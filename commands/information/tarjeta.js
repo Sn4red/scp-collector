@@ -1,7 +1,7 @@
 /*
     Implementaciones pendientes:
 
-    1. El valor de los SCP's capturados. Esto lo implementaré cuando añada
+    - El valor de los SCP's capturados. Esto lo implementaré cuando añada
     la colección donde se almacene el historial de los SCP's obtenidos,
     donde se pueda acumular el valor y mostrarlo en la tarjeta.
 */

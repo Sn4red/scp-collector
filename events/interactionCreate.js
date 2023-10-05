@@ -30,7 +30,7 @@ module.exports = {
 
             if (now < expirationTime) {
                 const expiredTimestamp = Math.round(expirationTime / 1000);
-                return interaction.reply({ content: `Podrás usar de nuevo \`${command.data.name}\` <t:${expiredTimestamp}:R>.`, ephemeral: true });
+                return interaction.reply({ content: `Podrás usar de nuevo \`${command.data.name}\` en <t:${expiredTimestamp}:R>.`, ephemeral: true });
             }
         }
 

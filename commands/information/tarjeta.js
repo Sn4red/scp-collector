@@ -20,7 +20,7 @@ module.exports = {
         .setDescription('Muestra tu tarjeta personal y el detalle de tu progreso.'),
     async execute(interaction) {
         // Se realiza la consulta a la base de datos.
-        const query = database.collection('usuario').where('id', '==', interaction.user.id);
+        const query = database.collection('usuario').where(firebase.firestore.FieldPath.documentId(), '==', interaction.user.id);
         const snapshot = await query.get();
 
         if (!snapshot.empty) {
@@ -29,7 +29,7 @@ module.exports = {
 
             // Datos del jugador.
             const fecha = jugador.fecha;
-            const id = jugador.id;
+            const id = document.id;
             const nick = jugador.nick;
             const nivel = jugador.nivel;
             const rango = jugador.rango;

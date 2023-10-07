@@ -1,9 +1,9 @@
 /*
     Implementaciones pendientes:
 
-    - El valor de los SCP's capturados. Esto lo implementaré cuando añada
+    - La cantidad de los SCP's capturados. Esto lo implementaré cuando añada
     la colección donde se almacene el historial de los SCP's obtenidos,
-    donde se pueda acumular el valor y mostrarlo en la tarjeta.
+    donde se pueda acumular la cantidad y mostrarlo en la tarjeta.
 */
 
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
@@ -19,17 +19,20 @@ module.exports = {
         .setName('tarjeta')
         .setDescription('Muestra tu tarjeta personal y el detalle de tu progreso.'),
     async execute(interaction) {
+        // Avisa a la API de Discord que la interacción se recibió correctamente y da un tiempo máximo de 15 minutos.
+        await interaction.deferReply();
+
         // Se realiza la consulta a la base de datos.
         const query = database.collection('usuario').where(firebase.firestore.FieldPath.documentId(), '==', interaction.user.id);
         const snapshot = await query.get();
 
         if (!snapshot.empty) {
-            const document = snapshot.docs[0];
-            const jugador = document.data();
+            const documento = snapshot.docs[0];
+            const jugador = documento.data();
 
             // Datos del jugador.
             const fecha = jugador.fecha;
-            const id = document.id;
+            const id = documento.id;
             const nick = jugador.nick;
             const nivel = jugador.nivel;
             const rango = jugador.rango;
@@ -170,7 +173,7 @@ module.exports = {
             // Usa la clase AttachmentBuilder para que se procese el archivo y pueda adjuntarse en el reply.
             const attachment = new AttachmentBuilder(await canvas.encode('png'), { name: 'profile-image.png' });
 
-            await interaction.reply({ files: [attachment] });
+            await interaction.editReply({ files: [attachment] });
         } else {
             await interaction.reply('¡No estás registrado! Captura un SCP para guardar tus datos.');
         }

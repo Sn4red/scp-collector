@@ -92,6 +92,10 @@ module.exports = {
                     const usuario = snapshotUsuario.data();
                     const xpMaximo = xpJugador[usuario.rango];
 
+                    // La variable determina qué tipo de promoción va a hacerse (rango o nivel),
+                    // para que salga diferente tipo de mensaje.
+                    let tipoPromocion = 'no';
+
                     // Esta sección obtiene el siguiente rango en base al rango actual del usuario. Si el rango actual es
                     // 'Miembro del Consejo O5', no hay promoción.
                     const rangos = [
@@ -113,11 +117,15 @@ module.exports = {
 
                     if ((usuario.xp + xpGanado) >= xpMaximo) {
                         if (usuario.nivel < 20) {
+                            tipoPromocion = 'nivel';
+
                             await queryUsuario.update({
                                 nivel: ++usuario.nivel,
                                 xp: (usuario.xp + xpGanado) - xpMaximo,
                             });
                         } else {
+                            tipoPromocion = 'rango';
+
                             await queryUsuario.update({
                                 rango: rangos[indiceElementoActual],
                                 nivel: 1,
@@ -134,6 +142,15 @@ module.exports = {
                         embeds: [cartaEmbed],
                         files: [imagePath],
                     });
+
+                    switch (tipoPromocion) {
+                        case 'nivel':
+                            await interaction.followUp('Felicidades ' + usuario.nick + '. Ahora eres nivel ' + usuario.nivel + '.');
+                            break;
+                        case 'rango':
+                            await interaction.followUp('Felicidades ' + usuario.nick + '. Has ascendido a ' + rangos[indiceElementoActual] + '.');
+                            break;
+                    }
                 } else {
                     await interaction.reply('Error al intentar capturar un SCP. Inténtalo más tarde.');
                 }

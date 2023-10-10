@@ -33,7 +33,7 @@ module.exports = {
             });
 
             const documento = snapshotUsuario.data();
-            const idUsuario = documento.id;
+            const idUsuario = interaction.user.id;
 
             // Usa la clase AttachmentBuilder para que se procese el archivo y pueda adjuntarse en el reply.
             const attachment = await desplegarTarjeta(documento, idUsuario, interaction);
@@ -77,6 +77,17 @@ async function desplegarTarjeta(documento, idUsuario, interaction) {
     const nivel = documento.nivel;
     const rango = documento.rango;
     const xp = documento.xp.toString();
+
+    // Consulta a la base de datos sobre la cantidad de SCP's obtenidos.
+    let cantidadSCP = 0;
+    const querySCP = database.collection('obtencion');
+    const snapshotSCP = await querySCP.where('usuario', '==', database.collection('usuario').doc(id)).get();
+
+    if (snapshotSCP.empty) {
+        cantidadSCP = 0;
+    } else {
+        cantidadSCP = snapshotSCP.size;
+    }
     
     // Crea un lienzo de 450x250 píxeles y obtiene su contexto.
     // El contexto será usado para poder modificar el lienzo.
@@ -128,7 +139,7 @@ async function desplegarTarjeta(documento, idUsuario, interaction) {
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.fillText('SCP\'s capturados:', 145, 132);
-    context.fillText('0', 220, 132);
+    context.fillText(cantidadSCP + '', 220, 132);
     
     // Etiqueta de clasificado.
     context.font = '13px Roboto Condensed';

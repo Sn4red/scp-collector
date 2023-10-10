@@ -1,3 +1,9 @@
+/*
+    Pendiente:
+
+    - Crear un contador para capturar un límite de SCP's cada cierto tiempo.
+*/
+
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('path');
@@ -41,6 +47,12 @@ module.exports = {
         if (snapshotUsuario.exists) {
             // Clase obtenida mediante probabilidad.
             const claseObtenida = probabilidadClase();
+
+            console.log(claseObtenida);
+            console.log(claseObtenida);
+            console.log(claseObtenida);
+            console.log(claseObtenida);
+            console.log(claseObtenida);
             // La subcolección tiene el mismo nombre que el documento que la contiene, pero es completamente en minúscula.
             const subColeccion = claseObtenida.charAt(0).toLowerCase() + claseObtenida.slice(1);
     

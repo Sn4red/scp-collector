@@ -48,11 +48,6 @@ module.exports = {
             // Clase obtenida mediante probabilidad.
             const claseObtenida = probabilidadClase();
 
-            console.log(claseObtenida);
-            console.log(claseObtenida);
-            console.log(claseObtenida);
-            console.log(claseObtenida);
-            console.log(claseObtenida);
             // La subcolección tiene el mismo nombre que el documento que la contiene, pero es completamente en minúscula.
             const subColeccion = claseObtenida.charAt(0).toLowerCase() + claseObtenida.slice(1);
     

@@ -1,11 +1,3 @@
-/*
-    Implementaciones pendientes:
-
-    - La cantidad de los SCP's capturados. Esto lo implementaré cuando añada
-    la colección donde se almacene el historial de los SCP's obtenidos,
-    donde se pueda acumular la cantidad y mostrarlo en la tarjeta.
-*/
-
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
 const { request } = require('undici');

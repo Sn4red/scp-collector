@@ -15,12 +15,12 @@ module.exports = {
         await interaction.deferReply();
 
         // Se realiza la consulta a la base de datos.
-        const queryUsuario = database.collection('usuario').doc(interaction.user.id);
-        const snapshotUsuario = await queryUsuario.get();
+        const referenciaUsuario = database.collection('usuario').doc(interaction.user.id);
+        const snapshotUsuario = await referenciaUsuario.get();
 
         // Si el usuario existe, se actualizan sus datos, en este caso el nickname (por si se lo cambió manualmente).
         if (snapshotUsuario.exists) {
-            await queryUsuario.update({
+            await referenciaUsuario.update({
                 nick: interaction.user.username,
             });
 
@@ -42,6 +42,7 @@ module.exports = {
             const anio = fechaActual.getFullYear();
 
             const usuarioNuevo = {
+                capturasDiarias: 0,
                 fecha: dia + '/' + mes + '/' + anio,
                 nick: interaction.user.username,
                 nivel: 1,
@@ -55,7 +56,6 @@ module.exports = {
             const attachment = await desplegarTarjeta(usuarioNuevo, interaction.user.id, interaction);
 
             await interaction.editReply({ files: [attachment] });
-            
             await interaction.followUp('¡Usuario nuevo! Ya puedes usar los comandos para coleccionar cartas y demás.');
         }
     },

@@ -1,17 +1,12 @@
-/*
-    Pendiente:
-
-    - Crear un contador para capturar un límite de SCP's cada cierto tiempo.
-*/
-
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('path');
+const cron = require('node-cron');
 
 const database = firebase.firestore();
 
 module.exports = {
-    cooldown: 10,
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('capturar')
         .setDescription('Atrapa un SCP y lo añades a tu colección.'),
@@ -41,125 +36,135 @@ module.exports = {
         await interaction.deferReply();
 
         // Se realiza la consulta a la base de datos.
-        const queryUsuario = database.collection('usuario').doc(interaction.user.id);
-        const snapshotUsuario = await queryUsuario.get();
+        const referenciaUsuario = database.collection('usuario').doc(interaction.user.id);
+        const snapshotUsuario = await referenciaUsuario.get();
 
         if (snapshotUsuario.exists) {
-            // Clase obtenida mediante probabilidad.
-            const claseObtenida = probabilidadClase();
+            // Se obtienen los datos desde aquí para que se pueda realizar la validación del límite diario.
+            const usuario = snapshotUsuario.data();
 
-            // La subcolección tiene el mismo nombre que el documento que la contiene, pero es completamente en minúscula.
-            const subColeccion = claseObtenida.charAt(0).toLowerCase() + claseObtenida.slice(1);
+            // Valida si se llegó al límite de capturas diarias (5).
+            if (usuario.capturasDiarias >= 5) {
+                await interaction.editReply('Has alcanzado el límite de capturas diarias de SCP\'s.');
+            } else {
+                // Clase obtenida mediante probabilidad.
+                const claseObtenida = probabilidadClase();
+
+                // La subcolección tiene el mismo nombre que el documento que la contiene, pero es completamente en minúscula.
+                const subColeccion = claseObtenida.charAt(0).toLowerCase() + claseObtenida.slice(1);
     
-            // Obtiene todas las cartas de SCP de la clase obtenida por probabilidad.
-            const cartas = database.collection('carta').doc(claseObtenida).collection(subColeccion);
-            const snapshotCarta = await cartas.get();
+                // Obtiene todas las cartas de SCP de la clase obtenida por probabilidad.
+                const referenciaCartas = database.collection('carta').doc(claseObtenida).collection(subColeccion);
+                const snapshotCartas = await referenciaCartas.get();
     
-            if (!snapshotCarta.empty) {
-                // Pasa los documentos del objeto QuerySnapshot en un array.
-                const cartasArray = snapshotCarta.docs.map(x => ({ id: x.id, data: x.data() }));
+                if (!snapshotCartas.empty) {
+                    // Pasa los documentos del objeto QuerySnapshot en un array.
+                    const cartasArray = snapshotCartas.docs.map(x => ({ id: x.id, data: x.data() }));
     
-                // Mediante el objeto Math, se obtiene un índice aleatorio en base a la cantidad de cartas que hay en el array,
-                // y se selecciona una carta aleatoria.
-                const indiceAleatorio = Math.floor(Math.random() * cartasArray.length);
-                const cartaAleatoria = cartasArray[indiceAleatorio];
+                    // Mediante el objeto Math, se obtiene un índice aleatorio en base a la cantidad de cartas que hay en el array,
+                    // y se selecciona una carta aleatoria.
+                    const indiceAleatorio = Math.floor(Math.random() * cartasArray.length);
+                    const cartaAleatoria = cartasArray[indiceAleatorio];
     
-                // Datos de la carta.
-                const idCarta = cartaAleatoria.id;
-                const clase = claseObtenida;
-                const archivo = cartaAleatoria.data.archivo;
-                const nombre = cartaAleatoria.data.nombre;
+                    // Datos de la carta.
+                    const idCarta = cartaAleatoria.id;
+                    const clase = claseObtenida;
+                    const archivo = cartaAleatoria.data.archivo;
+                    const nombre = cartaAleatoria.data.nombre;
     
-                const imagePath = path.join(__dirname, `../../images/scp/${idCarta}.jpg`);
+                    const imagePath = path.join(__dirname, `../../images/scp/${idCarta}.jpg`);
     
-                // Para que todas las imágenes tengan el mismo tamaño,
-                // se redimensionan a 300x200 píxeles.
-                const cartaEmbed = new EmbedBuilder()
-                .setColor(0x000000)
-                .setTitle(`Ítem #: ${idCarta} / ${nombre}`)
-                .setDescription(`+${xp[clase]} XP`)
-                .addFields(
-                    { name: 'Clase', value: clase, inline: true },
-                    { name: 'Archivo', value: archivo, inline: true },
-                )
-                .setImage(`attachment://${idCarta}.jpg`)
-                .setTimestamp()
-                .setFooter({ text: 'X tiros restantes.' });
+                    // Para que todas las imágenes tengan el mismo tamaño,
+                    // se redimensionan a 300x200 píxeles.
+                    const cartaEmbed = new EmbedBuilder()
+                    .setColor(0x000000)
+                    .setTitle(`Ítem #: ${idCarta} / ${nombre}`)
+                    .setDescription(`+${xp[clase]} XP`)
+                    .addFields(
+                        { name: 'Clase', value: clase, inline: true },
+                        { name: 'Archivo', value: archivo, inline: true },
+                    )
+                    .setImage(`attachment://${idCarta}.jpg`)
+                    .setTimestamp()
+                    .setFooter({ text: 'X tiros restantes.' });
                     
-                // Se inserta el registro de la obtención de la carta.
-                const registroObtencion = database.collection('obtencion').doc();
+                    // Se inserta el registro de la obtención de la carta.
+                    const registroObtencion = database.collection('obtencion').doc();
     
-                await registroObtencion.set({
-                    carta: database.collection('carta').doc(claseObtenida).collection(subColeccion).doc(idCarta),
-                    usuario: queryUsuario,
-                });
+                    await registroObtencion.set({
+                        carta: database.collection('carta').doc(claseObtenida).collection(subColeccion).doc(idCarta),
+                        usuario: referenciaUsuario,
+                    });
 
-                // Acá se realiza la promoción de rango y nivel (si fuera el caso).
-                const xpGanado = xp[clase];
-                const usuario = snapshotUsuario.data();
-                const xpMaximo = xpJugador[usuario.rango];
+                    // Acá se realiza la promoción de rango y nivel (si fuera el caso), y el aumento de los límites diarios.
+                    const xpGanado = xp[clase];
+                    const xpMaximo = xpJugador[usuario.rango];
 
-                // La variable determina qué tipo de promoción va a hacerse (rango o nivel),
-                // para que salga diferente tipo de mensaje.
-                let tipoPromocion = 'no';
+                    // La variable determina qué tipo de promoción va a hacerse (rango o nivel),
+                    // para que salga diferente tipo de mensaje.
+                    let tipoPromocion = 'no';
 
-                // Esta sección obtiene el siguiente rango en base al rango actual del usuario. Si el rango actual es
-                // 'Miembro del Consejo O5', no hay promoción.
-                const rangos = [
-                    'Clase D',
-                    'Oficial de Seguridad',
-                    'Investigador',
-                    'Especialista de Contención',
-                    'Agente de Campo',
-                    'Director de Sede',
-                    'Miembro del Consejo O5',
-                ];
+                    // Esta sección obtiene el siguiente rango en base al rango actual del usuario. Si el rango actual es
+                    // 'Miembro del Consejo O5', no hay promoción.
+                    const rangos = [
+                        'Clase D',
+                        'Oficial de Seguridad',
+                        'Investigador',
+                        'Especialista de Contención',
+                        'Agente de Campo',
+                        'Director de Sede',
+                        'Miembro del Consejo O5',
+                    ];
 
-                let indiceElementoActual = rangos.indexOf(usuario.rango);
-                indiceElementoActual++;
+                    let indiceElementoActual = rangos.indexOf(usuario.rango);
+                    indiceElementoActual++;
 
-                if (indiceElementoActual == 6) {
-                    indiceElementoActual--;
-                }
+                    if (indiceElementoActual == 6) {
+                        indiceElementoActual--;
+                    }
 
-                if ((usuario.xp + xpGanado) >= xpMaximo) {
-                    if (usuario.nivel < 20) {
-                        tipoPromocion = 'nivel';
+                    if ((usuario.xp + xpGanado) >= xpMaximo) {
+                        if (usuario.nivel < 20) {
+                            tipoPromocion = 'nivel';
 
-                        await queryUsuario.update({
-                            nivel: ++usuario.nivel,
-                            xp: (usuario.xp + xpGanado) - xpMaximo,
-                        });
+                            await referenciaUsuario.update({
+                                nivel: ++usuario.nivel,
+                                xp: (usuario.xp + xpGanado) - xpMaximo,
+                                capturasDiarias: ++usuario.capturasDiarias,
+                            });
+                        } else {
+                            tipoPromocion = 'rango';
+
+                            await referenciaUsuario.update({
+                                rango: rangos[indiceElementoActual],
+                                nivel: 1,
+                                xp: (usuario.xp + xpGanado) - xpMaximo,
+                                capturasDiarias: ++usuario.capturasDiarias,
+                            });
+                        }
                     } else {
-                        tipoPromocion = 'rango';
-
-                        await queryUsuario.update({
-                            rango: rangos[indiceElementoActual],
-                            nivel: 1,
-                            xp: (usuario.xp + xpGanado) - xpMaximo,
+                        await referenciaUsuario.update({
+                            xp: firebase.firestore.FieldValue.increment(xpGanado),
+                            capturasDiarias: ++usuario.capturasDiarias,
                         });
+                    }                    
+
+                    await interaction.editReply({
+                        embeds: [cartaEmbed],
+                        files: [imagePath],
+                    });
+
+                    switch (tipoPromocion) {
+                        case 'nivel':
+                            await interaction.followUp('Felicidades ' + usuario.nick + '. Ahora eres nivel ' + usuario.nivel + '.');
+                            break;
+                        case 'rango':
+                            await interaction.followUp('Felicidades ' + usuario.nick + '. Has ascendido a ' + rangos[indiceElementoActual] + '.');
+                            break;
                     }
                 } else {
-                    await queryUsuario.update({
-                        xp: firebase.firestore.FieldValue.increment(xpGanado),
-                    });
-                }                    
-
-                await interaction.editReply({
-                    embeds: [cartaEmbed],
-                    files: [imagePath],
-                });
-
-                switch (tipoPromocion) {
-                    case 'nivel':
-                        await interaction.followUp('Felicidades ' + usuario.nick + '. Ahora eres nivel ' + usuario.nivel + '.');
-                        break;
-                    case 'rango':
-                        await interaction.followUp('Felicidades ' + usuario.nick + '. Has ascendido a ' + rangos[indiceElementoActual] + '.');
-                        break;
+                    await interaction.editReply('Error al intentar capturar un SCP. Inténtalo más tarde.');
                 }
-            } else {
-                await interaction.editReply('Error al intentar capturar un SCP. Inténtalo más tarde.');
             }
         } else {
             await interaction.editReply('¡No estás registrado! Usa /tarjeta para guardar tus datos.');
@@ -167,7 +172,7 @@ module.exports = {
     },
 };
 
-// La función te define la probabilidad por clase (rareza) en un array,
+// Esta función te define la probabilidad por clase (rareza) en un array,
 // y determina la clase a elegir según la probabilidad acumulativa.
 function probabilidadClase() {
     const clases = [
@@ -191,3 +196,23 @@ function probabilidadClase() {
 
     return clases[0].nombre;
 }
+
+// Esta función reinicia el límite diario de capturas de cartas.
+async function restablecerLimiteDiario() {
+    const referenciaUsuarios = database.collection('usuario');
+    const snapshotUsuarios = await referenciaUsuarios.get();
+
+    snapshotUsuarios.forEach(async (x) => {
+        if (x.exists) {
+            await x.ref.update({
+                capturasDiarias: 0,
+            });
+        }
+    });
+}
+
+// La tarea cron ejecuta la función de reinicio a la media noche.
+cron.schedule('0 0 * * *', async () => {
+    console.log('*** Restableciendo límite diario de capturas SCP\'s ***');
+    await restablecerLimiteDiario();
+});

@@ -6,7 +6,7 @@ module.exports = {
         .setName('comandos')
         .setDescription('Lista todos los comandos utilizables.'),
     async execute(interaction) {
-        const exampleEmbed = new EmbedBuilder()
+        const embed = new EmbedBuilder()
             .setColor(0x000000)
             .setTitle('Lista de Comandos')
             .setThumbnail('https://media.tenor.com/qVlSOwUINxcAAAAC/scp-logo.gif')
@@ -32,6 +32,6 @@ module.exports = {
             .setTimestamp()
             .setFooter({ text: 'Para enviar sugerencias o reportar errores: <Google Form>', iconURL: 'https://logowik.com/content/uploads/images/google-forms8392.jpg' });
 
-        await interaction.reply({ embeds: [exampleEmbed] });
+        await interaction.reply({ embeds: [embed] });
     },
 };

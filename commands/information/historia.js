@@ -6,7 +6,7 @@ module.exports = {
         .setName('historia')
         .setDescription('Detalla la temática del bot para más contexto y un poco de historia sobre qué es La Fundación SCP.'),
     async execute(interaction) {
-        const exampleEmbed = new EmbedBuilder()
+        const embed = new EmbedBuilder()
             .setColor(0x000000)
             .setTitle('La Fundación SCP')
             .setDescription('Operando de forma clandestina y global, La Fundación actúa más allá de toda jurisdicción, reforzada por los grandes gobiernos nacionales que ' +
@@ -19,6 +19,6 @@ module.exports = {
             .setTimestamp()
             .setFooter({ text: 'Usa /comandos para ver toda la lista de comandos disponibles.', iconURL: 'https://media.tenor.com/qVlSOwUINxcAAAAC/scp-logo.gif' });
 
-        await interaction.reply({ embeds: [exampleEmbed] });
+        await interaction.reply({ embeds: [embed] });
     },
 };

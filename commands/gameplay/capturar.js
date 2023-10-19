@@ -20,8 +20,8 @@ module.exports = {
             'Apollyon': 200,
         };
 
-        // El XP máximo por nivel (20 niveles por rango) según el rango del jugador.
-        const xpJugador = {
+        // El XP máximo por nivel (20 niveles por rango) según el rango del usuario.
+        const xpUsuario = {
             'Clase D': 50,
             'Oficial de Seguridad': 100,
             'Investigador': 250,
@@ -98,7 +98,7 @@ module.exports = {
 
                     // Acá se realiza la promoción de rango y nivel (si fuera el caso), y el aumento de los límites diarios.
                     const xpGanado = xp[clase];
-                    const xpMaximo = xpJugador[usuario.rango];
+                    const xpMaximo = xpUsuario[usuario.rango];
 
                     // La variable determina qué tipo de promoción va a hacerse (rango o nivel),
                     // para que salga diferente tipo de mensaje.

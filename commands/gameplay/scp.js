@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, SlashCommandSubcommandGroupBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -16,21 +16,35 @@ module.exports = {
         const snapshotUsuario = await referenciaUsuario.get();
         const usuario = snapshotUsuario.data();
 
-        const referenciaCartas = database.collection('obtencion');
-        const snapshotCartas = await referenciaCartas.where('usuario', '==', referenciaUsuario).get();
+        const referenciaCartas = database.collection('obtencion').where('usuario', '==', referenciaUsuario);
+        const snapshotCartas = await referenciaCartas.get();
+        
+        const cartas = [];
 
-        snapshotCartas.forEach(x => {
-            const carta = x.data();
-            
-            console.log(x.id);
-            console.log(carta.carta.id);
-        });
+        for (const x of snapshotCartas.docs) {
+            const obtencion = x.data();
+            const referenciaCarta = obtencion.carta;
+            const documentoCarta = await referenciaCarta.get();
+
+            cartas.push(documentoCarta);
+        }
+
+        cartas.sort((a, b) => a.id.localeCompare(b.id));
 
         const embed = new EmbedBuilder()
             .setColor(0x000000)
             .setTitle('**Colección de ' + usuario.nick + '**')
-            .setDescription('aeaaea')
             .setTimestamp();
+
+        let listaCartas = '';
+
+        cartas.forEach(x => {
+            const carta = x.data();
+
+            listaCartas += `${x.id} - ${carta.nombre}\n`;
+        });
+
+        embed.addFields({ name: '\u200B', value: listaCartas });
 
         await interaction.editReply({ embeds: [embed] });
     },

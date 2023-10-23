@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, SlashCommandSubcommandGroupBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -14,38 +14,68 @@ module.exports = {
 
         const referenciaUsuario = database.collection('usuario').doc(interaction.user.id);
         const snapshotUsuario = await referenciaUsuario.get();
-        const usuario = snapshotUsuario.data();
 
-        const referenciaCartas = database.collection('obtencion').where('usuario', '==', referenciaUsuario);
-        const snapshotCartas = await referenciaCartas.get();
-        
-        const cartas = [];
+        if (snapshotUsuario.exists) {
+            const usuario = snapshotUsuario.data();
 
-        for (const x of snapshotCartas.docs) {
-            const obtencion = x.data();
-            const referenciaCarta = obtencion.carta;
-            const documentoCarta = await referenciaCarta.get();
+            const referenciaCartas = database.collection('obtencion').where('usuario', '==', referenciaUsuario);
+            const snapshotCartas = await referenciaCartas.get();
 
-            cartas.push(documentoCarta);
+            if (!snapshotCartas.empty) {
+                // 'cartasCount' almacenará la cantidad repetida por carta.
+                // 'cartas' almacenará los datos completos de la carta.
+                // 'cartasClase' almacenará las clases de las cartas (no son un campo de la carta, sino del nombre de su colección en Firebase).
+                const cartasCount = new Map();
+                const cartas = new Map();
+                const cartasClase = new Map();
+
+                // Obtiene las cartas por el campo que las hace referencia y las almacena en una colección.
+                // Esto es para obtener los datos de la carta (se necesita el nombre para el listado).
+                for (const x of snapshotCartas.docs) {
+                    const obtencion = x.data();
+                    const referenciaCarta = obtencion.carta;
+                    const documentoCarta = await referenciaCarta.get();
+
+                    const idCarta = documentoCarta.id;
+
+                    if (cartasCount.has(idCarta)) {
+                        cartasCount.set(idCarta, cartasCount.get(idCarta) + 1);
+                    } else {
+                        cartasCount.set(idCarta, 1);
+                        cartas.set(idCarta, documentoCarta);
+                    }
+
+                    cartasClase.set(idCarta, referenciaCarta.parent.parent.id);
+                }
+
+                // Se ordena la lista de forma numérica tomando en cuenta el ID después del 'SCP-'
+                // (a partir del quinto carácter) y convierte la lista de ID's de la colección en un array.
+                const ordenCartas = Array.from(cartasCount.keys()).sort((a, b) => parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10));
+
+                const embed = new EmbedBuilder()
+                    .setColor(0x000000)
+                    .setTitle('__**Colección de ' + usuario.nick + '**__')
+                    .setTimestamp();
+
+                // Se listan las cartas interándose en una sola cadena para mostrarlo en el embed.
+                let listaCartas = '';
+
+                ordenCartas.forEach(x => {
+                    const carta = cartas.get(x).data();
+                    const cantidad = cartasCount.get(x);
+                    const clase = cartasClase.get(x);
+
+                    listaCartas += `(${cantidad}) ${x} - ${carta.nombre} - **${clase}**\n`;
+                });
+
+                embed.addFields({ name: '\u200B', value: listaCartas });
+
+                await interaction.editReply({ embeds: [embed] });
+            } else {
+                await interaction.editReply('No tienes SCP\'s capturados!');
+            }
+        } else {
+            await interaction.editReply('¡No estás registrado! Usa /tarjeta para guardar tus datos.');
         }
-
-        cartas.sort((a, b) => a.id.localeCompare(b.id));
-
-        const embed = new EmbedBuilder()
-            .setColor(0x000000)
-            .setTitle('**Colección de ' + usuario.nick + '**')
-            .setTimestamp();
-
-        let listaCartas = '';
-
-        cartas.forEach(x => {
-            const carta = x.data();
-
-            listaCartas += `${x.id} - ${carta.nombre}\n`;
-        });
-
-        embed.addFields({ name: '\u200B', value: listaCartas });
-
-        await interaction.editReply({ embeds: [embed] });
     },
 };

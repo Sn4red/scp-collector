@@ -85,8 +85,7 @@ module.exports = {
                         { name: 'Archivo', value: archivo, inline: true },
                     )
                     .setImage(`attachment://${idCarta}.jpg`)
-                    .setTimestamp()
-                    .setFooter({ text: 'X tiros restantes.' });
+                    .setTimestamp();
                     
                     // Se inserta el registro de la obtención de la carta.
                     const registroObtencion = database.collection('obtencion').doc();
@@ -147,7 +146,9 @@ module.exports = {
                             xp: firebase.firestore.FieldValue.increment(xpGanado),
                             capturasDiarias: ++usuario.capturasDiarias,
                         });
-                    }                    
+                    }
+                    
+                    cartaEmbed.setFooter({ text: `${5 - usuario.capturasDiarias} tiros restantes` });
 
                     await interaction.editReply({
                         embeds: [cartaEmbed],

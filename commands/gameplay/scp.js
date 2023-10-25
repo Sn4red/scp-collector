@@ -29,24 +29,33 @@ module.exports = {
                 const cartas = new Map();
                 const cartasClase = new Map();
 
-                // Obtiene las cartas por el campo que las hace referencia y las almacena en una colección.
+                const promesas = [];
+
+                // Obtiene las cartas por el campo que las hace referencia y almacena el documento en un array.
                 // Esto es para obtener los datos de la carta (se necesita el nombre para el listado).
                 for (const x of snapshotCartas.docs) {
                     const obtencion = x.data();
                     const referenciaCarta = obtencion.carta;
-                    const documentoCarta = await referenciaCarta.get();
+                    const documentoCarta = referenciaCarta.get();
 
-                    const idCarta = documentoCarta.id;
+                    promesas.push(documentoCarta);
+                }
+
+                const cartasArray = await Promise.all(promesas);
+
+                // Se guardan los datos requeridos en los maps.
+                cartasArray.forEach(x => {
+                    const idCarta = x.id;
 
                     if (cartasCount.has(idCarta)) {
                         cartasCount.set(idCarta, cartasCount.get(idCarta) + 1);
                     } else {
                         cartasCount.set(idCarta, 1);
-                        cartas.set(idCarta, documentoCarta);
+                        cartas.set(idCarta, x);
                     }
 
-                    cartasClase.set(idCarta, referenciaCarta.parent.parent.id);
-                }
+                    cartasClase.set(idCarta, x.ref.parent.parent.id);
+                });
 
                 // Se ordena la lista de forma numérica tomando en cuenta el ID después del 'SCP-'
                 // (a partir del quinto carácter) y convierte la lista de ID's de la colección en un array.

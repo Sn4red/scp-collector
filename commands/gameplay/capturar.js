@@ -214,6 +214,6 @@ async function restablecerLimiteDiario() {
 
 // La tarea cron ejecuta la función de reinicio a la media noche.
 cron.schedule('0 0 * * *', async () => {
-    console.log('*** Restableciendo límite diario de capturas SCP\'s ***');
+    console.log('*** Restableciendo límite de tiros diarios ***');
     await restablecerLimiteDiario();
 });

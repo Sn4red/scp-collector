@@ -10,7 +10,7 @@ module.exports = {
         .setDescription('Lista tu colección de SCP\'s.'),
     async execute(interaction) {
        // Avisa a la API de Discord que la interacción se recibió correctamente y da un tiempo máximo de 15 minutos.
-        await interaction.deferReply({ ephemeral: true });
+        const mensaje = await interaction.deferReply({ fetchReply: true });
 
         const referenciaUsuario = database.collection('usuario').doc(interaction.user.id);
         const snapshotUsuario = await referenciaUsuario.get();
@@ -80,6 +80,22 @@ module.exports = {
                 embed.addFields({ name: '\u200B', value: listaCartas });
 
                 await interaction.editReply({ embeds: [embed] });
+
+                mensaje.react('➡️');
+
+                // Filtra sólo reacciones provenientes del usuario que ejecutó el comando y en el emoji añadido en concreto.
+                const filtroCollector = (reaction, user) => {
+                    return reaction.emoji.name == '➡️' && user.id == interaction.user.id;
+                };
+
+                // Se aplica el filtro con otros parámetros para la función awaitReactions.
+                mensaje.awaitReactions({ filter: filtroCollector, max: 1, time: 60000, errors: ['time'] })
+                    .then((collected) => {
+                        console.log('FUNCIONAAAAA')
+                    })
+                    .catch((collected) =>{
+                        console.log('No hubo reacciones.')
+                    });
             } else {
                 await interaction.editReply('No tienes SCP\'s capturados!');
             }

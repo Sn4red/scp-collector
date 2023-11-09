@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -9,10 +9,12 @@ module.exports = {
         .setName('scp')
         .setDescription('Lista tu colección de SCP\'s.'),
     async execute(interaction) {
-       // Avisa a la API de Discord que la interacción se recibió correctamente y da un tiempo máximo de 15 minutos.
-        const mensaje = await interaction.deferReply({ fetchReply: true });
+        const idUsuario = interaction.user.id;
 
-        const referenciaUsuario = database.collection('usuario').doc(interaction.user.id);
+        // Avisa a la API de Discord que la interacción se recibió correctamente y da un tiempo máximo de 15 minutos.
+        await interaction.deferReply({ ephemeral: true });
+
+        const referenciaUsuario = database.collection('usuario').doc(idUsuario);
         const snapshotUsuario = await referenciaUsuario.get();
 
         if (snapshotUsuario.exists) {
@@ -44,7 +46,7 @@ module.exports = {
                 const cartasArray = await Promise.all(promesas);
 
                 // Se guardan los datos requeridos en los maps.
-                cartasArray.forEach(x => {
+                cartasArray.forEach((x) => {
                     const idCarta = x.id;
 
                     if (cartasCount.has(idCarta)) {
@@ -61,46 +63,97 @@ module.exports = {
                 // (a partir del quinto carácter) y convierte la lista de ID's de la colección en un array.
                 const ordenCartas = Array.from(cartasCount.keys()).sort((a, b) => parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10));
 
-                const embed = new EmbedBuilder()
-                    .setColor(0x000000)
-                    .setTitle('__**Colección de ' + usuario.nick + '**__')
-                    .setTimestamp();
-
-                // Se listan las cartas interándose en una sola cadena para mostrarlo en el embed.
+                // Se listan las cartas iterándose en una sola cadena para mostrarlo en el embed.
                 let listaCartas = '';
 
-                ordenCartas.forEach(x => {
-                    const carta = cartas.get(x).data();
-                    const cantidad = cartasCount.get(x);
-                    const clase = cartasClase.get(x);
+                const embeds = [];
+                const paginas = {};
+                let limiteRegistrosXPagina = 0;
 
-                    listaCartas += `(${cantidad}) ${x} - ${carta.nombre} - **${clase}**\n`;
+                ordenCartas.forEach((elemento, indice, array) => {
+                    const carta = cartas.get(elemento).data();
+                    const cantidad = cartasCount.get(elemento);
+                    const clase = cartasClase.get(elemento);
+
+                    listaCartas += `(${cantidad}) ${elemento} - ${carta.nombre} - **${clase}**\n`;
+
+                    limiteRegistrosXPagina++;
+                    
+                    // Cuando se acumulan 10 registros de cartas, se almacenan en una sola página y se resetea la variable.
+                    if (limiteRegistrosXPagina == 10) {
+                        embeds.push(new EmbedBuilder().setTitle(`__**Colección de ${usuario.nick} **__`).setDescription(listaCartas));
+
+                        listaCartas = '';
+                        limiteRegistrosXPagina = 0;
+                    }
+
+                    // Acá se realiza la validación para la última página si es que no se llegan a acumular 10 registros.
+                    if (indice == array.length - 1) {
+                        embeds.push(new EmbedBuilder().setTitle(`__**Colección de ${usuario.nick} **__`).setDescription(listaCartas));
+                    }
                 });
 
-                embed.addFields({ name: '\u200B', value: listaCartas });
+                // Se crea un ActionRow que contenga 2 botones.
+                const rowUsuario = (id) => {
+                    const row = new ActionRowBuilder();
 
-                await interaction.editReply({ embeds: [embed] });
+                    const botonAnterior = new ButtonBuilder()
+                        .setCustomId('botonAnterior')
+                        .setStyle('Secondary')
+                        .setEmoji('⬅️')
+                        .setDisabled(paginas[id] === 0);
 
-                mensaje.react('➡️');
+                    const botonSiguiente = new ButtonBuilder()
+                        .setCustomId('botonSiguiente')
+                        .setStyle('Secondary')
+                        .setEmoji('➡️')
+                        .setDisabled(paginas[id] === embeds.length - 1);
 
-                // Filtra sólo reacciones provenientes del usuario que ejecutó el comando y en el emoji añadido en concreto.
-                const filtroCollector = (reaction, user) => {
-                    return reaction.emoji.name == '➡️' && user.id == interaction.user.id;
+                    row.addComponents(botonAnterior, botonSiguiente);
+
+                    return row;
                 };
 
-                // Se aplica el filtro con otros parámetros para la función awaitReactions.
-                mensaje.awaitReactions({ filter: filtroCollector, max: 1, time: 60000, errors: ['time'] })
-                    .then((collected) => {
-                        console.log('FUNCIONAAAAA')
-                    })
-                    .catch((collected) =>{
-                        console.log('No hubo reacciones.')
+                paginas[idUsuario] = paginas[idUsuario] || 0;
+
+                const embed = embeds[paginas[idUsuario]];
+                const filtroCollector = (x) => x.user.id === idUsuario;
+                const tiempo = 1000 * 60 * 5;
+
+                const respuesta = await interaction.editReply({
+                    embeds: [embed],
+                    components: [rowUsuario(idUsuario)],
+                });
+
+                const collector = respuesta.createMessageComponentCollector({ filter: filtroCollector, time: tiempo });
+
+                collector.on('collect', (boton) => {
+                    if (!boton) {
+                        return;
+                    }
+        
+                    boton.deferUpdate();
+        
+                    if (boton.customId !== 'botonAnterior' && boton.customId !== 'botonSiguiente') {
+                        return;
+                    }
+        
+                    if (boton.customId === 'botonAnterior' && paginas[idUsuario] > 0) {
+                        --paginas[idUsuario];
+                    } else if (boton.customId === 'botonSiguiente' && paginas[idUsuario] < embeds.length - 1) {
+                        ++paginas[idUsuario];
+                    }
+        
+                    interaction.editReply({
+                        embeds: [embeds[paginas[idUsuario]]],
+                        components: [rowUsuario(idUsuario)],
                     });
+                });
             } else {
                 await interaction.editReply('No tienes SCP\'s capturados!');
             }
         } else {
             await interaction.editReply('¡No estás registrado! Usa /tarjeta para guardar tus datos.');
-        }
+        }  
     },
 };

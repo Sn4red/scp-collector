@@ -59,7 +59,7 @@ module.exports = {
     
                 if (!snapshotCartas.empty) {
                     // Pasa los documentos del objeto QuerySnapshot en un array.
-                    const cartasArray = snapshotCartas.docs.map(x => ({ id: x.id, data: x.data() }));
+                    const cartasArray = snapshotCartas.docs.map((x) => ({ id: x.id, data: x.data() }));
     
                     // Mediante el objeto Math, se obtiene un índice aleatorio en base a la cantidad de cartas que hay en el array,
                     // y se selecciona una carta aleatoria.
@@ -148,7 +148,11 @@ module.exports = {
                         });
                     }
                     
-                    cartaEmbed.setFooter({ text: `${5 - usuario.capturasDiarias} tiros restantes` });
+                    if (usuario.capturasDiarias == 4) {
+                        cartaEmbed.setFooter({ text: `${5 - usuario.capturasDiarias} tiro restante` });
+                    } else {
+                        cartaEmbed.setFooter({ text: `${5 - usuario.capturasDiarias} tiros restantes` });
+                    }
 
                     await interaction.editReply({
                         embeds: [cartaEmbed],

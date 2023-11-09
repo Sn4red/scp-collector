@@ -127,7 +127,7 @@ module.exports = {
 
                 const collector = respuesta.createMessageComponentCollector({ filter: filtroCollector, time: tiempo });
 
-                collector.on('collect', (boton) => {
+                collector.on('collect', async (boton) => {
                     if (!boton) {
                         return;
                     }
@@ -144,7 +144,7 @@ module.exports = {
                         ++paginas[idUsuario];
                     }
         
-                    interaction.editReply({
+                    await interaction.editReply({
                         embeds: [embeds[paginas[idUsuario]]],
                         components: [rowUsuario(idUsuario)],
                     });

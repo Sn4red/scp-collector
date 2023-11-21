@@ -23,7 +23,8 @@ module.exports = {
                 { name: 'Sistema de Tradeo', value: '/tradear <ID> <SCP deseado> <SCP a entregar> - Envía una petición de tradeo directa a un usuario, especificando el ' +
                                                     'SCP que tiene el otro usuario y el que tú estás dispuesto a tradear. Cuando el otro usuario acepta tu petición, se realizará el ' +
                                                     'tradeo de forma automática. **Antes de poder aceptar, hay un cooldown de 1 minuto por si se envió una solicitud por error.**\n' +
-                                                    '/aceptartradeo <ID> <SCP a obtener> - Acepta la petición y se realiza el tradeo.\n' +
+                                                    '/aceptartradeo <ID> <SCP a entregar> <SCP a obtener> - Acepta la petición y se realiza el tradeo.\n' +
+                                                    '/rechazartradeo <ID> <SCP a entregar> <SCP a obtener> - Rechaza una oferta de tradeo.\n' +
                                                     '/cancelartradeo <ID> <SCP deseado> - Cancela un tradeo en específico que hayas enviado.\n' +
                                                     '/rechazartradeo <ID> <SCP a obtener> - Rechaza una oferta de tradeo.\n' + 
                                                     '/listatradeosenviados - Lista los tradeos que están pendientes junto con un historial de tradeos que has realizado.\n' +

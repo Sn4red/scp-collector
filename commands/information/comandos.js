@@ -20,7 +20,7 @@ module.exports = {
                 { name: 'Jugabilidad', value: '/capturar - Atrapa un SCP y lo añades a tu colección. Puedes obtener repetidos que servirán para que puedas intercambiarlos ' +
                                             'con un tercero. La rareza (clase) del SCP influirá en las probabilidades de que lo obtengas. Sólo puedes capturar 5 SCP\'s al día.\n' +
                                             '/scp - Lista los SCP\'s que tienes por el momento, incluyendo los repetidos.' },
-                { name: 'Sistema de Tradeo', value: '/tradear <ID> <SCP deseado> <SCP a entregar> - Envía una petición de tradeo directa a un usuario, especificando el ' +
+                { name: 'Sistema de Tradeo', value: '/tradear <ID> <SCP deseado> <SCP a entregar> - Crea una petición de tradeo directa a un usuario, especificando el ' +
                                                     'SCP que tiene el otro usuario y el que tú estás dispuesto a tradear. Cuando el otro usuario acepta tu petición, se realizará el ' +
                                                     'tradeo de forma automática. **Antes de poder aceptar, hay un cooldown de 1 minuto por si se envió una solicitud por error.**\n' +
                                                     '/aceptartradeo <ID> <SCP a entregar> <SCP a obtener> - Acepta la petición y se realiza el tradeo.\n' +

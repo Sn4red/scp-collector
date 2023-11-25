@@ -172,7 +172,7 @@ module.exports = {
                 }
             }
         } else {
-            await interaction.editReply('¡No estás registrado! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
         }
     },
 };

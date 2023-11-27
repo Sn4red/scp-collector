@@ -93,6 +93,7 @@ module.exports = {
                     await registroObtencion.set({
                         carta: database.collection('carta').doc(claseObtenida).collection(subColeccion).doc(idCarta),
                         usuario: referenciaUsuario,
+                        lockeado: false,
                     });
 
                     // Acá se realiza la promoción de rango y nivel (si fuera el caso), y el aumento de los límites diarios.

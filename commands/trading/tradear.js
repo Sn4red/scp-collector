@@ -32,39 +32,43 @@ module.exports = {
 
                 const validacionCampos = validarCampos(valorReceptor, valorCartaEmisor, valorCartaReceptor);
 
-                const cartaEncontradaEmisor = await encontrarCarta(referenciaUsuarioEmisor, valorCartaEmisor);
+                if (!validacionCampos.estadoError) {
+                    const cartaEncontradaEmisor = await encontrarCarta(referenciaUsuarioEmisor, validacionCampos.valorCartaEmisorArreglado);
 
-                if (cartaEncontradaEmisor) {
-                    const referenciaUsuarioReceptor = database.collection('usuario').doc(valorReceptor);
-                    const snapshotUsuarioReceptor = await referenciaUsuarioReceptor.get();
+                    if (cartaEncontradaEmisor) {
+                        const referenciaUsuarioReceptor = database.collection('usuario').doc(valorReceptor);
+                        const snapshotUsuarioReceptor = await referenciaUsuarioReceptor.get();
 
-                    if (snapshotUsuarioReceptor.exists) {
-                        const cartaEncontradaReceptor = await encontrarCarta(referenciaUsuarioReceptor, valorCartaReceptor);
+                        if (snapshotUsuarioReceptor.exists) {
+                            const cartaEncontradaReceptor = await encontrarCarta(referenciaUsuarioReceptor, validacionCampos.valorCartaReceptorArreglado);
 
-                        if (cartaEncontradaReceptor) {
-                            const registroTradeo = database.collection('tradeo').doc();
+                            if (cartaEncontradaReceptor) {
+                                const registroTradeo = database.collection('tradeo').doc();
+                                
+                                await registroTradeo.set({
+                                    cartaEmisor: cartaEncontradaEmisor.ref,
+                                    cartaReceptor: cartaEncontradaReceptor.ref,
+                                    confirmacionTradeo: false,
+                                    cooldownSeguridad: new Date(),
+                                    emisor: idUsuario,
+                                    fechaTradeo: null,
+                                    receptor: valorReceptor,
+                                });
 
-                            await registroTradeo.set({
-                                cartaEmisor: cartaEncontradaEmisor.ref,
-                                cartaReceptor: cartaEncontradaReceptor.ref,
-                                confirmacionTradeo: false,
-                                cooldownSeguridad: new Date(),
-                                emisor: idUsuario,
-                                fechaTradeo: null,
-                                receptor: valorReceptor,
-                            });
+                                lockearCarta(referenciaUsuarioEmisor, cartaEncontradaEmisor);
 
-                            lockearCarta(referenciaUsuarioEmisor, cartaEncontradaEmisor);
-
-                            modalInteraction.editReply(`Solicitud de tradeo enviada con el ID **${registroTradeo.id}**. Puedes usar el mismo ID para cancelar la solicitud.`);
+                                modalInteraction.editReply(`Solicitud de tradeo enviada con el ID **${registroTradeo.id}**. Puedes usar el mismo ID para cancelar la solicitud.`);
+                            } else {
+                                modalInteraction.editReply('Solicitud cancelada ¡Parece que el usuario no tiene la carta que quieres!');
+                            }
                         } else {
-                            modalInteraction.editReply('Solicitud cancelada ¡Parece que el usuario no tiene la carta que quieres!');
+                            modalInteraction.editReply('Solicitud cancelada. El usuario con el que intentas tradear todavía no está registrado o no se ha encontrado.');
                         }
                     } else {
-                        modalInteraction.editReply('Solicitud cancelada. El usuario con el que intentas tradear todavía no está registrado o no se ha encontrado.');
+                        modalInteraction.editReply('Solicitud cancelada ¡Parece que no tienes la carta que estás ofreciendo!');
                     }
                 } else {
-                    modalInteraction.editReply('Solicitud cancelada ¡Parece que no tienes la carta que estás ofreciendo!');
+                    modalInteraction.editReply(validacionCampos.mensajeError);
                 }
             }).catch((error) => {
                 console.log(`Error: ${error}`);
@@ -115,32 +119,38 @@ function desplegarModal(idUsuario) {
     return modal;
 }
 
+// La función valida que los campos del modal sean ingresados correctamente.
 function validarCampos(valorReceptor, valorCartaEmisor, valorCartaReceptor) {
     // Se realiza la validación de que el ID del usuario contenga sólo números.
     const validacionReceptor = /^[0-9]+$/.test(valorReceptor);
-    
+
+    // Se convierten los ID's de las cartas a mayúsculas.
+    const valorCartaEmisorArreglado = valorCartaEmisor.toUpperCase();
+    const valorCartaReceptorArreglado = valorCartaReceptor.toUpperCase();
+
     // Se realiza la validación de que el formato de la carta sea correcta.
-    const validacionCartaEmisor = /^scp-\d{3,4}$/i.test(valorCartaEmisor);
-    const validacionCartaReceptor = /^scp-\d{3,4}$/i.test(valorCartaReceptor);
-
-    // Se realiza una validación alternativa si se especifica el ID de la carta con sólo números.
-    const validacionCartaEmisorNumeros = /^\d{3,4}$/.test(valorCartaEmisor);
-    const validacionCartaReceptorNumeros = /^\d{3,4}$/.test(valorCartaReceptor);
+    const validacionCartaEmisor = /^scp-\d{3,4}$/i.test(valorCartaEmisorArreglado);
+    const validacionCartaReceptor = /^scp-\d{3,4}$/i.test(valorCartaReceptorArreglado);
     
-    let resultado = '';
+    let mensajeError = 'Los siguientes datos fueron ingresados incorrectamente:\n';
+    let estadoError = false;
 
-    if (validacionReceptor == false) {
-        resultado += 'Los siguientes datos fueron ingresados incorrectamente: ID Usuario';
-
-        if (validacionCartaEmisor == false) {
-            resultado += ', carta ofrecida';
-        }
+    if (!validacionReceptor) {
+        mensajeError += '- ID usuario\n';
+        estadoError = true;
+    }
+    
+    if (!validacionCartaEmisor) {
+        mensajeError += '- Carta ofrecida\n';
+        estadoError = true;
     }
 
-    // Armar un if else para validar si se ingresó cualquiera de las 2 formas de ID de carta y luego realizar los filtros del mensaje.
-    // Se debe de retornar el resultado, con los 2 valores de ID de carta.
+    if (!validacionCartaReceptor) {
+        mensajeError += '- Carta deseada';
+        estadoError = true;
+    }
 
-    return {  };
+    return { valorCartaEmisorArreglado, valorCartaReceptorArreglado, estadoError, mensajeError };
 }
 
 // Esta función busca una carta de un usuario que no esté 'lockeado'.

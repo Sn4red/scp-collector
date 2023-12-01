@@ -74,7 +74,7 @@ module.exports = {
                 console.log(`Error: ${error}`);
             });
         } else {
-            await interaction.reply('¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.reply({ content: '¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.', ephemeral: true });
         }
     },
 };

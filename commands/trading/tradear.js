@@ -72,6 +72,8 @@ module.exports = {
                 }
             }).catch((error) => {
                 console.log(`Error: ${error}`);
+
+                interaction.followUp({ content: 'Solicitud cancelada debido a la inactividad.', ephemeral: true });
             });
         } else {
             await interaction.reply({ content: '¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.', ephemeral: true });

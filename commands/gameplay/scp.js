@@ -89,6 +89,12 @@ module.exports = {
 
                     // Acá se realiza la validación para la última página si es que no se llegan a acumular 10 registros.
                     if (indice == array.length - 1) {
+                        // Si sólo se tienen 10 registros, la ejecución igual entrará por acá, lo cual dará error porque listaCartas ya no contiene
+                        // texto, e intentará agregar esto en un nuevo embed. Así que se realiza esta validación para que salga.
+                        if (listaCartas.length == 0) {
+                            return;
+                        }
+
                         embeds.push(new EmbedBuilder().setTitle(`__**Colección de ${usuario.nick} **__`).setDescription(listaCartas));
                     }
                 });

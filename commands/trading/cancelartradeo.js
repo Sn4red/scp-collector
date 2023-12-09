@@ -13,59 +13,60 @@ module.exports = {
             .setDescription('ID solicitud del tradeo a cancelar.')
             .setRequired(true)),
     async execute(interaction) {
-        // Avisa a la API de Discord que la interacción se recibió correctamente y da un tiempo máximo de 15 minutos.
+        // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
 
-        const idUsuario = interaction.user.id;
+        const userId = interaction.user.id;
 
-        const referenciaUsuario = database.collection('usuario').doc(idUsuario);
-        const snapshotUsuario = await referenciaUsuario.get();
+        const userReference = database.collection('usuario').doc(userId);
+        const userSnapshot = await userReference.get();
 
-        if (snapshotUsuario.exists) {
-            const idTradeo = interaction.options.getString('solicitud');
+        if (userSnapshot.exists) {
+            const tradeId = interaction.options.getString('solicitud');
 
-            const referenciaTradeo = database.collection('tradeo').doc(idTradeo);
-            const snapshotTradeo = await referenciaTradeo.get();
+            const tradeReference = database.collection('tradeo').doc(tradeId);
+            const tradeSnapshot = await tradeReference.get();
 
-            if (snapshotTradeo.exists) {
-                const tradeo = snapshotTradeo.data();
+            if (tradeSnapshot.exists) {
+                const trade = tradeSnapshot.data();
 
-                if (tradeo.emisor == idUsuario) {
-                    const rowBotones = desplegarBotones();
+                if (trade.emisor == userId) {
+                    const buttonsRow = displayButtons();
 
-                    const respuesta = await interaction.editReply({
-                        content: `¿Estás seguro de cancelar la solicitud de tradeo **${snapshotTradeo.id}**?`,
-                        components: [rowBotones],
+                    const reply = await interaction.editReply({
+                        content: `¿Estás seguro de cancelar la solicitud de tradeo **${tradeSnapshot.id}**?`,
+                        components: [buttonsRow],
                     });
 
-                    const filtroCollector = (x) => x.user.id === tradeo.emisor;
-                    const tiempo = 1000 * 30;
+                    const collectorFilter = (userInteraction) => userInteraction.user.id === trade.emisor;
+                    const time = 1000 * 30;
 
-                    const collector = respuesta.createMessageComponentCollector({ componentType: ComponentType.Button, filter: filtroCollector, time: tiempo });
+                    const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
 
-                    let mensajeEliminado = false;
+                    let deletedMessage = false;
 
-                    collector.on('collect', async (boton) => {
-                        if (boton.customId === 'confirmar') {
-                            mensajeEliminado = true;
+                    collector.on('collect', async (button) => {
+                        if (button.customId === 'confirm') {
+                            deletedMessage = true;
 
-                            await database.collection('tradeo').doc(snapshotTradeo.id).delete();
+                            await database.collection('tradeo').doc(tradeSnapshot.id).delete();
 
                             // Falta deslockear la carta del usuario emisor.
 
-                            await interaction.followUp({ content: `Tradeo >> **${snapshotTradeo.id}** << cancelado con éxito.`, ephemeral: true });
+                            await interaction.followUp({ content: `Tradeo >> **${tradeSnapshot.id}** << cancelado con éxito.`, ephemeral: true });
                             await interaction.deleteReply();
                         }
 
-                        if (boton.customId === 'cancelar') {
-                            mensajeEliminado = true;
+                        if (button.customId === 'cancel') {
+                            deletedMessage = true;
 
                             await interaction.deleteReply();
                         }
                     });
 
                     collector.on('end', async () => {
-                        if (!mensajeEliminado) {
+                        // Only the message is deleted through here if the user doesn't reply in the indicated time.
+                        if (!deletedMessage) {
                             await interaction.deleteReply();
                         }
                     });
@@ -81,20 +82,20 @@ module.exports = {
     },
 };
 
-function desplegarBotones() {
-    const confirmar = new ButtonBuilder()
-        .setCustomId('confirmar')
+function displayButtons() {
+    const confirmButton = new ButtonBuilder()
+        .setCustomId('confirm')
         .setLabel('Confirmar')
         .setStyle(ButtonStyle.Danger);
     
-    const cancelar = new ButtonBuilder()
-        .setCustomId('cancelar')
+    const cancelButton = new ButtonBuilder()
+        .setCustomId('cancel')
         .setLabel('Cancelar')
         .setStyle(ButtonStyle.Secondary);
 
     const row = new ActionRowBuilder();
 
-    row.addComponents(cancelar, confirmar);
+    row.addComponents(cancelButton, confirmButton);
 
     return row;
 }

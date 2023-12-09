@@ -9,55 +9,55 @@ module.exports = {
         .setName('tradear')
         .setDescription('Crea una petición de tradeo directa a un usuario.'),
     async execute(interaction) {
-        const idUsuario = interaction.user.id;
+        const userId = interaction.user.id;
 
-        const referenciaUsuarioEmisor = database.collection('usuario').doc(idUsuario);
-        const snapshotUsuarioEmisor = await referenciaUsuarioEmisor.get();
+        const issuerUserReference = database.collection('usuario').doc(userId);
+        const issuerUserSnapshot = await issuerUserReference.get();
 
-        if (snapshotUsuarioEmisor.exists) {
-            const modal = desplegarModal(idUsuario);
+        if (issuerUserSnapshot.exists) {
+            const modal = displayModal(userId);
         
             await interaction.showModal(modal);
 
-            const filtro = (x) => x.customId === `modal-${idUsuario}`;
-            const tiempo = 1000 * 60 * 1;
+            const filter = (userModal) => userModal.customId === `modal-${userId}`;
+            const time = 1000 * 60 * 1;
 
-            interaction.awaitModalSubmit({ filter: filtro, time: tiempo }).then(async (modalInteraction) => {
-                const valorReceptor = modalInteraction.fields.getTextInputValue('txtReceptor');
-                const valorCartaEmisor = modalInteraction.fields.getTextInputValue('txtCartaEmisor');
-                const valorCartaReceptor = modalInteraction.fields.getTextInputValue('txtCartaReceptor');
+            interaction.awaitModalSubmit({ filter: filter, time: time }).then(async (modalInteraction) => {
+                const recipientValue = modalInteraction.fields.getTextInputValue('txtRecipient');
+                const issuerCardValue = modalInteraction.fields.getTextInputValue('txtIssuerCard');
+                const recipientCardValue = modalInteraction.fields.getTextInputValue('txtRecipientCard');
 
-                // Avisa a la API de Discord que la interacción se recibió correctamente y da un tiempo máximo de 15 minutos.
+                // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
                 await modalInteraction.deferReply({ ephemeral: true });
 
-                const validacionCampos = validarCampos(valorReceptor, valorCartaEmisor, valorCartaReceptor);
+                const fieldsValidation = validateFields(recipientValue, issuerCardValue, recipientCardValue);
 
-                if (!validacionCampos.estadoError) {
-                    const cartaEncontradaEmisor = await encontrarCarta(referenciaUsuarioEmisor, validacionCampos.valorCartaEmisorArreglado);
+                if (!fieldsValidation.errorState) {
+                    const foundCardIssuer = await findCard(issuerUserReference, fieldsValidation.fixedIssuerCardValue);
 
-                    if (cartaEncontradaEmisor) {
-                        const referenciaUsuarioReceptor = database.collection('usuario').doc(valorReceptor);
-                        const snapshotUsuarioReceptor = await referenciaUsuarioReceptor.get();
+                    if (foundCardIssuer) {
+                        const recipientUserReference = database.collection('usuario').doc(recipientValue);
+                        const recipientUserSnapshot = await recipientUserReference.get();
 
-                        if (snapshotUsuarioReceptor.exists) {
-                            const cartaEncontradaReceptor = await encontrarCarta(referenciaUsuarioReceptor, validacionCampos.valorCartaReceptorArreglado);
+                        if (recipientUserSnapshot.exists) {
+                            const foundCardRecipient = await findCard(recipientUserReference, fieldsValidation.fixedRecipientCardValue);
 
-                            if (cartaEncontradaReceptor) {
-                                const registroTradeo = database.collection('tradeo').doc();
+                            if (foundCardRecipient) {
+                                const tradeEntry = database.collection('tradeo').doc();
                                 
-                                await registroTradeo.set({
-                                    cartaEmisor: cartaEncontradaEmisor.ref,
-                                    cartaReceptor: cartaEncontradaReceptor.ref,
+                                await tradeEntry.set({
+                                    cartaEmisor: foundCardIssuer.ref,
+                                    cartaReceptor: foundCardRecipient.ref,
                                     confirmacionTradeo: false,
                                     cooldownSeguridad: new Date(),
-                                    emisor: idUsuario,
+                                    emisor: userId,
                                     fechaTradeo: null,
-                                    receptor: valorReceptor,
+                                    receptor: recipientValue,
                                 });
 
-                                lockearCarta(referenciaUsuarioEmisor, cartaEncontradaEmisor);
+                                lockCard(issuerUserReference, foundCardIssuer);
 
-                                modalInteraction.editReply(`Solicitud de tradeo enviada con el ID **${registroTradeo.id}**. Puedes usar el mismo ID para cancelar la solicitud.`);
+                                modalInteraction.editReply(`Solicitud de tradeo enviada con el ID **${tradeEntry.id}**. Puedes usar el mismo ID para cancelar la solicitud.`);
                             } else {
                                 modalInteraction.editReply('Solicitud cancelada ¡Parece que el usuario no tiene la carta que quieres!');
                             }
@@ -68,7 +68,7 @@ module.exports = {
                         modalInteraction.editReply('Solicitud cancelada ¡Parece que no tienes la carta que estás ofreciendo!');
                     }
                 } else {
-                    modalInteraction.editReply(validacionCampos.mensajeError);
+                    modalInteraction.editReply(fieldsValidation.errorMessage);
                 }
             }).catch((error) => {
                 console.log(`Error: ${error}`);
@@ -81,21 +81,21 @@ module.exports = {
     },
 };
 
-// Función que construye el modal.
-function desplegarModal(idUsuario) {
+// Function that builds the modal.
+function displayModal(idUsuario) {
     const modal = new ModalBuilder()
         .setCustomId(`modal-${idUsuario}`)
         .setTitle('Petición de Tradeo');
         
-    const txtReceptor = new TextInputBuilder()
-        .setCustomId('txtReceptor')
+    const txtRecipient = new TextInputBuilder()
+        .setCustomId('txtRecipient')
         .setLabel('Usuario:')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('123456789')
         .setRequired(true);
 
-    const txtCartaEmisor = new TextInputBuilder()
-        .setCustomId('txtCartaEmisor')
+    const txtIssuerCard = new TextInputBuilder()
+        .setCustomId('txtIssuerCard')
         .setLabel('Carta a ofrecer:')
         .setStyle(TextInputStyle.Short)
         .setMinLength(7)
@@ -103,8 +103,8 @@ function desplegarModal(idUsuario) {
         .setPlaceholder('SCP-000')
         .setRequired(true);
         
-    const txtCartaReceptor = new TextInputBuilder()
-        .setCustomId('txtCartaReceptor')
+    const txtRecipientCard = new TextInputBuilder()
+        .setCustomId('txtRecipientCard')
         .setLabel('Carta deseada:')
         .setStyle(TextInputStyle.Short)
         .setMinLength(7)
@@ -112,80 +112,80 @@ function desplegarModal(idUsuario) {
         .setPlaceholder('SCP-000')
         .setRequired(true);
             
-    const rowReceptor = new ActionRowBuilder().addComponents(txtReceptor);
-    const rowCartaEmisor = new ActionRowBuilder().addComponents(txtCartaEmisor);
-    const rowCartaReceptor = new ActionRowBuilder().addComponents(txtCartaReceptor);
+    const recipientRow = new ActionRowBuilder().addComponents(txtRecipient);
+    const issuerCardRow = new ActionRowBuilder().addComponents(txtIssuerCard);
+    const recipientCardRow = new ActionRowBuilder().addComponents(txtRecipientCard);
         
-    modal.addComponents(rowReceptor, rowCartaEmisor, rowCartaReceptor);
+    modal.addComponents(recipientRow, issuerCardRow, recipientCardRow);
 
     return modal;
 }
 
-// La función valida que los campos del modal sean ingresados correctamente.
-function validarCampos(valorReceptor, valorCartaEmisor, valorCartaReceptor) {
-    // Se realiza la validación de que el ID del usuario contenga sólo números.
-    const validacionReceptor = /^[0-9]+$/.test(valorReceptor);
+// The function validates that the fields of the modal are entered correctly.
+function validateFields(recipientValue, issuerCardValue, recipientCardValue) {
+    // The validation is performed to ensure that the user ID contains only numbers.
+    const recipientValidation = /^[0-9]+$/.test(recipientValue);
 
-    // Se convierten los ID's de las cartas a mayúsculas.
-    const valorCartaEmisorArreglado = valorCartaEmisor.toUpperCase();
-    const valorCartaReceptorArreglado = valorCartaReceptor.toUpperCase();
+    // The card IDs are converted to uppercase.
+    const fixedIssuerCardValue = issuerCardValue.toUpperCase();
+    const fixedRecipientCardValue = recipientCardValue.toUpperCase();
 
-    // Se realiza la validación de que el formato de la carta sea correcta.
-    const validacionCartaEmisor = /^scp-\d{3,4}$/i.test(valorCartaEmisorArreglado);
-    const validacionCartaReceptor = /^scp-\d{3,4}$/i.test(valorCartaReceptorArreglado);
+    // Validates that the card format is correct.
+    const issuerCardValidation = /^scp-\d{3,4}$/i.test(fixedIssuerCardValue);
+    const recipientCardValidation = /^scp-\d{3,4}$/i.test(fixedRecipientCardValue);
     
-    let mensajeError = 'Los siguientes datos fueron ingresados incorrectamente:\n';
-    let estadoError = false;
+    let errorMessage = 'Los siguientes datos fueron ingresados incorrectamente:\n';
+    let errorState = false;
 
-    if (!validacionReceptor) {
-        mensajeError += '- ID usuario\n';
-        estadoError = true;
+    if (!recipientValidation) {
+        errorMessage += '- ID usuario\n';
+        errorState = true;
     }
     
-    if (!validacionCartaEmisor) {
-        mensajeError += '- Carta ofrecida\n';
-        estadoError = true;
+    if (!issuerCardValidation) {
+        errorMessage += '- Carta ofrecida\n';
+        errorState = true;
     }
 
-    if (!validacionCartaReceptor) {
-        mensajeError += '- Carta deseada';
-        estadoError = true;
+    if (!recipientCardValidation) {
+        errorMessage += '- Carta deseada';
+        errorState = true;
     }
 
-    return { valorCartaEmisorArreglado, valorCartaReceptorArreglado, estadoError, mensajeError };
+    return { fixedIssuerCardValue, fixedRecipientCardValue, errorState, errorMessage };
 }
 
-// Esta función busca una carta de un usuario que no esté 'lockeado'.
-async function encontrarCarta(referenciaUsuario, valorCarta) {
-    const referenciaCartasEmisor = database.collection('obtencion').where('usuario', '==', referenciaUsuario).where('lockeado', '==', false);
-    const snapshotCartasEmisor = await referenciaCartasEmisor.get();
+// This function searches for a card from a user that is not 'locked'.
+async function findCard(issuerUserReference, cardValue) {
+    const issuerCardReference = database.collection('obtencion').where('usuario', '==', issuerUserReference).where('lockeado', '==', false);
+    const issuerCardSnapshot = await issuerCardReference.get();
 
-    const promesas = [];
+    const promises = [];
     
-    for (const x of snapshotCartasEmisor.docs) {
-        const obtencion = x.data();
-        const referenciaCarta = obtencion.carta;
-        const documentoCarta = referenciaCarta.get();
+    for (const x of issuerCardSnapshot.docs) {
+        const obtention = x.data();
+        const cardReference = obtention.carta;
+        const cardDocument = cardReference.get();
 
-        promesas.push(documentoCarta);
+        promises.push(cardDocument);
     }
 
-    const cartasArrayEmisor = await Promise.all(promesas);
-    const cartaEncontradaEmisor = cartasArrayEmisor.find((x) => x.id === valorCarta);
+    const issuerCardsArray = await Promise.all(promises);
+    const foundCardIssuer = issuerCardsArray.find((x) => x.id === cardValue);
 
-    return cartaEncontradaEmisor;
+    return foundCardIssuer;
 }
 
-// Esta función 'lockea' la carta del que crea la solicitud para que no pueda usarse para otros tradeos en paralelo.
-async function lockearCarta(referenciaUsuarioEmisor, cartaEncontradaEmisor) {
-    const referenciaCarta = database.collection('obtencion').where('usuario', '==', referenciaUsuarioEmisor)
-                                                            .where('carta', '==', cartaEncontradaEmisor.ref)
+// This function 'locks' the card of the user who creates de request so that it cannot be used for other trades in parallel.
+async function lockCard(issuerUserReference, foundCardIssuer) {
+    const obtentionReference = database.collection('obtencion').where('usuario', '==', issuerUserReference)
+                                                            .where('carta', '==', foundCardIssuer.ref)
                                                             .where('lockeado', '==', false).limit(1);
-    const snapshotCarta = await referenciaCarta.get();
+    const obtentionSnapshot = await obtentionReference.get();
     
-    const documentoCarta = snapshotCarta.docs[0];
+    const obtentionDocument = obtentionSnapshot.docs[0];
 
-    documentoCarta.ref.update({
+    obtentionDocument.ref.update({
         lockeado: true,
     });
 }

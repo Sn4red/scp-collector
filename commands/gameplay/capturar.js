@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
-const path = require('path');
+const path = require('node:path');
 const cron = require('node-cron');
 
 const database = firebase.firestore();
@@ -11,7 +11,7 @@ module.exports = {
         .setName('capturar')
         .setDescription('Atrapa un SCP y lo añades a tu colección.'),
     async execute(interaction) {
-        // El XP que se obtiene según la clase del SCP.
+        // The XP obtained based on the SCP class.
         const xp = {
             'Seguro': 5,
             'Euclid': 15,
@@ -20,8 +20,8 @@ module.exports = {
             'Apollyon': 200,
         };
 
-        // El XP máximo por nivel (20 niveles por rango) según el rango del usuario.
-        const xpUsuario = {
+        // The maximum XP per level (20 levels per rank) based on the user's rank.
+        const userXP = {
             'Clase D': 50,
             'Oficial de Seguridad': 100,
             'Investigador': 250,
@@ -32,81 +32,81 @@ module.exports = {
         };
 
 
-        // Avisa a la API de Discord que la interacción se recibió correctamente y da un tiempo máximo de 15 minutos.
+        // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
-        // Se realiza la consulta a la base de datos.
-        const referenciaUsuario = database.collection('usuario').doc(interaction.user.id);
-        const snapshotUsuario = await referenciaUsuario.get();
+        // Database query is performed.
+        const userReference = database.collection('usuario').doc(interaction.user.id);
+        const userSnapshot = await userReference.get();
 
-        if (snapshotUsuario.exists) {
-            // Se obtienen los datos desde aquí para que se pueda realizar la validación del límite diario.
-            const usuario = snapshotUsuario.data();
+        if (userSnapshot.exists) {
+            // Data is retrieved from here for daily limit validation.
+            const user = userSnapshot.data();
 
-            // Valida si se llegó al límite de capturas diarias (5).
-            if (usuario.capturasDiarias >= 5) {
+            // Validates if the daily capture limit (5) has been reached.
+            if (user.capturasDiarias >= 5) {
                 await interaction.editReply('Has alcanzado el límite de capturas diarias de SCP\'s.');
             } else {
-                // Clase obtenida mediante probabilidad.
-                const claseObtenida = probabilidadClase();
+                // Class obtained through probability.
+                const obtainedClass = classProbability();
 
-                // La subcolección tiene el mismo nombre que el documento que la contiene, pero es completamente en minúscula.
-                const subColeccion = claseObtenida.charAt(0).toLowerCase() + claseObtenida.slice(1);
+                // The subcollection has the same name as the document containing it, but is entirely in lowercase.
+                const subCollection = obtainedClass.charAt(0).toLowerCase() + obtainedClass.slice(1);
     
-                // Obtiene todas las cartas de SCP de la clase obtenida por probabilidad.
-                const referenciaCartas = database.collection('carta').doc(claseObtenida).collection(subColeccion);
-                const snapshotCartas = await referenciaCartas.get();
+                // Retrieves all SCP cards of the class obtained through probability.
+                const cardReference = database.collection('carta').doc(obtainedClass).collection(subCollection);
+                const cardSnapshot = await cardReference.get();
     
-                if (!snapshotCartas.empty) {
-                    // Pasa los documentos del objeto QuerySnapshot en un array.
-                    const cartasArray = snapshotCartas.docs.map((x) => ({ id: x.id, data: x.data() }));
+                if (!cardSnapshot.empty) {
+                    // Transforms the documents from the QuerySnapshot object into an array.
+                    const cardsArray = cardSnapshot.docs.map((x) => ({ id: x.id, data: x.data() }));
     
-                    // Mediante el objeto Math, se obtiene un índice aleatorio en base a la cantidad de cartas que hay en el array,
-                    // y se selecciona una carta aleatoria.
-                    const indiceAleatorio = Math.floor(Math.random() * cartasArray.length);
-                    const cartaAleatoria = cartasArray[indiceAleatorio];
+                    // Using the Math object, a random index is obtained based on the number of cards in the array,
+                    // and a random card is selected.
+                    const randomIndex = Math.floor(Math.random() * cardsArray.length);
+                    const randomCard = cardsArray[randomIndex];
     
-                    // Datos de la carta.
-                    const idCarta = cartaAleatoria.id;
-                    const clase = claseObtenida;
-                    const archivo = cartaAleatoria.data.archivo;
-                    const nombre = cartaAleatoria.data.nombre;
+                    // Card data.
+                    const cardId = randomCard.id;
+                    const classCard = obtainedClass;
+                    const file = randomCard.data.archivo;
+                    const name = randomCard.data.nombre;
     
-                    const imagePath = path.join(__dirname, `../../images/scp/${idCarta}.jpg`);
+                    const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
     
-                    // Para que todas las imágenes tengan el mismo tamaño,
-                    // se redimensionan a 300x200 píxeles.
-                    const cartaEmbed = new EmbedBuilder()
-                    .setColor(0x000000)
-                    .setTitle(`Ítem #: ${idCarta} / ${nombre}`)
-                    .setDescription(`+${xp[clase]} XP`)
-                    .addFields(
-                        { name: 'Clase', value: clase, inline: true },
-                        { name: 'Archivo', value: archivo, inline: true },
-                    )
-                    .setImage(`attachment://${idCarta}.jpg`)
-                    .setTimestamp();
+                    // To ensure all images have the same size,
+                    // they are resized to 300x200 pixels.
+                    const cardEmbed = new EmbedBuilder()
+                        .setColor(0x000000)
+                        .setTitle(`Ítem #: ${cardId} / ${name}`)
+                        .setDescription(`+${xp[classCard]} XP`)
+                        .addFields(
+                            { name: 'Clase', value: classCard, inline: true },
+                            { name: 'Archivo', value: file, inline: true },
+                        )
+                        .setImage(`attachment://${cardId}.jpg`)
+                        .setTimestamp();
                     
-                    // Se inserta el registro de la obtención de la carta.
-                    const registroObtencion = database.collection('obtencion').doc();
+                    // The entry of obtaining the card is inserted.
+                    const obtentionEntry = database.collection('obtencion').doc();
     
-                    await registroObtencion.set({
-                        carta: database.collection('carta').doc(claseObtenida).collection(subColeccion).doc(idCarta),
-                        usuario: referenciaUsuario,
+                    await obtentionEntry.set({
+                        carta: database.collection('carta').doc(obtainedClass).collection(subCollection).doc(cardId),
+                        usuario: userReference,
                         lockeado: false,
                     });
 
-                    // Acá se realiza la promoción de rango y nivel (si fuera el caso), y el aumento de los límites diarios.
-                    const xpGanado = xp[clase];
-                    const xpMaximo = xpUsuario[usuario.rango];
+                    // The rank and level promotion is performed here (if applicable), along with the increase of daily limits.
+                    const earnedXP = xp[classCard];
+                    const maxXP = userXP[user.rango];
 
-                    // La variable determina qué tipo de promoción va a hacerse (rango o nivel),
-                    // para que salga diferente tipo de mensaje.
-                    let tipoPromocion = 'no';
+                    // The variable determines what type of promotion will be performed (rank or level),
+                    // so that a different type of message is displayed.
+                    let promotionType = 'no';
 
-                    // Esta sección obtiene el siguiente rango en base al rango actual del usuario. Si el rango actual es
-                    // 'Miembro del Consejo O5', no hay promoción.
-                    const rangos = [
+                    // This section retrieves the next rank based on the user's current rank. If the current rank is
+                    // 'Council O5 Member', there is no promotion.
+                    const ranks = [
                         'Clase D',
                         'Oficial de Seguridad',
                         'Investigador',
@@ -116,56 +116,56 @@ module.exports = {
                         'Miembro del Consejo O5',
                     ];
 
-                    let indiceElementoActual = rangos.indexOf(usuario.rango);
-                    indiceElementoActual++;
+                    let indexCurrentElement = ranks.indexOf(user.rango);
+                    indexCurrentElement++;
 
-                    if (indiceElementoActual == 6) {
-                        indiceElementoActual--;
+                    if (indexCurrentElement == 6) {
+                        indexCurrentElement--;
                     }
 
-                    if ((usuario.xp + xpGanado) >= xpMaximo) {
-                        if (usuario.nivel < 20) {
-                            tipoPromocion = 'nivel';
+                    if ((user.xp + earnedXP) >= maxXP) {
+                        if (user.nivel < 20) {
+                            promotionType = 'nivel';
 
-                            await referenciaUsuario.update({
-                                nivel: ++usuario.nivel,
-                                xp: (usuario.xp + xpGanado) - xpMaximo,
-                                capturasDiarias: ++usuario.capturasDiarias,
+                            await userReference.update({
+                                nivel: ++user.nivel,
+                                xp: (user.xp + earnedXP) - maxXP,
+                                capturasDiarias: ++user.capturasDiarias,
                             });
                         } else {
-                            tipoPromocion = 'rango';
+                            promotionType = 'rango';
 
-                            await referenciaUsuario.update({
-                                rango: rangos[indiceElementoActual],
+                            await userReference.update({
+                                rango: ranks[indexCurrentElement],
                                 nivel: 1,
-                                xp: (usuario.xp + xpGanado) - xpMaximo,
-                                capturasDiarias: ++usuario.capturasDiarias,
+                                xp: (user.xp + earnedXP) - maxXP,
+                                capturasDiarias: ++user.capturasDiarias,
                             });
                         }
                     } else {
-                        await referenciaUsuario.update({
-                            xp: firebase.firestore.FieldValue.increment(xpGanado),
-                            capturasDiarias: ++usuario.capturasDiarias,
+                        await userReference.update({
+                            xp: firebase.firestore.FieldValue.increment(earnedXP),
+                            capturasDiarias: ++user.capturasDiarias,
                         });
                     }
                     
-                    if (usuario.capturasDiarias == 4) {
-                        cartaEmbed.setFooter({ text: `${5 - usuario.capturasDiarias} tiro restante` });
+                    if (user.capturasDiarias == 4) {
+                        cardEmbed.setFooter({ text: `${5 - user.capturasDiarias} tiro restante` });
                     } else {
-                        cartaEmbed.setFooter({ text: `${5 - usuario.capturasDiarias} tiros restantes` });
+                        cardEmbed.setFooter({ text: `${5 - user.capturasDiarias} tiros restantes` });
                     }
 
                     await interaction.editReply({
-                        embeds: [cartaEmbed],
+                        embeds: [cardEmbed],
                         files: [imagePath],
                     });
 
-                    switch (tipoPromocion) {
+                    switch (promotionType) {
                         case 'nivel':
-                            await interaction.followUp('Felicidades ' + usuario.nick + '. Ahora eres nivel ' + usuario.nivel + '.');
+                            await interaction.followUp('Felicidades ' + user.nick + '. Ahora eres nivel ' + user.nivel + '.');
                             break;
                         case 'rango':
-                            await interaction.followUp('Felicidades ' + usuario.nick + '. Has ascendido a ' + rangos[indiceElementoActual] + '.');
+                            await interaction.followUp('Felicidades ' + user.nick + '. Has ascendido a ' + ranks[indexCurrentElement] + '.');
                             break;
                     }
                 } else {
@@ -178,47 +178,47 @@ module.exports = {
     },
 };
 
-// Esta función te define la probabilidad por clase (rareza) en un array,
-// y determina la clase a elegir según la probabilidad acumulativa.
-function probabilidadClase() {
-    const clases = [
-        { nombre: 'Seguro', probabilidad: 40 },
-        { nombre: 'Euclid', probabilidad: 30 },
-        { nombre: 'Keter', probabilidad: 21 },
-        { nombre: 'Taumiel', probabilidad: 7 },
-        { nombre: 'Apollyon', probabilidad: 2 },
+// This function defines the probability per class (rarity) in an array,
+// and determines the class to choose based on cumulative probability.
+function classProbability() {
+    const classes = [
+        { name: 'Seguro', probability: 40 },
+        { name: 'Euclid', probability: 30 },
+        { name: 'Keter', probability: 21 },
+        { name: 'Taumiel', probability: 7 },
+        { name: 'Apollyon', probability: 2 },
     ];
 
     const random = Math.random() * 100;
-    let acumulado = 0;
+    let cumulative = 0;
 
-    for (const x of clases) {
-        acumulado += x.probabilidad;
+    for (const classCard of classes) {
+        cumulative += classCard.probability;
 
-        if (random < acumulado) {
-            return x.nombre;
+        if (random < cumulative) {
+            return classCard.name;
         }
     }
 
-    return clases[0].nombre;
+    return classes[0].name;
 }
 
-// Esta función reinicia el límite diario de capturas de cartas.
-async function restablecerLimiteDiario() {
-    const referenciaUsuarios = database.collection('usuario');
-    const snapshotUsuarios = await referenciaUsuarios.get();
+// This function resets the daily limit for card captures.
+async function resetDailyLimit() {
+    const userReference = database.collection('usuario');
+    const userSnapshot = await userReference.get();
 
-    snapshotUsuarios.forEach(async (x) => {
-        if (x.exists) {
-            await x.ref.update({
+    userSnapshot.forEach(async (user) => {
+        if (user.exists) {
+            await user.ref.update({
                 capturasDiarias: 0,
             });
         }
     });
 }
 
-// La tarea cron ejecuta la función de reinicio a la media noche.
+// The cron task executes the reset function at midnight.
 cron.schedule('0 0 * * *', async () => {
     console.log('*** Restableciendo límite de tiros diarios ***');
-    await restablecerLimiteDiario();
+    await resetDailyLimit();
 });

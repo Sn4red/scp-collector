@@ -9,150 +9,117 @@ module.exports = {
         .setName('scp')
         .setDescription('Lista tu colección de SCP\'s.'),
     async execute(interaction) {
-        const idUsuario = interaction.user.id;
+        const userId = interaction.user.id;
 
-        // Avisa a la API de Discord que la interacción se recibió correctamente y da un tiempo máximo de 15 minutos.
+        // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
 
-        const referenciaUsuario = database.collection('usuario').doc(idUsuario);
-        const snapshotUsuario = await referenciaUsuario.get();
+        const userReference = database.collection('usuario').doc(userId);
+        const userSnapshot = await userReference.get();
 
-        if (snapshotUsuario.exists) {
-            const usuario = snapshotUsuario.data();
+        if (userSnapshot.exists) {
+            const user = userSnapshot.data();
 
-            const referenciaCartas = database.collection('obtencion').where('usuario', '==', referenciaUsuario);
-            const snapshotCartas = await referenciaCartas.get();
+            const obtentionReference = database.collection('obtencion').where('usuario', '==', userReference);
+            const obtentionSnapshot = await obtentionReference.get();
 
-            if (!snapshotCartas.empty) {
-                // 'cartasCount' almacenará la cantidad repetida por carta.
-                // 'cartas' almacenará los datos completos de la carta.
-                // 'cartasClase' almacenará las clases de las cartas (no son un campo de la carta, sino del nombre de su colección en Firebase).
-                const cartasCount = new Map();
-                const cartas = new Map();
-                const cartasClase = new Map();
+            if (!obtentionSnapshot.empty) {
+                const sortedCards = await cardsSorting(obtentionSnapshot);
 
-                const promesas = [];
+                // The list is numerically sorted considering the ID after 'SCP-'
+                // (from the fifh character onward), and converts the collection's ID list into an array.
+                const cardsOrder = Array.from(sortedCards.cardsCount.keys()).sort((a, b) => parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10));
 
-                // Obtiene las cartas por el campo que las hace referencia y almacena el documento en un array.
-                // Esto es para obtener los datos de la carta (se necesita el nombre para el listado).
-                for (const x of snapshotCartas.docs) {
-                    const obtencion = x.data();
-                    const referenciaCarta = obtencion.carta;
-                    const documentoCarta = referenciaCarta.get();
-
-                    promesas.push(documentoCarta);
-                }
-
-                const cartasArray = await Promise.all(promesas);
-
-                // Se guardan los datos requeridos en los maps.
-                cartasArray.forEach((x) => {
-                    const idCarta = x.id;
-
-                    if (cartasCount.has(idCarta)) {
-                        cartasCount.set(idCarta, cartasCount.get(idCarta) + 1);
-                    } else {
-                        cartasCount.set(idCarta, 1);
-                        cartas.set(idCarta, x);
-                    }
-
-                    cartasClase.set(idCarta, x.ref.parent.parent.id);
-                });
-
-                // Se ordena la lista de forma numérica tomando en cuenta el ID después del 'SCP-'
-                // (a partir del quinto carácter) y convierte la lista de ID's de la colección en un array.
-                const ordenCartas = Array.from(cartasCount.keys()).sort((a, b) => parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10));
-
-                // Se listan las cartas iterándose en una sola cadena para mostrarlo en el embed.
-                let listaCartas = '';
+                // The cards are listed by iterating in a single string to display it in the embed.
+                let cardsList = '';
 
                 const embeds = [];
-                const paginas = {};
-                let limiteRegistrosXPagina = 0;
+                const pages = {};
+                let entriesPerPageLimit = 0;
 
-                ordenCartas.forEach((elemento, indice, array) => {
-                    const carta = cartas.get(elemento).data();
-                    const cantidad = cartasCount.get(elemento);
-                    const clase = cartasClase.get(elemento);
+                cardsOrder.forEach((element, index, array) => {
+                    const card = sortedCards.cards.get(element).data();
+                    const quantity = sortedCards.cardsCount.get(element);
+                    const classCard = sortedCards.cardsClass.get(element);
 
-                    listaCartas += `(${cantidad}) ${elemento} - ${carta.nombre} - **${clase}**\n`;
+                    cardsList += `(${quantity}) ${element} - ${card.nombre} - **${classCard}**\n`;
 
-                    limiteRegistrosXPagina++;
+                    entriesPerPageLimit++;
                     
-                    // Cuando se acumulan 10 registros de cartas, se almacenan en una sola página y se resetea la variable.
-                    if (limiteRegistrosXPagina == 10) {
-                        embeds.push(new EmbedBuilder().setTitle(`__**Colección de ${usuario.nick} **__`).setDescription(listaCartas));
+                    // When 10 card entries are accumulated, they are stored on a single page and the variable is reset.
+                    if (entriesPerPageLimit == 10) {
+                        embeds.push(new EmbedBuilder().setTitle(`__**Colección de ${user.nick} **__`).setDescription(cardsList));
 
-                        listaCartas = '';
-                        limiteRegistrosXPagina = 0;
+                        cardsList = '';
+                        entriesPerPageLimit = 0;
                     }
 
-                    // Acá se realiza la validación para la última página si es que no se llegan a acumular 10 registros.
-                    if (indice == array.length - 1) {
-                        // Si sólo se tienen 10 registros, la ejecución igual entrará por acá, lo cual dará error porque listaCartas ya no contiene
-                        // texto, e intentará agregar esto en un nuevo embed. Así que se realiza esta validación para que salga.
-                        if (listaCartas.length == 0) {
+                    // The validation is performed here for the last page in case 10 entries are not accumulated.
+                    if (index == array.length - 1) {
+                        // If there are only 10 entries, the execution will still enter here, which will result in an error because 'cardsList'
+                        // no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
+                        if (cardsList.length == 0) {
                             return;
                         }
 
-                        embeds.push(new EmbedBuilder().setTitle(`__**Colección de ${usuario.nick} **__`).setDescription(listaCartas));
+                        embeds.push(new EmbedBuilder().setTitle(`__**Colección de ${user.nick} **__`).setDescription(cardsList));
                     }
                 });
 
-                // Se crea un ActionRow que contenga 2 botones.
-                const rowUsuario = (id) => {
+                // A new ActionRow is created containing 2 buttons.
+                const userRow = (id) => {
                     const row = new ActionRowBuilder();
 
-                    const botonAnterior = new ButtonBuilder()
-                        .setCustomId('botonAnterior')
+                    const previousButton = new ButtonBuilder()
+                        .setCustomId('previousButton')
                         .setStyle('Secondary')
                         .setEmoji('⬅️')
-                        .setDisabled(paginas[id] === 0);
+                        .setDisabled(pages[id] === 0);
 
-                    const botonSiguiente = new ButtonBuilder()
-                        .setCustomId('botonSiguiente')
+                    const nextButton = new ButtonBuilder()
+                        .setCustomId('nextButton')
                         .setStyle('Secondary')
                         .setEmoji('➡️')
-                        .setDisabled(paginas[id] === embeds.length - 1);
+                        .setDisabled(pages[id] === embeds.length - 1);
 
-                    row.addComponents(botonAnterior, botonSiguiente);
+                    row.addComponents(previousButton, nextButton);
 
                     return row;
                 };
 
-                paginas[idUsuario] = paginas[idUsuario] || 0;
+                pages[userId] = pages[userId] || 0;
 
-                const embed = embeds[paginas[idUsuario]];
-                const filtroCollector = (x) => x.user.id === idUsuario;
-                const tiempo = 1000 * 60 * 5;
+                const embed = embeds[pages[userId]];
+                const collectorFilter = (x) => x.user.id === userId;
+                const time = 1000 * 60 * 5;
 
-                const respuesta = await interaction.editReply({
+                const reply = await interaction.editReply({
                     embeds: [embed],
-                    components: [rowUsuario(idUsuario)],
+                    components: [userRow(userId)],
                 });
 
-                const collector = respuesta.createMessageComponentCollector({ filter: filtroCollector, time: tiempo });
+                const collector = reply.createMessageComponentCollector({ filter: collectorFilter, time: time });
 
-                collector.on('collect', async (boton) => {
-                    if (!boton) {
+                collector.on('collect', async (button) => {
+                    if (!button) {
                         return;
                     }
         
-                    boton.deferUpdate();
+                    button.deferUpdate();
         
-                    if (boton.customId !== 'botonAnterior' && boton.customId !== 'botonSiguiente') {
+                    if (button.customId !== 'previousButton' && button.customId !== 'nextButton') {
                         return;
                     }
         
-                    if (boton.customId === 'botonAnterior' && paginas[idUsuario] > 0) {
-                        --paginas[idUsuario];
-                    } else if (boton.customId === 'botonSiguiente' && paginas[idUsuario] < embeds.length - 1) {
-                        ++paginas[idUsuario];
+                    if (button.customId === 'previousButton' && pages[userId] > 0) {
+                        --pages[userId];
+                    } else if (button.customId === 'nextButton' && pages[userId] < embeds.length - 1) {
+                        ++pages[userId];
                     }
         
                     await interaction.editReply({
-                        embeds: [embeds[paginas[idUsuario]]],
-                        components: [rowUsuario(idUsuario)],
+                        embeds: [embeds[pages[userId]]],
+                        components: [userRow(userId)],
                     });
                 });
             } else {
@@ -160,6 +127,45 @@ module.exports = {
             }
         } else {
             await interaction.editReply('¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
-        }  
+        }
     },
 };
+
+async function cardsSorting(obtentionSnapshot) {
+    // 'cardsCount' will store the quantity repeated per card.
+    // 'cards' will store the complete data of the card.
+    // 'cardsClass' will store the classes of the cards (they are not a field of the card but of its collection's name in Firebase).
+    const cardsCount = new Map();
+    const cards = new Map();
+    const cardsClass = new Map();
+
+    const promises = [];
+
+    // Retrieves cards by the field that references them and stores the document in an array.
+    // This is to obtain the card data (the name is needed for the listing).
+    for (const obtention of obtentionSnapshot.docs) {
+        const obtentionDocument = obtention.data();
+        const cardReference = obtentionDocument.carta;
+        const cardSnapshot = cardReference.get();
+
+        promises.push(cardSnapshot);
+    }
+
+    const cardsArray = await Promise.all(promises);
+
+    // The required data is saved in the maps.
+    cardsArray.forEach((x) => {
+        const cardId = x.id;
+
+        if (cardsCount.has(cardId)) {
+            cardsCount.set(cardId, cardsCount.get(cardId) + 1);
+        } else {
+            cardsCount.set(cardId, 1);
+            cards.set(cardId, x);
+        }
+
+        cardsClass.set(cardId, x.ref.parent.parent.id);
+    });
+
+    return { cardsCount, cards, cardsClass };
+}

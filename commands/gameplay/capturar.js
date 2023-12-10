@@ -5,33 +5,32 @@ const cron = require('node-cron');
 
 const database = firebase.firestore();
 
+// The XP obtained based on the SCP class.
+const xp = {
+    'Seguro': 5,
+    'Euclid': 15,
+    'Keter': 30,
+    'Taumiel': 100,
+    'Apollyon': 200,
+};
+
+// The maximum XP per level (20 levels per rank) based on the user's rank.
+const userXP = {
+    'Clase D': 50,
+    'Oficial de Seguridad': 100,
+    'Investigador': 250,
+    'Especialista de Contención': 500,
+    'Agente de Campo': 1500,
+    'Director de Sede': 5000,
+    'Miembro del Consejo O5': 10000,
+};
+
 module.exports = {
     cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('capturar')
         .setDescription('Atrapa un SCP y lo añades a tu colección.'),
     async execute(interaction) {
-        // The XP obtained based on the SCP class.
-        const xp = {
-            'Seguro': 5,
-            'Euclid': 15,
-            'Keter': 30,
-            'Taumiel': 100,
-            'Apollyon': 200,
-        };
-
-        // The maximum XP per level (20 levels per rank) based on the user's rank.
-        const userXP = {
-            'Clase D': 50,
-            'Oficial de Seguridad': 100,
-            'Investigador': 250,
-            'Especialista de Contención': 500,
-            'Agente de Campo': 1500,
-            'Director de Sede': 5000,
-            'Miembro del Consejo O5': 10000,
-        };
-
-
         // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 

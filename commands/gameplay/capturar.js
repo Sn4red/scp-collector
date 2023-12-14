@@ -25,6 +25,17 @@ const userXP = {
     'Miembro del Consejo O5': 10000,
 };
 
+// User ranks.
+const ranks = [
+    'Clase D',
+    'Oficial de Seguridad',
+    'Investigador',
+    'Especialista de Contención',
+    'Agente de Campo',
+    'Director de Sede',
+    'Miembro del Consejo O5',
+];
+
 module.exports = {
     cooldown: 5,
     data: new SlashCommandBuilder()
@@ -40,10 +51,10 @@ module.exports = {
 
         if (userSnapshot.exists) {
             // Data is retrieved from here for daily limit validation.
-            const user = userSnapshot.data();
+            const userDocument = userSnapshot.data();
 
             // Validates if the daily capture limit (5) has been reached.
-            if (user.capturasDiarias >= 5) {
+            if (userDocument.capturasDiarias >= 5) {
                 await interaction.editReply('Has alcanzado el límite de capturas diarias de SCP\'s.');
             } else {
                 // Class obtained through probability.
@@ -96,75 +107,19 @@ module.exports = {
                     });
 
                     // The rank and level promotion is performed here (if applicable), along with the increase of daily limits.
-                    const earnedXP = xp[classCard];
-                    const maxXP = userXP[user.rango];
-
-                    // The variable determines what type of promotion will be performed (rank or level),
-                    // so that a different type of message is displayed.
-                    let promotionType = 'no';
-
-                    // This section retrieves the next rank based on the user's current rank. If the current rank is
-                    // 'Council O5 Member', there is no promotion.
-                    const ranks = [
-                        'Clase D',
-                        'Oficial de Seguridad',
-                        'Investigador',
-                        'Especialista de Contención',
-                        'Agente de Campo',
-                        'Director de Sede',
-                        'Miembro del Consejo O5',
-                    ];
-
-                    let indexCurrentElement = ranks.indexOf(user.rango);
-                    indexCurrentElement++;
-
-                    if (indexCurrentElement == 6) {
-                        indexCurrentElement--;
-                    }
-
-                    if ((user.xp + earnedXP) >= maxXP) {
-                        if (user.nivel < 20) {
-                            promotionType = 'nivel';
-
-                            await userReference.update({
-                                nivel: ++user.nivel,
-                                xp: (user.xp + earnedXP) - maxXP,
-                                capturasDiarias: ++user.capturasDiarias,
-                            });
-                        } else {
-                            promotionType = 'rango';
-
-                            await userReference.update({
-                                rango: ranks[indexCurrentElement],
-                                nivel: 1,
-                                xp: (user.xp + earnedXP) - maxXP,
-                                capturasDiarias: ++user.capturasDiarias,
-                            });
-                        }
-                    } else {
-                        await userReference.update({
-                            xp: firebase.firestore.FieldValue.increment(earnedXP),
-                            capturasDiarias: ++user.capturasDiarias,
-                        });
-                    }
-                    
-                    if (user.capturasDiarias == 4) {
-                        cardEmbed.setFooter({ text: `${5 - user.capturasDiarias} tiro restante` });
-                    } else {
-                        cardEmbed.setFooter({ text: `${5 - user.capturasDiarias} tiros restantes` });
-                    }
+                    const promotionSystem = await promotionProcess(classCard, userDocument, userReference, cardEmbed);
 
                     await interaction.editReply({
-                        embeds: [cardEmbed],
+                        embeds: [promotionSystem.cardEmbed],
                         files: [imagePath],
                     });
 
-                    switch (promotionType) {
+                    switch (promotionSystem.promotionType) {
                         case 'nivel':
-                            await interaction.followUp('Felicidades ' + user.nick + '. Ahora eres nivel ' + user.nivel + '.');
+                            await interaction.followUp('Felicidades ' + promotionSystem.userDocument.nick + '. Ahora eres nivel ' + promotionSystem.userDocument.nivel + '.');
                             break;
                         case 'rango':
-                            await interaction.followUp('Felicidades ' + user.nick + '. Has ascendido a ' + ranks[indexCurrentElement] + '.');
+                            await interaction.followUp('Felicidades ' + promotionSystem.userDocument.nick + '. Has ascendido a ' + ranks[promotionSystem.indexCurrentElement] + '.');
                             break;
                     }
                 } else {
@@ -200,6 +155,58 @@ function classProbability() {
     }
 
     return classes[0].name;
+}
+
+async function promotionProcess(classCard, userDocument, userReference, cardEmbed) {
+    const earnedXP = xp[classCard];
+    const maxXP = userXP[userDocument.rango];
+
+    // The variable determines what type of promotion will be performed (rank or level),
+    // so that a different type of message is displayed.
+    let promotionType = 'no';
+
+    // This section retrieves the next rank based on the user's current rank. If the current rank is
+    // 'Council O5 Member', there is no promotion.
+    let indexCurrentElement = ranks.indexOf(userDocument.rango);
+    indexCurrentElement++;
+
+    if (indexCurrentElement == 6) {
+        indexCurrentElement--;
+    }
+
+    if ((userDocument.xp + earnedXP) >= maxXP) {
+        if (userDocument.nivel < 20) {
+            promotionType = 'nivel';
+
+            await userReference.update({
+                nivel: ++userDocument.nivel,
+                xp: (userDocument.xp + earnedXP) - maxXP,
+                capturasDiarias: ++userDocument.capturasDiarias,
+            });
+        } else {
+            promotionType = 'rango';
+
+            await userReference.update({
+                rango: ranks[indexCurrentElement],
+                nivel: 1,
+                xp: (userDocument.xp + earnedXP) - maxXP,
+                capturasDiarias: ++userDocument.capturasDiarias,
+            });
+        }
+    } else {
+        await userReference.update({
+            xp: firebase.firestore.FieldValue.increment(earnedXP),
+            capturasDiarias: ++userDocument.capturasDiarias,
+        });
+    }
+    
+    if (userDocument.capturasDiarias == 4) {
+        cardEmbed.setFooter({ text: `${5 - userDocument.capturasDiarias} tiro restante` });
+    } else {
+        cardEmbed.setFooter({ text: `${5 - userDocument.capturasDiarias} tiros restantes` });
+    }
+
+    return { cardEmbed, promotionType, userDocument, indexCurrentElement };
 }
 
 // This function resets the daily limit for card captures.

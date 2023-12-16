@@ -12,12 +12,12 @@ module.exports = {
             .setThumbnail('https://media.tenor.com/qVlSOwUINxcAAAAC/scp-logo.gif')
             .addFields(
                 { name: 'Información', value: '/comandos - Lista todos los comandos utilizables.\n' +
-                                            '/tarjeta - Muestra tu tarjeta personal y el detalle de tu progreso.\n' +
                                             '/sistema - Explica cómo funcionan los rangos, niveles y experiencia.\n' +
                                             '/clases - Detalla las diferentes clases de SCP\'s.\n' +
                                             '/historia - Detalla la temática del bot para más contexto y un poco de historia sobre qué es La Fundación SCP.\n' +
                                             '/faq - Preguntas frecuentes sobre la funcionalidad del bot.' },
-                { name: 'Jugabilidad', value: '/capturar - Atrapa un SCP y lo añades a tu colección. Puedes obtener repetidos que servirán para que puedas intercambiarlos ' +
+                { name: 'Jugabilidad', value: '/tarjeta - Muestra tu tarjeta personal y el detalle de tu progreso. Es el primer comando que deberías de usar para poder usar el bot.\n' +
+                                            '/capturar - Atrapa un SCP y lo añades a tu colección. Puedes obtener repetidos que servirán para que puedas intercambiarlos ' +
                                             'con un tercero. La rareza (clase) del SCP influirá en las probabilidades de que lo obtengas. Sólo puedes capturar 5 SCP\'s al día.\n' +
                                             '/scp - Lista los SCP\'s que tienes por el momento, incluyendo los repetidos.' },
                 { name: 'Sistema de Tradeo', value: '/tradear - Crea una petición de tradeo directa a un usuario, especificando el usuario, el SCP que tiene y el que estás dispuesto' +

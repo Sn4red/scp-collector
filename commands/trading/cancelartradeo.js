@@ -4,7 +4,7 @@ const firebase = require('../../utils/firebase');
 const database = firebase.firestore();
 
 module.exports = {
-    cooldown: 60,
+    cooldown: 20,
     data: new SlashCommandBuilder()
         .setName('cancelartradeo')
         .setDescription('Cancela un tradeo en específico que hayas enviado.')
@@ -28,9 +28,9 @@ module.exports = {
             const tradeSnapshot = await tradeReference.get();
 
             if (tradeSnapshot.exists) {
-                const trade = tradeSnapshot.data();
+                const tradeDocument = tradeSnapshot.data();
 
-                if (trade.emisor == userId) {
+                if (tradeDocument.emisor == userId) {
                     const buttonsRow = displayButtons();
 
                     const reply = await interaction.editReply({
@@ -38,7 +38,7 @@ module.exports = {
                         components: [buttonsRow],
                     });
 
-                    const collectorFilter = (userInteraction) => userInteraction.user.id === trade.emisor;
+                    const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.emisor;
                     const time = 1000 * 30;
 
                     const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
@@ -49,10 +49,20 @@ module.exports = {
                         if (button.customId === 'confirm') {
                             deletedMessage = true;
 
+                            const obtentionReference = database.collection('obtencion').where('usuario', '==', userReference)
+                                                            .where('carta', '==', tradeDocument.cartaEmisor)
+                                                            .where('lockeado', '==', true).limit(1);
+
+                            const obtentionSnapshot = await obtentionReference.get();
+
+                            const obtentionDocument = obtentionSnapshot.docs[0];
+
+                            obtentionDocument.ref.update({
+                                lockeado: false,
+                            });
+
                             await database.collection('tradeo').doc(tradeSnapshot.id).delete();
-
-                            // Falta deslockear la carta del usuario emisor.
-
+                            
                             await interaction.followUp({ content: `Tradeo >> **${tradeSnapshot.id}** << cancelado con éxito.`, ephemeral: true });
                             await interaction.deleteReply();
                         }

@@ -8,8 +8,8 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('cancelartradeo')
         .setDescription('Cancela un tradeo en específico que hayas enviado.')
-        .addStringOption(x =>
-            x.setName('solicitud')
+        .addStringOption(option =>
+            option.setName('solicitud')
             .setDescription('ID solicitud del tradeo a cancelar.')
             .setRequired(true)),
     async execute(interaction) {

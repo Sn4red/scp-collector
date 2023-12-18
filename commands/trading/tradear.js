@@ -165,9 +165,9 @@ async function findCard(issuerUserReference, cardValue) {
     for (const x of issuerCardSnapshot.docs) {
         const obtention = x.data();
         const cardReference = obtention.carta;
-        const cardDocument = cardReference.get();
+        const cardSnapshot = cardReference.get();
 
-        promises.push(cardDocument);
+        promises.push(cardSnapshot);
     }
 
     const issuerCardsArray = await Promise.all(promises);

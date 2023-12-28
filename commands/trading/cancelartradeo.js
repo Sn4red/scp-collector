@@ -49,6 +49,8 @@ module.exports = {
                         if (button.customId === 'confirm') {
                             deletedMessage = true;
 
+                            // The card is searched for the user whom it belongs, and it is unlocked. After that, the trade document
+                            // is deleted.
                             const obtentionReference = database.collection('obtencion').where('usuario', '==', userReference)
                                                             .where('carta', '==', tradeDocument.cartaEmisor)
                                                             .where('lockeado', '==', true).limit(1);

@@ -16,17 +16,46 @@ module.exports = {
         const userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
-            const tradeReference = database.collection('tradeo').where('emisor', '==', interaction.user.id);
-            const tradeSnapshot = await tradeReference.get();
+            const issuerTradeReference = database.collection('tradeo').where('emisor', '==', interaction.user.id)
+                                            .where('confirmacionTradeo', '==', true);
 
-            // Se arma un embed inicial con un pequeno historial de tradeos realizados.
+            const issuerTradeSnapshot = await issuerTradeReference.get();
 
-            if (!tradeSnapshot.empty) {
-                // Se anaden los tradeos pendientes de aceptar al embed, se ordenan por fecha de creacion y se despliega.
-            } else {
-                // Se envia el embed armado mostrando un mensaje en el top que no hay tradeos pendientes de aceptar,
-                // con solo un pequeno historial de tradeos realizados.
+            const recipientTradeReference = database.collection('tradeo').where('receptor', '==', interaction.user.id)
+                                            .where('confirmacionTradeo', '==', true);
+            
+            const recipientTradeSnapshot = await recipientTradeReference.get();
+
+            const userTradeSnapshot = issuerTradeSnapshot.docs.concat(recipientTradeSnapshot.docs);
+
+            const embed = new EmbedBuilder()
+                .setColor(0x000000)
+                .setTitle('Lista de Tradeos Enviados')
+                .setDescription('No se han encontrado tradeos pendientes.\n\n**/--- Historial de Tradeos Recientes ---/**')
+                .setTimestamp();
+
+            for (const document of userTradeSnapshot) {
+                const tradeDocument = document.data();
+
+                const issuerCardReference = tradeDocument.cartaEmisor;
+                const issuerCardSnapshot = await issuerCardReference.get();
+
+                const recipientCardReference = tradeDocument.cartaReceptor;
+                const recipientCardSnapshot = await recipientCardReference.get();
+
+                const fechaTradeo = new Date(tradeDocument.fechaTradeo._seconds * 1000 + tradeDocument.fechaTradeo._nanoseconds / 1000000).toLocaleString();
+                
+                const issuerReference = database.collection('usuario').doc(tradeDocument.emisor);
+                const issuerSnapshot = await issuerReference.get();
+                const issuerDocument = issuerSnapshot.data();
+                const issuerNickname = issuerDocument.nick;
+
+                embed.addFields(
+                    { name: ' ', value: `* ${issuerCardSnapshot.id} por ${recipientCardSnapshot.id} (${fechaTradeo}) -> ${issuerNickname}` },
+                );
             }
+
+            await interaction.editReply({ embeds: [embed] });
         } else {
             await interaction.editReply('¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
         }

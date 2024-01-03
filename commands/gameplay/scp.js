@@ -48,7 +48,7 @@ module.exports = {
                     
                     // When 10 card entries are accumulated, they are stored on a single page and the variable is reset.
                     if (entriesPerPageLimit == 10) {
-                        embeds.push(new EmbedBuilder().setTitle(`__**Colección de ${user.nick} **__`).setDescription(cardsList));
+                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`__**Colección de ${user.nick} **__`).setDescription(cardsList));
 
                         cardsList = '';
                         entriesPerPageLimit = 0;
@@ -62,7 +62,7 @@ module.exports = {
                             return;
                         }
 
-                        embeds.push(new EmbedBuilder().setTitle(`__**Colección de ${user.nick} **__`).setDescription(cardsList));
+                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`__**Colección de ${user.nick} **__`).setDescription(cardsList));
                     }
                 });
 

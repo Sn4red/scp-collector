@@ -156,13 +156,13 @@ function validateFields(recipientValue, issuerCardValue, recipientCardValue) {
 }
 
 // This function searches for a card from a user that is not 'locked'.
-async function findCard(issuerUserReference, cardValue) {
-    const issuerCardReference = database.collection('obtencion').where('usuario', '==', issuerUserReference).where('lockeado', '==', false);
-    const issuerCardSnapshot = await issuerCardReference.get();
+async function findCard(userReference, cardValue) {
+    const obtentionReference = database.collection('obtencion').where('usuario', '==', userReference).where('lockeado', '==', false);
+    const obtentionSnapshot = await obtentionReference.get();
 
     const promises = [];
     
-    for (const x of issuerCardSnapshot.docs) {
+    for (const x of obtentionSnapshot.docs) {
         const obtention = x.data();
         const cardReference = obtention.carta;
         const cardSnapshot = cardReference.get();
@@ -170,10 +170,10 @@ async function findCard(issuerUserReference, cardValue) {
         promises.push(cardSnapshot);
     }
 
-    const issuerCardsArray = await Promise.all(promises);
-    const foundCardIssuer = issuerCardsArray.find((x) => x.id === cardValue);
+    const cardsArray = await Promise.all(promises);
+    const foundCard = cardsArray.find((x) => x.id === cardValue);
 
-    return foundCardIssuer;
+    return foundCard;
 }
 
 // This function 'locks' the card of the user who creates de request so that it cannot be used for other trades in parallel.

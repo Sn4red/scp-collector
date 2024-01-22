@@ -55,7 +55,7 @@ module.exports = {
 
             // Validates if the daily capture limit (5) has been reached.
             if (userDocument.capturasDiarias >= 5) {
-                await interaction.editReply('Has alcanzado el límite de capturas diarias de SCP\'s.');
+                await interaction.editReply('💥  Has alcanzado el límite de capturas diarias de SCP\'s.');
             } else {
                 // Class obtained through probability.
                 const obtainedClass = classProbability();
@@ -88,11 +88,11 @@ module.exports = {
                     // they are resized to 300x200 pixels.
                     const cardEmbed = new EmbedBuilder()
                         .setColor(0x000000)
-                        .setTitle(`Ítem #: ${cardId} / ${name}`)
-                        .setDescription(`+${xp[classCard]} XP`)
+                        .setTitle(`🎲  Ítem #: \`${cardId}\` // \`${name}\``)
+                        .setDescription(`**+${xp[classCard]} XP**`)
                         .addFields(
-                            { name: 'Clase', value: classCard, inline: true },
-                            { name: 'Archivo', value: file, inline: true },
+                            { name: '👾  Clase', value: `\`${classCard}\``, inline: true },
+                            { name: '📄  Archivo', value: file, inline: true },
                         )
                         .setImage(`attachment://${cardId}.jpg`)
                         .setTimestamp();
@@ -116,18 +116,18 @@ module.exports = {
 
                     switch (promotionSystem.promotionType) {
                         case 'nivel':
-                            await interaction.followUp('Felicidades ' + promotionSystem.userDocument.nick + '. Ahora eres nivel ' + promotionSystem.userDocument.nivel + '.');
+                            await interaction.followUp(`✨  Felicidades ${promotionSystem.userDocument.nick}. Ahora eres nivel ${promotionSystem.userDocument.nivel}.  ✨`);
                             break;
                         case 'rango':
-                            await interaction.followUp('Felicidades ' + promotionSystem.userDocument.nick + '. Has ascendido a ' + ranks[promotionSystem.indexCurrentElement] + '.');
+                            await interaction.followUp(`✨  Felicidades ${promotionSystem.userDocument.nick}. Has ascendido a **${ranks[promotionSystem.indexCurrentElement]}**.  ✨`);
                             break;
                     }
                 } else {
-                    await interaction.editReply('Error al intentar capturar un SCP. Inténtalo más tarde.');
+                    await interaction.editReply('❌  Error al intentar capturar un SCP. Inténtalo más tarde.');
                 }
             }
         } else {
-            await interaction.editReply('¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
         }
     },
 };

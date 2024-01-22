@@ -7,7 +7,7 @@ module.exports = {
     cooldown: 300,
     data: new SlashCommandBuilder()
         .setName('scp')
-        .setDescription('Lista tu colección de SCP\'s.'),
+        .setDescription('Lista tu colección de SCPs.'),
     async execute(interaction) {
         const userId = interaction.user.id;
 
@@ -42,13 +42,13 @@ module.exports = {
                     const quantity = sortedCards.cardsCount.get(element);
                     const classCard = sortedCards.cardsClass.get(element);
 
-                    cardsList += `(${quantity}) ${element} - ${card.nombre} - **${classCard}**\n`;
+                    cardsList += `▫️**\`(${quantity})\`** \`${element}\` // \`${card.nombre}\` - **\`${classCard}\`**\n`;
 
                     entriesPerPageLimit++;
                     
                     // When 10 card entries are accumulated, they are stored on a single page and the variable is reset.
                     if (entriesPerPageLimit == 10) {
-                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`__**Colección de ${user.nick} **__`).setDescription(cardsList));
+                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colección de ${user.nick} **__`).setDescription(cardsList));
 
                         cardsList = '';
                         entriesPerPageLimit = 0;
@@ -62,7 +62,7 @@ module.exports = {
                             return;
                         }
 
-                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`__**Colección de ${user.nick} **__`).setDescription(cardsList));
+                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colección de ${user.nick} **__`).setDescription(cardsList));
                     }
                 });
 
@@ -123,10 +123,10 @@ module.exports = {
                     });
                 });
             } else {
-                await interaction.editReply('No tienes SCP\'s capturados!');
+                await interaction.editReply('❌  No tienes SCPs capturados!');
             }
         } else {
-            await interaction.editReply('¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
         }
     },
 };

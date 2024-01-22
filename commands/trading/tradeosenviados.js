@@ -6,8 +6,8 @@ const database = firebase.firestore();
 module.exports = {
     cooldown: 20,
     data: new SlashCommandBuilder()
-        .setName('listatradeosenviados')
-        .setDescription('Muestra el detalle de un tradeo.'),
+        .setName('tradeosenviados')
+        .setDescription('Lista los tradeos que están pendientes junto con un historial de tradeos que has realizado.'),
     async execute(interaction) {
         const userId = interaction.user.id;
 
@@ -41,17 +41,17 @@ module.exports = {
                     const recipientDocument = recipientSnapshot.data();
                     const recipientNickname = recipientDocument.nick;
 
-                    tradesList += `* ${document.id} - ${fechaTradeo} a ${recipientNickname}\n`;
+                    tradesList += `▫️**\`${document.id}\`** // \`${fechaTradeo}\` a \`${recipientNickname}\`\n`;
 
                     entriesPerPageLimit++;
 
                     // When 10 trade entries are accumulated, they are stored on a single page and the variable is reset.
                     if (entriesPerPageLimit == 10) {
-                        tradesList += '\n**/--- Historial de Tradeos Recientes ---/**';
+                        tradesList += '\n**🔻🔻🔻  Historial de Tradeos Recientes  🔻🔻🔻**';
 
                         const pageEmbed = new EmbedBuilder()
                             .setColor(0x000000)
-                            .setTitle('📃 Lista de Tradeos Enviados')
+                            .setTitle('📃  __**Lista de Tradeos Enviados**__')
                             .setDescription(tradesList);
 
                         const filledEmbed = await historyTrades(userId, pageEmbed);
@@ -70,11 +70,11 @@ module.exports = {
                             return;
                         }
 
-                        tradesList += '\n**/--- Historial de Tradeos Recientes ---/**';
+                        tradesList += '\n**🔻🔻🔻  Historial de Tradeos Recientes  🔻🔻🔻**';
 
                         const pageEmbed = new EmbedBuilder()
                             .setColor(0x000000)
-                            .setTitle('📃 Lista de Tradeos Enviados')
+                            .setTitle('📃  __**Lista de Tradeos Enviados**__')
                             .setDescription(tradesList);
 
                         const filledEmbed = await historyTrades(userId, pageEmbed);
@@ -141,15 +141,15 @@ module.exports = {
             } else {
                 const embed = new EmbedBuilder()
                     .setColor(0x000000)
-                    .setTitle('Lista de Tradeos Enviados')
-                    .setDescription('No se han encontrado tradeos pendientes.\n\n**/--- Historial de Tradeos Recientes ---/**');
+                    .setTitle('📃  __**Lista de Tradeos Enviados**__')
+                    .setDescription('No se han encontrado tradeos pendientes.\n\n**🔻🔻🔻  Historial de Tradeos Recientes  🔻🔻🔻**');
 
                 const filledEmbed = await historyTrades(userId, embed);
 
                 await interaction.editReply({ embeds: [filledEmbed] });
             }
         } else {
-            await interaction.editReply('¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
         }
     },
 };

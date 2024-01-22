@@ -57,15 +57,15 @@ module.exports = {
 
                                 lockCard(issuerUserReference, foundCardIssuer);
 
-                                modalInteraction.editReply(`Solicitud de tradeo enviada con el ID **${tradeEntry.id}**. Puedes usar el mismo ID para cancelar la solicitud.`);
+                                modalInteraction.editReply(`✅  Solicitud de tradeo enviada con el ID **\`${tradeEntry.id}\`**. Puedes usar el mismo ID para cancelar la solicitud.`);
                             } else {
-                                modalInteraction.editReply('Solicitud cancelada ¡Parece que el usuario no tiene la carta que quieres!');
+                                modalInteraction.editReply('❌  Solicitud cancelada ¡Parece que el usuario no tiene la carta que quieres o está lockeada!');
                             }
                         } else {
-                            modalInteraction.editReply('Solicitud cancelada. El usuario con el que intentas tradear todavía no está registrado o no se ha encontrado.');
+                            modalInteraction.editReply('❌  Solicitud cancelada. El usuario con el que intentas tradear todavía no está registrado o no se ha encontrado.');
                         }
                     } else {
-                        modalInteraction.editReply('Solicitud cancelada ¡Parece que no tienes la carta que estás ofreciendo!');
+                        modalInteraction.editReply('❌  Solicitud cancelada ¡Parece que no tienes la carta que estás ofreciendo o está lockeada!');
                     }
                 } else {
                     modalInteraction.editReply(fieldsValidation.errorMessage);
@@ -73,10 +73,10 @@ module.exports = {
             }).catch((error) => {
                 console.log(`Error: ${error}`);
 
-                interaction.followUp({ content: 'Solicitud cancelada debido a la inactividad.', ephemeral: true });
+                interaction.followUp({ content: '❌  Solicitud cancelada debido a la inactividad.', ephemeral: true });
             });
         } else {
-            await interaction.reply({ content: '¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.', ephemeral: true });
+            await interaction.reply({ content: '❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.', ephemeral: true });
         }
     },
 };
@@ -85,7 +85,7 @@ module.exports = {
 function displayModal(idUsuario) {
     const modal = new ModalBuilder()
         .setCustomId(`modal-${idUsuario}`)
-        .setTitle('Petición de Tradeo');
+        .setTitle('Solicitud de Tradeo  📑');
         
     const txtRecipient = new TextInputBuilder()
         .setCustomId('txtRecipient')
@@ -134,21 +134,21 @@ function validateFields(recipientValue, issuerCardValue, recipientCardValue) {
     const issuerCardValidation = /^scp-\d{3,4}$/i.test(fixedIssuerCardValue);
     const recipientCardValidation = /^scp-\d{3,4}$/i.test(fixedRecipientCardValue);
     
-    let errorMessage = 'Los siguientes datos fueron ingresados incorrectamente:\n';
+    let errorMessage = '❌  Los siguientes datos fueron ingresados incorrectamente:\n';
     let errorState = false;
 
     if (!recipientValidation) {
-        errorMessage += '- ID usuario\n';
+        errorMessage += '▫️ ID usuario\n';
         errorState = true;
     }
     
     if (!issuerCardValidation) {
-        errorMessage += '- Carta ofrecida\n';
+        errorMessage += '▫️ Carta ofrecida\n';
         errorState = true;
     }
 
     if (!recipientCardValidation) {
-        errorMessage += '- Carta deseada';
+        errorMessage += '▫️ Carta deseada';
         errorState = true;
     }
 

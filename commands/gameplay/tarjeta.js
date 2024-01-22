@@ -56,7 +56,7 @@ module.exports = {
             const attachment = await displayCard(newUser, interaction.user.id, interaction);
 
             await interaction.editReply({ files: [attachment] });
-            await interaction.followUp('¡Usuario nuevo! Ya puedes usar los comandos para coleccionar cartas y demás.');
+            await interaction.followUp('👋  ¡Usuario nuevo! Ya puedes usar los comandos para coleccionar cartas y demás.');
         }
     },
 };
@@ -130,8 +130,8 @@ async function displayCard(document, userId, interaction) {
     // Captured SCPs.
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
-    context.fillText('SCP\'s capturados:', 145, 132);
-    context.fillText(SCPCount + '', 220, 132);
+    context.fillText('SCPs capturados:', 145, 132);
+    context.fillText(SCPCount + '', 219, 132);
     
     // Classified label.
     context.font = '13px Roboto Condensed';

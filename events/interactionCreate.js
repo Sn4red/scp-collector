@@ -30,7 +30,7 @@ module.exports = {
 
             if (now < expirationTime) {
                 const expiredTimestamp = Math.round(expirationTime / 1000);
-                return interaction.reply({ content: `Podrás usar de nuevo /\`${command.data.name}\` <t:${expiredTimestamp}:R>.`, ephemeral: true });
+                return interaction.reply({ content: `⌛  Podrás usar de nuevo /\`${command.data.name}\` <t:${expiredTimestamp}:R>.`, ephemeral: true });
             }
         }
 
@@ -42,9 +42,9 @@ module.exports = {
         } catch (error) {
             console.error(error);
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: '¡Se produjo un error al ejecutar este comando!', ephemeral: true });
+                await interaction.followUp({ content: '❌  ¡Se produjo un error al ejecutar este comando!', ephemeral: true });
             } else {
-                await interaction.reply({ content: '¡Se produjo un error al ejecutar este comando!', ephemeral: true });
+                await interaction.reply({ content: '❌  ¡Se produjo un error al ejecutar este comando!', ephemeral: true });
             }
         }
     },

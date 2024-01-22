@@ -34,7 +34,7 @@ module.exports = {
                     const buttonsRow = displayButtons();
 
                     const reply = await interaction.editReply({
-                        content: `¿Estás seguro de cancelar la solicitud de tradeo **${tradeSnapshot.id}**?`,
+                        content: `⛔  ¿Estás seguro(a) de cancelar la solicitud de tradeo **\`${tradeSnapshot.id}\`**?`,
                         components: [buttonsRow],
                     });
 
@@ -65,7 +65,7 @@ module.exports = {
 
                             await database.collection('tradeo').doc(tradeSnapshot.id).delete();
                             
-                            await interaction.followUp({ content: `Tradeo >> **${tradeSnapshot.id}** << cancelado con éxito.`, ephemeral: true });
+                            await interaction.followUp({ content: `✅  Tradeo >> **\`${tradeSnapshot.id}\`** << cancelado con éxito.`, ephemeral: true });
                             await interaction.deleteReply();
                         }
 
@@ -83,13 +83,13 @@ module.exports = {
                         }
                     });
                 } else {
-                    await interaction.editReply('Error. No puedes cancelar este tradeo porque no eres el propietario.');
+                    await interaction.editReply('❌  Error. No puedes cancelar este tradeo porque no eres el/la propietario(a).');
                 }
             } else {
-                await interaction.editReply('¡No existe un tradeo con esa ID!');
+                await interaction.editReply('❌  ¡No existe un tradeo con ese ID!');
             }
         } else {
-            await interaction.editReply('¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
         }
     },
 };

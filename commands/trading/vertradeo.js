@@ -32,27 +32,27 @@ module.exports = {
 
                 const tradeEmbed = new EmbedBuilder()
                     .setColor(0x000000)
-                    .setTitle(`Tradeo #: ${tradeSnapshot.id}`)
+                    .setTitle(`📃  Tradeo #: \`${tradeSnapshot.id}\``)
                     .addFields(
-                        { name: 'Emisor', value: `${tradeObject.issuerNickname} (${tradeObject.issuerId})` },
-                        { name: 'Carta', value: `${tradeObject.issuerCardId} / ${tradeObject.issuerCardName}` },
-                        { name: 'Receptor', value: `${tradeObject.recipientNickname} (${tradeObject.recipientId})` },
-                        { name: 'Carta', value: `${tradeObject.recipientCardId} / ${tradeObject.recipientCardName}` },
-                        { name: 'Fecha de Creación', value: `${tradeObject.creationDate}` },
-                        { name: 'Estado', value: `${tradeObject.tradeStatus}` },
+                        { name: '👤  Emisor', value: `\`${tradeObject.issuerNickname}\` (\`${tradeObject.issuerId}\`)` },
+                        { name: '📓  Carta', value: `\`${tradeObject.issuerCardId}\` // \`${tradeObject.issuerCardName}\`` },
+                        { name: '👤  Receptor', value: `\`${tradeObject.recipientNickname}\` (\`${tradeObject.recipientId}\`)` },
+                        { name: '📓  Carta', value: `\`${tradeObject.recipientCardId}\` // \`${tradeObject.recipientCardName}\`` },
+                        { name: '🕒  Fecha de Creación', value: `\`${tradeObject.creationDate}\`` },
+                        { name: '📌  Estado', value: `**\`${tradeObject.tradeStatus}\`**` },
                     )
                     .setTimestamp();
 
                 if (tradeObject.tradeDate != null) {
-                    tradeEmbed.addFields({ name: 'Fecha de Tradeo', value: `${tradeObject.tradeDate}` });
+                    tradeEmbed.addFields({ name: '🕢  Fecha de Tradeo', value: `\`${tradeObject.tradeDate}\`` });
                 }
 
                 await interaction.editReply({ embeds: [tradeEmbed] });
             } else {
-                await interaction.editReply('¡No existe un tradeo con esa ID!');
+                await interaction.editReply('❌  ¡No existe un tradeo con ese ID!');
             }
         } else {
-            await interaction.editReply('¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
         }
     },
 };

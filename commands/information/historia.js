@@ -8,7 +8,7 @@ module.exports = {
     async execute(interaction) {
         const embed = new EmbedBuilder()
             .setColor(0x000000)
-            .setTitle('La Fundación SCP')
+            .setTitle('🏛️   La Fundación SCP')
             .setDescription('Operando de forma clandestina y global, La Fundación actúa más allá de toda jurisdicción, reforzada por los grandes gobiernos nacionales que ' +
                             'le han encomendado la tarea de contener objetos, entes y fenómenos anómalos. Estas anomalías suponen una amenaza significativa para la seguridad ' +
                             'global, al ser capaces de causar daño físico o psicológico.\n\n' +

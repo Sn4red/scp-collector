@@ -14,12 +14,12 @@ module.exports = {
         // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
 
-        const userReference = database.collection('usuario').doc(userId);
+        const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
-            const pendingTradeReference = database.collection('tradeo').where('emisor', '==', userId)
-                                                                    .where('confirmacionTradeo', '==', false);
+            const pendingTradeReference = database.collection('trade').where('issuer', '==', userId)
+                                                                    .where('tradeConfirmation', '==', false);
 
             const pendingTradeSnapshot = await pendingTradeReference.get();
 
@@ -34,14 +34,14 @@ module.exports = {
                 for (const [index, document] of pendingTradeSnapshot.docs.entries()) {
                     const tradeDocument = document.data();
 
-                    const fechaTradeo = new Date(tradeDocument.cooldownSeguridad._seconds * 1000 + tradeDocument.cooldownSeguridad._nanoseconds / 1000000).toLocaleString();
+                    const tradeDate = new Date(tradeDocument.securityCooldown._seconds * 1000 + tradeDocument.securityCooldown._nanoseconds / 1000000).toLocaleString();
 
-                    const recipientReference = database.collection('usuario').doc(tradeDocument.receptor);
+                    const recipientReference = database.collection('user').doc(tradeDocument.recipient);
                     const recipientSnapshot = await recipientReference.get();
                     const recipientDocument = recipientSnapshot.data();
-                    const recipientNickname = recipientDocument.nick;
+                    const recipientNickname = recipientDocument.nickname;
 
-                    tradesList += `▫️**\`${document.id}\`** // \`${fechaTradeo}\` a \`${recipientNickname}\`\n`;
+                    tradesList += `▫️**\`${document.id}\`** // \`${tradeDate}\` a \`${recipientNickname}\`\n`;
 
                     entriesPerPageLimit++;
 
@@ -155,13 +155,13 @@ module.exports = {
 };
 
 async function historyTrades(userId, embed) {
-    const issuerCompleteTradeReference = database.collection('tradeo').where('emisor', '==', userId)
-                                                                    .where('confirmacionTradeo', '==', true);
+    const issuerCompleteTradeReference = database.collection('trade').where('issuer', '==', userId)
+                                                                    .where('tradeConfirmation', '==', true);
 
     const issuerCompleteTradeSnapshot = await issuerCompleteTradeReference.get();
 
-    const recipientCompleteTradeReference = database.collection('tradeo').where('receptor', '==', userId)
-                                                                        .where('confirmacionTradeo', '==', true);
+    const recipientCompleteTradeReference = database.collection('trade').where('recipient', '==', userId)
+                                                                        .where('tradeConfirmation', '==', true);
             
     const recipientCompleteTradeSnapshot = await recipientCompleteTradeReference.get();
 
@@ -170,21 +170,21 @@ async function historyTrades(userId, embed) {
     for (const document of userCompleteTradeSnapshot) {
         const tradeDocument = document.data();
 
-        const issuerCardReference = tradeDocument.cartaEmisor;
+        const issuerCardReference = tradeDocument.issuerCard;
         const issuerCardSnapshot = await issuerCardReference.get();
 
-        const recipientCardReference = tradeDocument.cartaReceptor;
+        const recipientCardReference = tradeDocument.recipientCard;
         const recipientCardSnapshot = await recipientCardReference.get();
 
-        const fechaTradeo = new Date(tradeDocument.fechaTradeo._seconds * 1000 + tradeDocument.fechaTradeo._nanoseconds / 1000000).toLocaleString();
+        const tradeDate = new Date(tradeDocument.tradeDate._seconds * 1000 + tradeDocument.tradeDate._nanoseconds / 1000000).toLocaleString();
                 
-        const issuerReference = database.collection('usuario').doc(tradeDocument.emisor);
+        const issuerReference = database.collection('user').doc(tradeDocument.issuer);
         const issuerSnapshot = await issuerReference.get();
         const issuerDocument = issuerSnapshot.data();
-        const issuerNickname = issuerDocument.nick;
+        const issuerNickname = issuerDocument.nickname;
 
         embed.addFields(
-            { name: ' ', value: `* ${issuerCardSnapshot.id} por ${recipientCardSnapshot.id} (${fechaTradeo}) -> ${issuerNickname}` },
+            { name: ' ', value: `* ${issuerCardSnapshot.id} por ${recipientCardSnapshot.id} (${tradeDate}) -> ${issuerNickname}` },
         );
     }
 

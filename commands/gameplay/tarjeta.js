@@ -15,13 +15,13 @@ module.exports = {
         await interaction.deferReply();
 
         // Database query is performed.
-        const userReference = database.collection('usuario').doc(interaction.user.id);
+        const userReference = database.collection('user').doc(interaction.user.id);
         const userSnapshot = await userReference.get();
 
         // If the user exists, his data is updated, in this case the nickame (if it was changed manually).
         if (userSnapshot.exists) {
             await userReference.update({
-                nick: interaction.user.username,
+                nickname: interaction.user.username,
             });
 
             const document = userSnapshot.data();
@@ -34,23 +34,23 @@ module.exports = {
         } else {
             // If the user doesn't exist, a new document is created before displaying the card.
 
-            // Formats the date in DD/MM/YYYY.
+            // Formats the date in YYYY/MM/DD.
             const currentDate = new Date();
 
-            const day = ('0' + currentDate.getDate()).slice(-2);
-            const month = ('0' + (currentDate.getMonth() + 1)).slice(-2);
             const year = currentDate.getFullYear();
+            const month = ('0' + (currentDate.getMonth() + 1)).slice(-2);
+            const day = ('0' + currentDate.getDate()).slice(-2);
 
             const newUser = {
-                capturasDiarias: 0,
-                fecha: day + '/' + month + '/' + year,
-                nick: interaction.user.username,
-                nivel: 1,
-                rango: 'Clase D',
+                dailyCaptures: 0,
+                issueDate: year + '/' + month + '/' + day,
+                level: 1,
+                nickname: interaction.user.username,
+                rank: 'Class D',
                 xp: 0,
             };
 
-            await database.collection('usuario').doc(interaction.user.id).set(newUser);
+            await database.collection('user').doc(interaction.user.id).set(newUser);
 
             // Uses the AttachmentBuilder class to process the file and be attached in the reply.
             const attachment = await displayCard(newUser, interaction.user.id, interaction);
@@ -63,22 +63,22 @@ module.exports = {
 
 async function displayCard(document, userId, interaction) {
     // User data.
-    const date = document.fecha;
+    const issueDate = document.issueDate;
     const id = userId;
-    const nickname = document.nick;
-    const level = document.nivel;
-    const rank = document.rango;
+    const nickname = document.nickname;
+    const level = document.level;
+    const rank = document.rank;
     const xp = document.xp.toString();
 
     // Query to the database regarding the number of obtained SCPs.
     let SCPCount = 0;
-    const obtentionReference = database.collection('obtencion');
-    const obtentionSnapshot = await obtentionReference.where('usuario', '==', database.collection('usuario').doc(id)).get();
+    const obtainingReference = database.collection('obtaining');
+    const obtainingSnapshot = await obtainingReference.where('user', '==', database.collection('user').doc(id)).get();
 
-    if (obtentionSnapshot.empty) {
+    if (obtainingSnapshot.empty) {
         SCPCount = 0;
     } else {
-        SCPCount = obtentionSnapshot.size;
+        SCPCount = obtainingSnapshot.size;
     }
     
     // Creates a canvas of 450x250 pixels and obtain its context.
@@ -125,7 +125,7 @@ async function displayCard(document, userId, interaction) {
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.fillText('Fecha de emisión:', 145, 117);
-    context.fillText(date, 220, 117);
+    context.fillText(issueDate, 220, 117);
     
     // Captured SCPs.
     context.font = 'bold 10px Roboto Condensed';
@@ -155,13 +155,13 @@ async function displayCard(document, userId, interaction) {
     
     // Progress filling according to the rank.
     const multiplicationFactors = {
-        'Clase D': 8,
-        'Oficial de Seguridad': 4,
-        'Investigador': 1.6,
-        'Especialista de Contención': 0.8,
-        'Agente de Campo': 0.266,
-        'Director de Sede': 0.08,
-        'Miembro del Consejo O5': 0.04,
+        'Class D': 8,
+        'Security Officer': 4,
+        'Investigator': 1.6,
+        'Containment Specialist': 0.8,
+        'Field Agent': 0.266,
+        'Site Director': 0.08,
+        'O5 Council Member': 0.04,
     };
     
     context.fillRect(25, 213, xp * multiplicationFactors[rank], 9);

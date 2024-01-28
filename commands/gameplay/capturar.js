@@ -7,33 +7,33 @@ const database = firebase.firestore();
 
 // The XP obtained based on the SCP class.
 const xp = {
-    'Seguro': 5,
+    'Safe': 5,
     'Euclid': 15,
     'Keter': 30,
-    'Taumiel': 100,
+    'Thaumiel': 100,
     'Apollyon': 200,
 };
 
 // The maximum XP per level (20 levels per rank) based on the user's rank.
 const userXP = {
-    'Clase D': 50,
-    'Oficial de Seguridad': 100,
-    'Investigador': 250,
-    'Especialista de Contención': 500,
-    'Agente de Campo': 1500,
-    'Director de Sede': 5000,
-    'Miembro del Consejo O5': 10000,
+    'Class D': 50,
+    'Security Officer': 100,
+    'Investigator': 250,
+    'Containment Specialist': 500,
+    'Field Agent': 1500,
+    'Site Director': 5000,
+    'O5 Council Member': 10000,
 };
 
 // User ranks.
 const ranks = [
-    'Clase D',
-    'Oficial de Seguridad',
-    'Investigador',
-    'Especialista de Contención',
-    'Agente de Campo',
-    'Director de Sede',
-    'Miembro del Consejo O5',
+    'Class D',
+    'Security Officer',
+    'Investigator',
+    'Containment Specialist',
+    'Field Agent',
+    'Site Director',
+    'O5 Council Member',
 ];
 
 module.exports = {
@@ -46,7 +46,7 @@ module.exports = {
         await interaction.deferReply();
 
         // Database query is performed.
-        const userReference = database.collection('usuario').doc(interaction.user.id);
+        const userReference = database.collection('user').doc(interaction.user.id);
         const userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
@@ -54,8 +54,8 @@ module.exports = {
             const userDocument = userSnapshot.data();
 
             // Validates if the daily capture limit (5) has been reached.
-            if (userDocument.capturasDiarias >= 5) {
-                await interaction.editReply('💥  Has alcanzado el límite de capturas diarias de SCP\'s.');
+            if (userDocument.dailyCaptures >= 5) {
+                await interaction.editReply('💥  Has alcanzado el límite de capturas diarias de SCPs.');
             } else {
                 // Class obtained through probability.
                 const obtainedClass = classProbability();
@@ -64,7 +64,7 @@ module.exports = {
                 const subCollection = obtainedClass.charAt(0).toLowerCase() + obtainedClass.slice(1);
     
                 // Retrieves all SCP cards of the class obtained through probability.
-                const cardReference = database.collection('carta').doc(obtainedClass).collection(subCollection);
+                const cardReference = database.collection('card').doc(obtainedClass).collection(subCollection);
                 const cardSnapshot = await cardReference.get();
     
                 if (!cardSnapshot.empty) {
@@ -79,8 +79,8 @@ module.exports = {
                     // Card data.
                     const cardId = randomCard.id;
                     const classCard = obtainedClass;
-                    const file = randomCard.data.archivo;
-                    const name = randomCard.data.nombre;
+                    const file = randomCard.data.file;
+                    const name = randomCard.data.name;
     
                     const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
     
@@ -98,12 +98,12 @@ module.exports = {
                         .setTimestamp();
                     
                     // The entry of obtaining the card is inserted.
-                    const obtentionEntry = database.collection('obtencion').doc();
+                    const obtainingEntry = database.collection('obtaining').doc();
     
-                    await obtentionEntry.set({
-                        carta: database.collection('carta').doc(obtainedClass).collection(subCollection).doc(cardId),
-                        usuario: userReference,
-                        lockeado: false,
+                    await obtainingEntry.set({
+                        card: database.collection('card').doc(obtainedClass).collection(subCollection).doc(cardId),
+                        user: userReference,
+                        locked: false,
                     });
 
                     // The rank and level promotion is performed here (if applicable), along with the increase of daily limits.
@@ -115,11 +115,11 @@ module.exports = {
                     });
 
                     switch (promotionSystem.promotionType) {
-                        case 'nivel':
-                            await interaction.followUp(`✨  Felicidades ${promotionSystem.userDocument.nick}. Ahora eres nivel ${promotionSystem.userDocument.nivel}.  ✨`);
+                        case 'level':
+                            await interaction.followUp(`✨  Felicidades ${promotionSystem.userDocument.nickname}. Ahora eres nivel ${promotionSystem.userDocument.level}.  ✨`);
                             break;
-                        case 'rango':
-                            await interaction.followUp(`✨  Felicidades ${promotionSystem.userDocument.nick}. Has ascendido a **${ranks[promotionSystem.indexCurrentElement]}**.  ✨`);
+                        case 'rank':
+                            await interaction.followUp(`✨  Felicidades ${promotionSystem.userDocument.nickname}. Has ascendido a **${ranks[promotionSystem.indexCurrentElement]}**.  ✨`);
                             break;
                     }
                 } else {
@@ -136,10 +136,10 @@ module.exports = {
 // and determines the class to choose based on cumulative probability.
 function classProbability() {
     const classes = [
-        { name: 'Seguro', probability: 40 },
+        { name: 'Safe', probability: 40 },
         { name: 'Euclid', probability: 30 },
         { name: 'Keter', probability: 21 },
-        { name: 'Taumiel', probability: 7 },
+        { name: 'Thaumiel', probability: 7 },
         { name: 'Apollyon', probability: 2 },
     ];
 
@@ -159,7 +159,7 @@ function classProbability() {
 
 async function promotionProcess(classCard, userDocument, userReference, cardEmbed) {
     const earnedXP = xp[classCard];
-    const maxXP = userXP[userDocument.rango];
+    const maxXP = userXP[userDocument.rank];
 
     // The variable determines what type of promotion will be performed (rank or level),
     // so that a different type of message is displayed.
@@ -167,7 +167,7 @@ async function promotionProcess(classCard, userDocument, userReference, cardEmbe
 
     // This section retrieves the next rank based on the user's current rank. If the current rank is
     // 'Council O5 Member', there is no promotion.
-    let indexCurrentElement = ranks.indexOf(userDocument.rango);
+    let indexCurrentElement = ranks.indexOf(userDocument.rank);
     indexCurrentElement++;
 
     if (indexCurrentElement == 6) {
@@ -175,35 +175,35 @@ async function promotionProcess(classCard, userDocument, userReference, cardEmbe
     }
 
     if ((userDocument.xp + earnedXP) >= maxXP) {
-        if (userDocument.nivel < 20) {
-            promotionType = 'nivel';
+        if (userDocument.level < 20) {
+            promotionType = 'level';
 
             await userReference.update({
-                nivel: ++userDocument.nivel,
+                level: ++userDocument.level,
                 xp: (userDocument.xp + earnedXP) - maxXP,
-                capturasDiarias: ++userDocument.capturasDiarias,
+                dailyCaptures: ++userDocument.dailyCaptures,
             });
         } else {
-            promotionType = 'rango';
+            promotionType = 'rank';
 
             await userReference.update({
-                rango: ranks[indexCurrentElement],
-                nivel: 1,
+                rank: ranks[indexCurrentElement],
+                level: 1,
                 xp: (userDocument.xp + earnedXP) - maxXP,
-                capturasDiarias: ++userDocument.capturasDiarias,
+                dailyCaptures: ++userDocument.dailyCaptures,
             });
         }
     } else {
         await userReference.update({
             xp: firebase.firestore.FieldValue.increment(earnedXP),
-            capturasDiarias: ++userDocument.capturasDiarias,
+            dailyCaptures: ++userDocument.dailyCaptures,
         });
     }
     
-    if (userDocument.capturasDiarias == 4) {
-        cardEmbed.setFooter({ text: `${5 - userDocument.capturasDiarias} tiro restante` });
+    if (userDocument.dailyCaptures == 4) {
+        cardEmbed.setFooter({ text: `${5 - userDocument.dailyCaptures} tiro restante` });
     } else {
-        cardEmbed.setFooter({ text: `${5 - userDocument.capturasDiarias} tiros restantes` });
+        cardEmbed.setFooter({ text: `${5 - userDocument.dailyCaptures} tiros restantes` });
     }
 
     return { cardEmbed, promotionType, userDocument, indexCurrentElement };
@@ -211,13 +211,13 @@ async function promotionProcess(classCard, userDocument, userReference, cardEmbe
 
 // This function resets the daily limit for card captures.
 async function resetDailyLimit() {
-    const userReference = database.collection('usuario');
+    const userReference = database.collection('user');
     const userSnapshot = await userReference.get();
 
     userSnapshot.forEach(async (user) => {
         if (user.exists) {
             await user.ref.update({
-                capturasDiarias: 0,
+                dailyCaptures: 0,
             });
         }
     });
@@ -225,6 +225,6 @@ async function resetDailyLimit() {
 
 // The cron task executes the reset function at midnight.
 cron.schedule('0 0 * * *', async () => {
-    console.log('*** Restableciendo límite de tiros diarios ***');
+    console.log('*** Resetting daily attempts limit ***');
     await resetDailyLimit();
 });

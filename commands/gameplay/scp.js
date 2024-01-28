@@ -14,17 +14,17 @@ module.exports = {
         // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
 
-        const userReference = database.collection('usuario').doc(userId);
+        const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
             const user = userSnapshot.data();
 
-            const obtentionReference = database.collection('obtencion').where('usuario', '==', userReference);
-            const obtentionSnapshot = await obtentionReference.get();
+            const obtainingReference = database.collection('obtaining').where('user', '==', userReference);
+            const obtainingSnapshot = await obtainingReference.get();
 
-            if (!obtentionSnapshot.empty) {
-                const sortedCards = await cardsSorting(obtentionSnapshot);
+            if (!obtainingSnapshot.empty) {
+                const sortedCards = await cardsSorting(obtainingSnapshot);
 
                 // The list is numerically sorted considering the ID after 'SCP-'
                 // (from the fifh character onward), and converts the collection's ID list into an array.
@@ -42,13 +42,13 @@ module.exports = {
                     const quantity = sortedCards.cardsCount.get(element);
                     const classCard = sortedCards.cardsClass.get(element);
 
-                    cardsList += `▫️**\`(${quantity})\`** \`${element}\` // \`${card.nombre}\` - **\`${classCard}\`**\n`;
+                    cardsList += `▫️**\`(${quantity})\`** \`${element}\` // \`${card.name}\` - **\`${classCard}\`**\n`;
 
                     entriesPerPageLimit++;
                     
                     // When 10 card entries are accumulated, they are stored on a single page and the variable is reset.
                     if (entriesPerPageLimit == 10) {
-                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colección de ${user.nick} **__`).setDescription(cardsList));
+                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colección de ${user.nickname} **__`).setDescription(cardsList));
 
                         cardsList = '';
                         entriesPerPageLimit = 0;
@@ -62,7 +62,7 @@ module.exports = {
                             return;
                         }
 
-                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colección de ${user.nick} **__`).setDescription(cardsList));
+                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colección de ${user.nickname} **__`).setDescription(cardsList));
                     }
                 });
 
@@ -131,7 +131,7 @@ module.exports = {
     },
 };
 
-async function cardsSorting(obtentionSnapshot) {
+async function cardsSorting(obtainingSnapshot) {
     // 'cardsCount' will store the quantity repeated per card.
     // 'cards' will store the complete data of the card.
     // 'cardsClass' will store the classes of the cards (they are not a field of the card but of its collection's name in Firebase).
@@ -143,9 +143,9 @@ async function cardsSorting(obtentionSnapshot) {
 
     // Retrieves cards by the field that references them and stores the document in an array.
     // This is to obtain the card data (the name is needed for the listing).
-    for (const obtention of obtentionSnapshot.docs) {
-        const obtentionDocument = obtention.data();
-        const cardReference = obtentionDocument.carta;
+    for (const obtaining of obtainingSnapshot.docs) {
+        const obtainingDocument = obtaining.data();
+        const cardReference = obtainingDocument.card;
         const cardSnapshot = cardReference.get();
 
         promises.push(cardSnapshot);

@@ -11,7 +11,7 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
 
-        const issuerUserReference = database.collection('usuario').doc(userId);
+        const issuerUserReference = database.collection('user').doc(userId);
         const issuerUserSnapshot = await issuerUserReference.get();
 
         if (issuerUserSnapshot.exists) {
@@ -36,23 +36,24 @@ module.exports = {
                     const foundCardIssuer = await findCard(issuerUserReference, fieldsValidation.fixedIssuerCardValue);
 
                     if (foundCardIssuer) {
-                        const recipientUserReference = database.collection('usuario').doc(recipientValue);
+                        const recipientUserReference = database.collection('user').doc(recipientValue);
                         const recipientUserSnapshot = await recipientUserReference.get();
 
                         if (recipientUserSnapshot.exists) {
                             const foundCardRecipient = await findCard(recipientUserReference, fieldsValidation.fixedRecipientCardValue);
 
                             if (foundCardRecipient) {
-                                const tradeEntry = database.collection('tradeo').doc();
+                                const tradeEntry = database.collection('trade').doc();
                                 
                                 await tradeEntry.set({
-                                    cartaEmisor: foundCardIssuer.ref,
-                                    cartaReceptor: foundCardRecipient.ref,
-                                    confirmacionTradeo: false,
-                                    cooldownSeguridad: new Date(),
-                                    emisor: userId,
-                                    fechaTradeo: null,
-                                    receptor: recipientValue,
+                                    issuer: userId,
+                                    issuerCard: foundCardIssuer.ref,
+                                    recipientCard: foundCardRecipient.ref,
+                                    recipient: recipientValue,
+                                    securityCooldown: new Date(),
+                                    tradeConfirmation: false,
+                                    tradeDate: null,
+                                    
                                 });
 
                                 lockCard(issuerUserReference, foundCardIssuer);
@@ -157,14 +158,14 @@ function validateFields(recipientValue, issuerCardValue, recipientCardValue) {
 
 // This function searches for a card from a user that is not 'locked'.
 async function findCard(userReference, cardValue) {
-    const obtentionReference = database.collection('obtencion').where('usuario', '==', userReference).where('lockeado', '==', false);
-    const obtentionSnapshot = await obtentionReference.get();
+    const obtainingReference = database.collection('obtaining').where('user', '==', userReference).where('locked', '==', false);
+    const obtainingSnapshot = await obtainingReference.get();
 
     const promises = [];
     
-    for (const x of obtentionSnapshot.docs) {
-        const obtention = x.data();
-        const cardReference = obtention.carta;
+    for (const x of obtainingSnapshot.docs) {
+        const obtaining = x.data();
+        const cardReference = obtaining.card;
         const cardSnapshot = cardReference.get();
 
         promises.push(cardSnapshot);
@@ -178,14 +179,14 @@ async function findCard(userReference, cardValue) {
 
 // This function 'locks' the card of the user who creates de request so that it cannot be used for other trades in parallel.
 async function lockCard(issuerUserReference, foundCardIssuer) {
-    const obtentionReference = database.collection('obtencion').where('usuario', '==', issuerUserReference)
-                                                            .where('carta', '==', foundCardIssuer.ref)
-                                                            .where('lockeado', '==', false).limit(1);
-    const obtentionSnapshot = await obtentionReference.get();
+    const obtainingReference = database.collection('obtaining').where('user', '==', issuerUserReference)
+                                                            .where('card', '==', foundCardIssuer.ref)
+                                                            .where('locked', '==', false).limit(1);
+    const obtainingSnapshot = await obtainingReference.get();
     
-    const obtentionDocument = obtentionSnapshot.docs[0];
+    const obtainingDocument = obtainingSnapshot.docs[0];
 
-    obtentionDocument.ref.update({
-        lockeado: true,
+    obtainingDocument.ref.update({
+        locked: true,
     });
 }

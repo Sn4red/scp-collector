@@ -16,13 +16,13 @@ module.exports = {
         // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
 
-        const userReference = database.collection('usuario').doc(interaction.user.id);
+        const userReference = database.collection('user').doc(interaction.user.id);
         const userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
             const tradeId = interaction.options.getString('solicitud');
 
-            const tradeReference = database.collection('tradeo').doc(tradeId);
+            const tradeReference = database.collection('trade').doc(tradeId);
             const tradeSnapshot = await tradeReference.get();
 
             if (tradeSnapshot.exists) {
@@ -58,40 +58,40 @@ module.exports = {
 };
 
 async function formattingValues(tradeDocument) {
-    const issuerReference = database.collection('usuario').doc(tradeDocument.emisor);
+    const issuerReference = database.collection('user').doc(tradeDocument.issuer);
     const issuerSnapshot = await issuerReference.get();
     const issuerDocument = issuerSnapshot.data();
-    const issuerNickname = issuerDocument.nick;
+    const issuerNickname = issuerDocument.nickname;
     const issuerId = issuerSnapshot.id;
 
-    const issuerCardReference = tradeDocument.cartaEmisor;
+    const issuerCardReference = tradeDocument.issuerCard;
     const issuerCardSnapshot = await issuerCardReference.get();
     const issuerCardDocument = issuerCardSnapshot.data();
     const issuerCardId = issuerCardSnapshot.id;
-    const issuerCardName = issuerCardDocument.nombre;
+    const issuerCardName = issuerCardDocument.name;
 
-    const recipientReference = database.collection('usuario').doc(tradeDocument.receptor);
+    const recipientReference = database.collection('user').doc(tradeDocument.recipient);
     const recipientSnapshot = await recipientReference.get();
     const recipientDocument = recipientSnapshot.data();
-    const recipientNickname = recipientDocument.nick;
+    const recipientNickname = recipientDocument.nickname;
     const recipientId = recipientSnapshot.id;
 
-    const recipientCardReference = tradeDocument.cartaReceptor;
+    const recipientCardReference = tradeDocument.recipientCard;
     const recipientCardSnapshot = await recipientCardReference.get();
     const recipientCardDocument = recipientCardSnapshot.data();
     const recipientCardId = recipientCardSnapshot.id;
-    const recipientCardName = recipientCardDocument.nombre;
+    const recipientCardName = recipientCardDocument.name;
 
-    const creationDate = new Date(tradeDocument.cooldownSeguridad._seconds * 1000 + tradeDocument.cooldownSeguridad._nanoseconds / 1000000).toLocaleString();
+    const creationDate = new Date(tradeDocument.securityCooldown._seconds * 1000 + tradeDocument.securityCooldown._nanoseconds / 1000000).toLocaleString();
 
     let tradeStatus = false;
     let tradeDate = null;
 
-    if (tradeDocument.confirmacionTradeo == false) {
+    if (tradeDocument.tradeConfirmation == false) {
         tradeStatus = 'Pendiente';
     } else {
         tradeStatus = 'Realizado';
-        tradeDate = new Date(tradeDocument.fechaTradeo._seconds * 1000 + tradeDocument.fechaTradeo._nanoseconds / 1000000).toLocaleString();
+        tradeDate = new Date(tradeDocument.tradeDate._seconds * 1000 + tradeDocument.tradeDate._nanoseconds / 1000000).toLocaleString();
     }
 
     return { issuerNickname, issuerId, issuerCardId, issuerCardName, recipientNickname, recipientId, recipientCardId, recipientCardName, creationDate, tradeStatus, tradeDate };

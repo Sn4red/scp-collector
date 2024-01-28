@@ -4,6 +4,6 @@ module.exports = {
     name: Events.ClientReady,
     once: true,
     execute(client) {
-        console.log(`Bot funcional ${client.user.tag}`);
+        console.log(`Functional bot ${client.user.tag}`);
     },
 };

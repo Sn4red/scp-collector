@@ -18,19 +18,19 @@ module.exports = {
 
         const userId = interaction.user.id;
 
-        const userReference = database.collection('usuario').doc(userId);
+        const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
             const tradeId = interaction.options.getString('solicitud');
 
-            const tradeReference = database.collection('tradeo').doc(tradeId);
+            const tradeReference = database.collection('trade').doc(tradeId);
             const tradeSnapshot = await tradeReference.get();
 
             if (tradeSnapshot.exists) {
                 const tradeDocument = tradeSnapshot.data();
 
-                if (tradeDocument.emisor == userId) {
+                if (tradeDocument.issuer == userId) {
                     const buttonsRow = displayButtons();
 
                     const reply = await interaction.editReply({
@@ -38,7 +38,7 @@ module.exports = {
                         components: [buttonsRow],
                     });
 
-                    const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.emisor;
+                    const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.issuer;
                     const time = 1000 * 30;
 
                     const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
@@ -51,19 +51,19 @@ module.exports = {
 
                             // The card is searched for the user whom it belongs, and it is unlocked. After that, the trade document
                             // is deleted.
-                            const obtentionReference = database.collection('obtencion').where('usuario', '==', userReference)
-                                                                                    .where('carta', '==', tradeDocument.cartaEmisor)
-                                                                                    .where('lockeado', '==', true).limit(1);
+                            const obtainingReference = database.collection('obtaining').where('user', '==', userReference)
+                                                                                    .where('card', '==', tradeDocument.issuerCard)
+                                                                                    .where('locked', '==', true).limit(1);
 
-                            const obtentionSnapshot = await obtentionReference.get();
+                            const obtainingSnapshot = await obtainingReference.get();
 
-                            const obtentionDocument = obtentionSnapshot.docs[0];
+                            const obtainingDocument = obtainingSnapshot.docs[0];
 
-                            obtentionDocument.ref.update({
-                                lockeado: false,
+                            obtainingDocument.ref.update({
+                                locked: false,
                             });
 
-                            await database.collection('tradeo').doc(tradeSnapshot.id).delete();
+                            await database.collection('trade').doc(tradeSnapshot.id).delete();
                             
                             await interaction.followUp({ content: `✅  Tradeo >> **\`${tradeSnapshot.id}\`** << cancelado con éxito.`, ephemeral: true });
                             await interaction.deleteReply();

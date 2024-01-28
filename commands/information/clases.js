@@ -4,7 +4,7 @@ module.exports = {
     cooldown: 1800,
     data: new SlashCommandBuilder()
         .setName('clases')
-        .setDescription('Detalla las diferentes clases de SCP\'s.'),
+        .setDescription('Detalla las diferentes clases de SCPs.'),
     async execute(interaction) {
         const embed = new EmbedBuilder()
             .setColor(0x000000)

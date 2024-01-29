@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const path = require('node:path');
+const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     cooldown: 1800,
@@ -6,6 +7,12 @@ module.exports = {
         .setName('classes')
         .setDescription('Details the different classes of SCPs.'),
     async execute(interaction) {
+        const thumbnailPath = path.join(__dirname, '../../images/embed/classes-thumbnail.jpg');
+        const iconFooterPath = path.join(__dirname, '../../images/embed/classes-iconFooter.gif');
+
+        const thumbnail = new AttachmentBuilder(thumbnailPath);
+        const iconFooter = new AttachmentBuilder(iconFooterPath);
+
         const embed = new EmbedBuilder()
             .setColor(0x000000)
             .setTitle('⚠️   Object Classes')
@@ -16,10 +23,10 @@ module.exports = {
                             '- Keter -> +30XP -> 21% probability\n' +
                             '- Thaumiel -> +100XP -> 7% probability\n' +
                             '- Apollyon -> +200XP -> 2% probability\n')
-            .setThumbnail('https://static.wikia.nocookie.net/scp/images/e/ea/Scp1471.jpg/revision/latest/scale-to-width-down/270?cb=20200804162123&path-prefix=es')
+            .setThumbnail('attachment://classes-thumbnail.jpg')
             .setTimestamp()
-            .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'https://media.tenor.com/qVlSOwUINxcAAAAC/scp-logo.gif' });
+            .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'attachment://classes-iconFooter.gif' });
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply({ embeds: [embed], files: [thumbnail, iconFooter] });
     },
 };

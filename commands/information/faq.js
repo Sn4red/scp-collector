@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const path = require('node:path');
+const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     cooldown: 1800,
@@ -6,11 +7,17 @@ module.exports = {
         .setName('faq')
         .setDescription('Frequently Asked Questions about bot functionality.'),
     async execute(interaction) {
+        const thumbnailPath = path.join(__dirname, '../../images/embed/faq-thumbnail.jpg');
+        const iconFooterPath = path.join(__dirname, '../../images/embed/faq-iconFooter.gif');
+
+        const thumbnail = new AttachmentBuilder(thumbnailPath);
+        const iconFooter = new AttachmentBuilder(iconFooterPath);
+
         const embed = new EmbedBuilder()
             .setColor(0x000000)
             .setTitle('📌   FAQ - Frequently Asked Questions')
             .setDescription('Here are some questions that may be common and could arise during the use of this bot.')
-            .setThumbnail('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQzl95DWl_GNe1tk4Z10e0lVfsavY_OhQNJQ&usqp=CAU')
+            .setThumbnail('attachment://faq-thumbnail.jpg')
             .setFields(
                 { name: 'Is my progress local to each server?', value: 'Your progress with the bot is global. Actions you take in one server may be reflected in another. ' +
                         'For example, if you obtain cards from one server, you should be able to view them from a different one.' },
@@ -18,8 +25,8 @@ module.exports = {
                 { name: 'Can extra benefits be obtained?', value: 'You can donate at the following link to see the details of benefits: <Patreon>' },
             )
             .setTimestamp()
-            .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'https://media.tenor.com/qVlSOwUINxcAAAAC/scp-logo.gif' });
+            .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'attachment://faq-iconFooter.gif' });
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply({ embeds: [embed], files: [thumbnail, iconFooter] });
     },
 };

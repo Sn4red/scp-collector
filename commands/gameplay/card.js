@@ -8,8 +8,8 @@ const database = firebase.firestore();
 module.exports = {
     cooldown: 300,
     data: new SlashCommandBuilder()
-        .setName('tarjeta')
-        .setDescription('Muestra tu tarjeta personal y el detalle de tu progreso.'),
+        .setName('card')
+        .setDescription('Displays your personal card and progress details.'),
     async execute(interaction) {
         // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
@@ -56,7 +56,7 @@ module.exports = {
             const attachment = await displayCard(newUser, interaction.user.id, interaction);
 
             await interaction.editReply({ files: [attachment] });
-            await interaction.followUp('👋  ¡Usuario nuevo! Ya puedes usar los comandos para coleccionar cartas y demás.');
+            await interaction.followUp('👋  New user! You can now use commands to collect cards and more.');
         }
     },
 };
@@ -103,40 +103,40 @@ async function displayCard(document, userId, interaction) {
     // Header
     context.font = 'bold 15px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
-    context.fillText('FUNDACIÓN SCP', 178, 28);
+    context.fillText('SCP FOUNDATION', 175, 28);
     
     // Code name.
     context.font = 'bold 16px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
-    context.fillText('Agente:', 145, 65);
+    context.fillText('Agent:', 145, 65);
     
     context.font = 'bold 14px Roboto Condensed';
-    context.fillText(nickname, 202, 65);
+    context.fillText(nickname, 194, 65);
     
     // Rank.
     context.font = 'bold 16px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
-    context.fillText('Rango:', 145, 91);
+    context.fillText('Rank:', 145, 91);
     
     context.font = 'bold 14px Roboto Condensed';
-    context.fillText(rank, 197, 91);
+    context.fillText(rank, 188, 91);
     
-    // Issuance date.
+    // Issue date.
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
-    context.fillText('Fecha de emisión:', 145, 117);
-    context.fillText(issueDate, 220, 117);
+    context.fillText('Issue Date:', 145, 117);
+    context.fillText(issueDate, 195, 117);
     
     // Captured SCPs.
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
-    context.fillText('SCPs capturados:', 145, 132);
-    context.fillText(SCPCount + '', 219, 132);
+    context.fillText('Captured SCPs:', 145, 132);
+    context.fillText(SCPCount + '', 212, 132);
     
     // Classified label.
     context.font = '13px Roboto Condensed';
     context.fillStyle = '#FF0000';
-    context.fillText('[ Clasificado ]', 41, 28);
+    context.fillText('[ Classified ]', 43, 28);
     
     // User ID.
     context.font = 'bold 8px Roboto Condensed';
@@ -169,7 +169,7 @@ async function displayCard(document, userId, interaction) {
     // User level.
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
-    context.fillText(`Nivel: ${level}`, 25, 203);
+    context.fillText(`Level: ${level}`, 25, 203);
     
     // User XP.
     context.font = 'bold 10px Roboto Condensed';
@@ -192,9 +192,9 @@ async function displayCard(document, userId, interaction) {
     }
         
     if (nextLevel.length > 2) {
-        context.fillText(`Sgte. Nivel: ${nextLevel}`, 340, 203);
+        context.fillText(`Next Level: ${nextLevel}`, 341, 203);
     } else {
-        context.fillText(`Sgte. Nivel: ${nextLevel}`, 368, 203);
+        context.fillText(`Next Level: ${nextLevel}`, 369, 203);
     }
     
     // Using undici to make HTTP request with better performance.

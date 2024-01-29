@@ -6,8 +6,8 @@ const database = firebase.firestore();
 module.exports = {
     cooldown: 60,
     data: new SlashCommandBuilder()
-        .setName('tradear')
-        .setDescription('Crea una petición de tradeo directa a un usuario.'),
+        .setName('trade')
+        .setDescription('Creates a direct trade request to a user.'),
     async execute(interaction) {
         const userId = interaction.user.id;
 
@@ -58,15 +58,15 @@ module.exports = {
 
                                 lockCard(issuerUserReference, foundCardIssuer);
 
-                                modalInteraction.editReply(`✅  Solicitud de tradeo enviada con el ID **\`${tradeEntry.id}\`**. Puedes usar el mismo ID para cancelar la solicitud.`);
+                                modalInteraction.editReply(`✅  Trade request sent with ID **\`${tradeEntry.id}\`**. You can use the same ID to cancel de request.`);
                             } else {
-                                modalInteraction.editReply('❌  Solicitud cancelada ¡Parece que el usuario no tiene la carta que quieres o está lockeada!');
+                                modalInteraction.editReply('❌  Request canceled! It seems that the user either doesn\'t have the card you want or it is locked.');
                             }
                         } else {
-                            modalInteraction.editReply('❌  Solicitud cancelada. El usuario con el que intentas tradear todavía no está registrado o no se ha encontrado.');
+                            modalInteraction.editReply('❌  Request canceled. The user you are trying to trade with is either not registered or not found.');
                         }
                     } else {
-                        modalInteraction.editReply('❌  Solicitud cancelada ¡Parece que no tienes la carta que estás ofreciendo o está lockeada!');
+                        modalInteraction.editReply('❌  Request canceled! It seems that you don\'t have the card you are offering, or it is locked.');
                     }
                 } else {
                     modalInteraction.editReply(fieldsValidation.errorMessage);
@@ -74,10 +74,10 @@ module.exports = {
             }).catch((error) => {
                 console.log(`Error: ${error}`);
 
-                interaction.followUp({ content: '❌  Solicitud cancelada debido a la inactividad.', ephemeral: true });
+                interaction.followUp({ content: '❌  Request canceled due to inactivity.', ephemeral: true });
             });
         } else {
-            await interaction.reply({ content: '❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.', ephemeral: true });
+            await interaction.reply({ content: '❌  You are not registered! Use /card to save your information.', ephemeral: true });
         }
     },
 };
@@ -86,18 +86,18 @@ module.exports = {
 function displayModal(idUsuario) {
     const modal = new ModalBuilder()
         .setCustomId(`modal-${idUsuario}`)
-        .setTitle('Solicitud de Tradeo  📑');
+        .setTitle('Trade Request  📑');
         
     const txtRecipient = new TextInputBuilder()
         .setCustomId('txtRecipient')
-        .setLabel('Usuario:')
+        .setLabel('User:')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('123456789')
         .setRequired(true);
 
     const txtIssuerCard = new TextInputBuilder()
         .setCustomId('txtIssuerCard')
-        .setLabel('Carta a ofrecer:')
+        .setLabel('Card to offer:')
         .setStyle(TextInputStyle.Short)
         .setMinLength(7)
         .setMaxLength(8)
@@ -106,7 +106,7 @@ function displayModal(idUsuario) {
         
     const txtRecipientCard = new TextInputBuilder()
         .setCustomId('txtRecipientCard')
-        .setLabel('Carta deseada:')
+        .setLabel('Desired card:')
         .setStyle(TextInputStyle.Short)
         .setMinLength(7)
         .setMaxLength(8)
@@ -135,21 +135,21 @@ function validateFields(recipientValue, issuerCardValue, recipientCardValue) {
     const issuerCardValidation = /^scp-\d{3,4}$/i.test(fixedIssuerCardValue);
     const recipientCardValidation = /^scp-\d{3,4}$/i.test(fixedRecipientCardValue);
     
-    let errorMessage = '❌  Los siguientes datos fueron ingresados incorrectamente:\n';
+    let errorMessage = '❌  The following data was entered incorrectly:\n';
     let errorState = false;
 
     if (!recipientValidation) {
-        errorMessage += '▫️ ID usuario\n';
+        errorMessage += '▫️ User ID\n';
         errorState = true;
     }
     
     if (!issuerCardValidation) {
-        errorMessage += '▫️ Carta ofrecida\n';
+        errorMessage += '▫️ Offered card\n';
         errorState = true;
     }
 
     if (!recipientCardValidation) {
-        errorMessage += '▫️ Carta deseada';
+        errorMessage += '▫️ Desired card';
         errorState = true;
     }
 

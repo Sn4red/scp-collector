@@ -6,11 +6,11 @@ const database = firebase.firestore();
 module.exports = {
     cooldown: 20,
     data: new SlashCommandBuilder()
-        .setName('vertradeo')
-        .setDescription('Muestra el detalle de un tradeo.')
+        .setName('viewtrade')
+        .setDescription('Displays the details of a trade request.')
         .addStringOption(option =>
-            option.setName('solicitud')
-            .setDescription('ID solicitud del tradeo a consultar.')
+            option.setName('request')
+            .setDescription('Trade request ID to inquire about.')
             .setRequired(true)),
     async execute(interaction) {
         // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
@@ -20,7 +20,7 @@ module.exports = {
         const userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
-            const tradeId = interaction.options.getString('solicitud');
+            const tradeId = interaction.options.getString('request');
 
             const tradeReference = database.collection('trade').doc(tradeId);
             const tradeSnapshot = await tradeReference.get();
@@ -32,27 +32,27 @@ module.exports = {
 
                 const tradeEmbed = new EmbedBuilder()
                     .setColor(0x000000)
-                    .setTitle(`📃  Tradeo #: \`${tradeSnapshot.id}\``)
+                    .setTitle(`📃  Trade #: \`${tradeSnapshot.id}\``)
                     .addFields(
-                        { name: '👤  Emisor', value: `\`${tradeObject.issuerNickname}\` (\`${tradeObject.issuerId}\`)` },
-                        { name: '📓  Carta', value: `\`${tradeObject.issuerCardId}\` // \`${tradeObject.issuerCardName}\`` },
-                        { name: '👤  Receptor', value: `\`${tradeObject.recipientNickname}\` (\`${tradeObject.recipientId}\`)` },
-                        { name: '📓  Carta', value: `\`${tradeObject.recipientCardId}\` // \`${tradeObject.recipientCardName}\`` },
-                        { name: '🕒  Fecha de Creación', value: `\`${tradeObject.creationDate}\`` },
-                        { name: '📌  Estado', value: `**\`${tradeObject.tradeStatus}\`**` },
+                        { name: '👤  Issuer', value: `\`${tradeObject.issuerNickname}\` (\`${tradeObject.issuerId}\`)` },
+                        { name: '📓  Card', value: `\`${tradeObject.issuerCardId}\` // \`${tradeObject.issuerCardName}\`` },
+                        { name: '👤  Recipient', value: `\`${tradeObject.recipientNickname}\` (\`${tradeObject.recipientId}\`)` },
+                        { name: '📓  Card', value: `\`${tradeObject.recipientCardId}\` // \`${tradeObject.recipientCardName}\`` },
+                        { name: '🕒  Creation Date', value: `\`${tradeObject.creationDate}\`` },
+                        { name: '📌  Status', value: `**\`${tradeObject.tradeStatus}\`**` },
                     )
                     .setTimestamp();
 
                 if (tradeObject.tradeDate != null) {
-                    tradeEmbed.addFields({ name: '🕢  Fecha de Tradeo', value: `\`${tradeObject.tradeDate}\`` });
+                    tradeEmbed.addFields({ name: '🕢  Trade Date', value: `\`${tradeObject.tradeDate}\`` });
                 }
 
                 await interaction.editReply({ embeds: [tradeEmbed] });
             } else {
-                await interaction.editReply('❌  ¡No existe un tradeo con ese ID!');
+                await interaction.editReply('❌  There is no trade with that ID!');
             }
         } else {
-            await interaction.editReply('❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('❌  You are not registered! Use /card to save your information.');
         }
     },
 };
@@ -88,9 +88,9 @@ async function formattingValues(tradeDocument) {
     let tradeDate = null;
 
     if (tradeDocument.tradeConfirmation == false) {
-        tradeStatus = 'Pendiente';
+        tradeStatus = 'Pending';
     } else {
-        tradeStatus = 'Realizado';
+        tradeStatus = 'Completed';
         tradeDate = new Date(tradeDocument.tradeDate._seconds * 1000 + tradeDocument.tradeDate._nanoseconds / 1000000).toLocaleString();
     }
 

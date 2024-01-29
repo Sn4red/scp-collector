@@ -6,8 +6,8 @@ const database = firebase.firestore();
 module.exports = {
     cooldown: 20,
     data: new SlashCommandBuilder()
-        .setName('tradeosenviados')
-        .setDescription('Lista los tradeos que están pendientes junto con un historial de tradeos que has realizado.'),
+        .setName('senttrades')
+        .setDescription('Lists pending trade requests along with a history of trades you have completed.'),
     async execute(interaction) {
         const userId = interaction.user.id;
 
@@ -47,11 +47,11 @@ module.exports = {
 
                     // When 10 trade entries are accumulated, they are stored on a single page and the variable is reset.
                     if (entriesPerPageLimit == 10) {
-                        tradesList += '\n**🔻🔻🔻  Historial de Tradeos Recientes  🔻🔻🔻**';
+                        tradesList += '\n**🔻🔻🔻  Recent Trade History  🔻🔻🔻**';
 
                         const pageEmbed = new EmbedBuilder()
                             .setColor(0x000000)
-                            .setTitle('📃  __**Lista de Tradeos Enviados**__')
+                            .setTitle('📃  __**List of Sent Trades**__')
                             .setDescription(tradesList);
 
                         const filledEmbed = await historyTrades(userId, pageEmbed);
@@ -70,11 +70,11 @@ module.exports = {
                             return;
                         }
 
-                        tradesList += '\n**🔻🔻🔻  Historial de Tradeos Recientes  🔻🔻🔻**';
+                        tradesList += '\n**🔻🔻🔻  Recent Trade History  🔻🔻🔻**';
 
                         const pageEmbed = new EmbedBuilder()
                             .setColor(0x000000)
-                            .setTitle('📃  __**Lista de Tradeos Enviados**__')
+                            .setTitle('📃  __**List of Sent Trades**__')
                             .setDescription(tradesList);
 
                         const filledEmbed = await historyTrades(userId, pageEmbed);
@@ -141,15 +141,15 @@ module.exports = {
             } else {
                 const embed = new EmbedBuilder()
                     .setColor(0x000000)
-                    .setTitle('📃  __**Lista de Tradeos Enviados**__')
-                    .setDescription('No se han encontrado tradeos pendientes.\n\n**🔻🔻🔻  Historial de Tradeos Recientes  🔻🔻🔻**');
+                    .setTitle('📃  __**List of Sent Trades**__')
+                    .setDescription('No pending trade requests found.\n\n**🔻🔻🔻  Recent Trade History  🔻🔻🔻**');
 
                 const filledEmbed = await historyTrades(userId, embed);
 
                 await interaction.editReply({ embeds: [filledEmbed] });
             }
         } else {
-            await interaction.editReply('❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('❌  You are not registered! Use /card to save your information.');
         }
     },
 };
@@ -184,7 +184,7 @@ async function historyTrades(userId, embed) {
         const issuerNickname = issuerDocument.nickname;
 
         embed.addFields(
-            { name: ' ', value: `* ${issuerCardSnapshot.id} por ${recipientCardSnapshot.id} (${tradeDate}) -> ${issuerNickname}` },
+            { name: ' ', value: `* ${issuerCardSnapshot.id} for ${recipientCardSnapshot.id} (${tradeDate}) -> ${issuerNickname}` },
         );
     }
 

@@ -39,8 +39,8 @@ const ranks = [
 module.exports = {
     cooldown: 5,
     data: new SlashCommandBuilder()
-        .setName('capturar')
-        .setDescription('Atrapa un SCP y lo añades a tu colección.'),
+        .setName('capture')
+        .setDescription('Capture an SCP and add it to your collection.'),
     async execute(interaction) {
         // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
@@ -55,7 +55,7 @@ module.exports = {
 
             // Validates if the daily capture limit (5) has been reached.
             if (userDocument.dailyCaptures >= 5) {
-                await interaction.editReply('💥  Has alcanzado el límite de capturas diarias de SCPs.');
+                await interaction.editReply('💥  You have reached the daily limit of SCP captures.');
             } else {
                 // Class obtained through probability.
                 const obtainedClass = classProbability();
@@ -88,11 +88,11 @@ module.exports = {
                     // they are resized to 300x200 pixels.
                     const cardEmbed = new EmbedBuilder()
                         .setColor(0x000000)
-                        .setTitle(`🎲  Ítem #: \`${cardId}\` // \`${name}\``)
+                        .setTitle(`🎲  Item #: \`${cardId}\` // \`${name}\``)
                         .setDescription(`**+${xp[classCard]} XP**`)
                         .addFields(
-                            { name: '👾  Clase', value: `\`${classCard}\``, inline: true },
-                            { name: '📄  Archivo', value: file, inline: true },
+                            { name: '👾  Class', value: `\`${classCard}\``, inline: true },
+                            { name: '📄  File', value: `**[View Document](${file})**`, inline: true },
                         )
                         .setImage(`attachment://${cardId}.jpg`)
                         .setTimestamp();
@@ -116,18 +116,18 @@ module.exports = {
 
                     switch (promotionSystem.promotionType) {
                         case 'level':
-                            await interaction.followUp(`✨  Felicidades ${promotionSystem.userDocument.nickname}. Ahora eres nivel ${promotionSystem.userDocument.level}.  ✨`);
+                            await interaction.followUp(`✨  Nice, ${promotionSystem.userDocument.nickname}! You are now level ${promotionSystem.userDocument.level}.  ✨`);
                             break;
                         case 'rank':
-                            await interaction.followUp(`✨  Felicidades ${promotionSystem.userDocument.nickname}. Has ascendido a **${ranks[promotionSystem.indexCurrentElement]}**.  ✨`);
+                            await interaction.followUp(`✨  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**.  ✨`);
                             break;
                     }
                 } else {
-                    await interaction.editReply('❌  Error al intentar capturar un SCP. Inténtalo más tarde.');
+                    await interaction.editReply('❌  Error while attempting to capture an SCP. Please try again later.');
                 }
             }
         } else {
-            await interaction.editReply('❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('❌  You are not registered! Use /card to save your information.');
         }
     },
 };
@@ -201,9 +201,9 @@ async function promotionProcess(classCard, userDocument, userReference, cardEmbe
     }
     
     if (userDocument.dailyCaptures == 4) {
-        cardEmbed.setFooter({ text: `${5 - userDocument.dailyCaptures} tiro restante` });
+        cardEmbed.setFooter({ text: `${5 - userDocument.dailyCaptures} shot remaining` });
     } else {
-        cardEmbed.setFooter({ text: `${5 - userDocument.dailyCaptures} tiros restantes` });
+        cardEmbed.setFooter({ text: `${5 - userDocument.dailyCaptures} shots remaining` });
     }
 
     return { cardEmbed, promotionType, userDocument, indexCurrentElement };

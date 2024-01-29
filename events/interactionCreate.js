@@ -11,7 +11,7 @@ module.exports = {
         const command = interaction.client.commands.get(interaction.commandName);
     
         if (!command) {
-            console.error(`Ningún comando de nombre ${interaction.commandName} fue encontrado.`);
+            console.error(`No command with the name ${interaction.commandName} was found.`);
             return;
         }
 
@@ -30,7 +30,7 @@ module.exports = {
 
             if (now < expirationTime) {
                 const expiredTimestamp = Math.round(expirationTime / 1000);
-                return interaction.reply({ content: `⌛  Podrás usar de nuevo /\`${command.data.name}\` <t:${expiredTimestamp}:R>.`, ephemeral: true });
+                return interaction.reply({ content: `⌛  You can use /\`${command.data.name}\` again <t:${expiredTimestamp}:R>.`, ephemeral: true });
             }
         }
 
@@ -42,9 +42,9 @@ module.exports = {
         } catch (error) {
             console.error(error);
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: '❌  ¡Se produjo un error al ejecutar este comando!', ephemeral: true });
+                await interaction.followUp({ content: '❌  An error occurred while executing this command!', ephemeral: true });
             } else {
-                await interaction.reply({ content: '❌  ¡Se produjo un error al ejecutar este comando!', ephemeral: true });
+                await interaction.reply({ content: '❌  An error occurred while executing this command!', ephemeral: true });
             }
         }
     },

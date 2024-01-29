@@ -6,11 +6,11 @@ const database = firebase.firestore();
 module.exports = {
     cooldown: 20,
     data: new SlashCommandBuilder()
-        .setName('cancelartradeo')
-        .setDescription('Cancela un tradeo en específico que hayas enviado.')
+        .setName('canceltrade')
+        .setDescription('Cancels a specific trade request you have sent.')
         .addStringOption(option =>
-            option.setName('solicitud')
-            .setDescription('ID solicitud del tradeo a cancelar.')
+            option.setName('request')
+            .setDescription('Trade request ID to cancel.')
             .setRequired(true)),
     async execute(interaction) {
         // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
@@ -22,7 +22,7 @@ module.exports = {
         const userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
-            const tradeId = interaction.options.getString('solicitud');
+            const tradeId = interaction.options.getString('request');
 
             const tradeReference = database.collection('trade').doc(tradeId);
             const tradeSnapshot = await tradeReference.get();
@@ -34,7 +34,7 @@ module.exports = {
                     const buttonsRow = displayButtons();
 
                     const reply = await interaction.editReply({
-                        content: `⛔  ¿Estás seguro(a) de cancelar la solicitud de tradeo **\`${tradeSnapshot.id}\`**?`,
+                        content: `⛔  Are you sure you want to cancel the trade request **\`${tradeSnapshot.id}\`**?`,
                         components: [buttonsRow],
                     });
 
@@ -65,7 +65,7 @@ module.exports = {
 
                             await database.collection('trade').doc(tradeSnapshot.id).delete();
                             
-                            await interaction.followUp({ content: `✅  Tradeo >> **\`${tradeSnapshot.id}\`** << cancelado con éxito.`, ephemeral: true });
+                            await interaction.followUp({ content: `✅  Trade >> **\`${tradeSnapshot.id}\`** << successfully canceled.`, ephemeral: true });
                             await interaction.deleteReply();
                         }
 
@@ -83,13 +83,13 @@ module.exports = {
                         }
                     });
                 } else {
-                    await interaction.editReply('❌  Error. No puedes cancelar este tradeo porque no eres el/la propietario(a).');
+                    await interaction.editReply('❌  Error. You cannot cancel this trade because you are not the owner.');
                 }
             } else {
-                await interaction.editReply('❌  ¡No existe un tradeo con ese ID!');
+                await interaction.editReply('❌  There is no trade with that ID!');
             }
         } else {
-            await interaction.editReply('❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('❌  You are not registered! Use /card to save your information.');
         }
     },
 };
@@ -97,12 +97,12 @@ module.exports = {
 function displayButtons() {
     const confirmButton = new ButtonBuilder()
         .setCustomId('confirm')
-        .setLabel('Confirmar')
+        .setLabel('Confirm')
         .setStyle(ButtonStyle.Danger);
     
     const cancelButton = new ButtonBuilder()
         .setCustomId('cancel')
-        .setLabel('Cancelar')
+        .setLabel('Cancel')
         .setStyle(ButtonStyle.Secondary);
 
     const row = new ActionRowBuilder();

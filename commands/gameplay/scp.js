@@ -7,7 +7,7 @@ module.exports = {
     cooldown: 300,
     data: new SlashCommandBuilder()
         .setName('scp')
-        .setDescription('Lista tu colección de SCPs.'),
+        .setDescription('List your collection of SCPs.'),
     async execute(interaction) {
         const userId = interaction.user.id;
 
@@ -62,7 +62,7 @@ module.exports = {
                             return;
                         }
 
-                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colección de ${user.nickname} **__`).setDescription(cardsList));
+                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colecction of ${user.nickname} **__`).setDescription(cardsList));
                     }
                 });
 
@@ -123,10 +123,10 @@ module.exports = {
                     });
                 });
             } else {
-                await interaction.editReply('❌  No tienes SCPs capturados!');
+                await interaction.editReply('❌  You don\'t have any SCPs captured!');
             }
         } else {
-            await interaction.editReply('❌  ¡No estás registrado(a)! Usa /tarjeta para guardar tus datos.');
+            await interaction.editReply('❌  You are not registered! Use /card to save your information.');
         }
     },
 };

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
 const cron = require('node-cron');
@@ -83,6 +83,7 @@ module.exports = {
                     const name = randomCard.data.name;
     
                     const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
+                    const image = new AttachmentBuilder(imagePath);
     
                     // To ensure all images have the same size,
                     // they are resized to 300x200 pixels.
@@ -111,7 +112,7 @@ module.exports = {
 
                     await interaction.editReply({
                         embeds: [promotionSystem.cardEmbed],
-                        files: [imagePath],
+                        files: [image],
                     });
 
                     switch (promotionSystem.promotionType) {

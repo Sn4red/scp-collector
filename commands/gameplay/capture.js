@@ -1,3 +1,7 @@
+/** 
+ * * Investigar y aplicar transaction a los tiritos, para no aplicar cambios sueltos por si se pierde la conexion, o hay algun error.
+ */
+
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
@@ -5,8 +9,8 @@ const cron = require('node-cron');
 
 const database = firebase.firestore();
 
-// The XP obtained based on the SCP class.
-const xp = {
+// * The XP obtained based on the SCP class.
+const normalXP = {
     'Safe': 5,
     'Euclid': 15,
     'Keter': 30,
@@ -14,7 +18,15 @@ const xp = {
     'Apollyon': 200,
 };
 
-// The maximum XP per level (20 levels per rank) based on the user's rank.
+const premiumXP = {
+    'Safe': 10,
+    'Euclid': 30,
+    'Keter': 60,
+    'Thaumiel': 200,
+    'Apollyon': 400,
+};
+
+// * The maximum XP per level (500 levels per rank) based on the user's rank.
 const userXP = {
     'Class D': 50,
     'Security Officer': 100,
@@ -25,7 +37,7 @@ const userXP = {
     'O5 Council Member': 10000,
 };
 
-// User ranks.
+// * User ranks.
 const ranks = [
     'Class D',
     'Security Officer',
@@ -37,94 +49,136 @@ const ranks = [
 ];
 
 module.exports = {
-    cooldown: 5,
+    cooldown: 2,
     data: new SlashCommandBuilder()
         .setName('capture')
         .setDescription('Capture an SCP and add it to your collection.'),
     async execute(interaction) {
-        // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
-        // Database query is performed.
+        // * Database query is performed.
         const userReference = database.collection('user').doc(interaction.user.id);
         const userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
-            // Data is retrieved from here for daily limit validation.
+            // * Data is retrieved from here for daily limit validation.
             const userDocument = userSnapshot.data();
 
-            // Validates if the daily capture limit (5) has been reached.
-            if (userDocument.dailyCaptures >= 5) {
+            // * Validates if there are still daily captures available.
+            if (userDocument.dailyAttemptsRemaining === 0) {
                 await interaction.editReply('💥  You have reached the daily limit of SCP captures.');
             } else {
-                // Class obtained through probability.
-                const obtainedClass = classProbability();
+                // * Class obtained through probability.
+                const obtainedClass = classProbability(userDocument.premium);
 
-                // The subcollection has the same name as the document containing it, but is entirely in lowercase.
+                // * The subcollection has the same name as the document containing it, but is entirely in lowercase.
                 const subCollection = obtainedClass.charAt(0).toLowerCase() + obtainedClass.slice(1);
     
-                // Retrieves all SCP cards of the class obtained through probability.
+                // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
                 const cardReference = database.collection('card').doc(obtainedClass).collection(subCollection);
-                const cardSnapshot = await cardReference.get();
-    
-                if (!cardSnapshot.empty) {
-                    // Transforms the documents from the QuerySnapshot object into an array.
-                    const cardsArray = cardSnapshot.docs.map((x) => ({ id: x.id, data: x.data() }));
-    
-                    // Using the Math object, a random index is obtained based on the number of cards in the array,
-                    // and a random card is selected.
-                    const randomIndex = Math.floor(Math.random() * cardsArray.length);
-                    const randomCard = cardsArray[randomIndex];
-    
-                    // Card data.
-                    const cardId = randomCard.id;
-                    const classCard = obtainedClass;
-                    const file = randomCard.data.file;
-                    const name = randomCard.data.name;
-    
-                    const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
-                    const image = new AttachmentBuilder(imagePath);
-    
-                    // To ensure all images have the same size,
-                    // they are resized to 300x200 pixels.
-                    const cardEmbed = new EmbedBuilder()
-                        .setColor(0x000000)
-                        .setTitle(`🎲  Item #: \`${cardId}\` // \`${name}\``)
-                        .setDescription(`**+${xp[classCard]} XP**`)
-                        .addFields(
-                            { name: '👾  Class', value: `\`${classCard}\``, inline: true },
-                            { name: '📄  File', value: `**[View Document](${file})**`, inline: true },
-                        )
-                        .setImage(`attachment://${cardId}.jpg`)
-                        .setTimestamp();
+                const cardSnapshot = await cardReference.count().get();
+
+                const classCount = cardSnapshot.data().count;
+
+                // * Using the Math object, a random number is obtained based on the number of cards,
+                // * and a random card is selected matching the random number with the 'random' field in the document.
+                // * We add 1 to the result in case it returns 0.
+                const randomNumber = Math.floor(Math.random() * classCount) + 1;
                     
-                    // The entry of obtaining the card is inserted.
-                    const obtainingEntry = database.collection('obtaining').doc();
+                const selectedCardReference = database.collection('card').doc(obtainedClass).collection(subCollection);
+                const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
+                const selectedCardSnapshot = await selectedCardQuery.get();
+
+                const document = selectedCardSnapshot.docs[0];
+                const selectedCardDocument = document.data();
     
-                    await obtainingEntry.set({
-                        card: database.collection('card').doc(obtainedClass).collection(subCollection).doc(cardId),
-                        user: userReference,
-                        locked: false,
-                    });
+                // * Card data.
+                const cardId = document.id;
+                const classCard = obtainedClass;
+                const file = selectedCardDocument.file;
+                const name = selectedCardDocument.name;
+    
+                const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
+                const image = new AttachmentBuilder(imagePath);
+    
+                // * To ensure all images have the same size,
+                // * they are resized to 300x200 pixels.
+                const cardEmbed = new EmbedBuilder()
+                    .setTitle(`🎲  Item #: \`${cardId}\` // \`${name}\``)
+                    .addFields(
+                        { name: '👾  Class', value: `\`${classCard}\``, inline: true },
+                    )
+                    .setImage(`attachment://${cardId}.jpg`)
+                    .setTimestamp();
 
-                    // The rank and level promotion is performed here (if applicable), along with the increase of daily limits.
-                    const promotionSystem = await promotionProcess(classCard, userDocument, userReference, cardEmbed);
+                let holographicValue = holographicProbability();
+                    
+                if (userDocument.premium) {
+                    cardEmbed.setDescription(`**+${premiumXP[classCard]} XP**`);
 
-                    await interaction.editReply({
-                        embeds: [promotionSystem.cardEmbed],
-                        files: [image],
-                    });
+                    switch (holographicValue) {
+                        case 'Diamond':
+                            cardEmbed.setColor(0x00bfff);
 
-                    switch (promotionSystem.promotionType) {
-                        case 'level':
-                            await interaction.followUp(`✨  Nice, ${promotionSystem.userDocument.nickname}! You are now level ${promotionSystem.userDocument.level}.  ✨`);
+                            cardEmbed.addFields(
+                                { name: '🟦  Diamond', value: '+100 XP', inline: true },
+                            );
+
                             break;
-                        case 'rank':
-                            await interaction.followUp(`✨  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**.  ✨`);
+                        case 'Golden':
+                            cardEmbed.setColor(0xffd700);
+
+                            cardEmbed.addFields(
+                                { name: '🟨  Golden', value: '+70 XP', inline: true },
+                            );
+
                             break;
+                        case 'Emerald':
+                            cardEmbed.setColor(0x00b65c);
+
+                            cardEmbed.addFields(
+                                { name: '🟩  Emerald', value: '+40 XP', inline: true },
+                            );
+
+                            break;
+                        default:
+                            cardEmbed.setColor(0x010101);
                     }
                 } else {
-                    await interaction.editReply('❌  Error while attempting to capture an SCP. Please try again later.');
+                    cardEmbed.setDescription(`**+${normalXP[classCard]} XP**`);
+                    cardEmbed.setColor(0x000000);
+
+                    holographicValue = 'Normal';
+                }
+
+                cardEmbed.addFields(
+                    { name: '📄  File', value: `**[View Document](${file})**`, inline: true },
+                );
+                    
+                // * The entry of obtaining the card is inserted.
+                const obtainingEntry = database.collection('user').doc(userSnapshot.id).collection('obtaining').doc();
+    
+                await obtainingEntry.set({
+                    card: database.collection('card').doc(obtainedClass).collection(subCollection).doc(cardId),
+                    holographic: holographicValue,
+                });
+
+                // * The rank and level promotion is performed here (if applicable), along with the increase of daily limits.
+                const promotionSystem = await promotionProcess(classCard, holographicValue, userDocument, userReference, cardEmbed);
+
+                await interaction.editReply({
+                    embeds: [promotionSystem.cardEmbed],
+                    files: [image],
+                });
+
+                switch (promotionSystem.promotionType) {
+                    case 'level':
+                        await interaction.followUp(`✨  Nice, ${promotionSystem.userDocument.nickname}! You are now level ${promotionSystem.userDocument.level}.  ✨`);
+                        break;
+                    case 'rank':
+                        await interaction.followUp(`✨  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**.  ✨`);
+                        break;
                 }
             }
         } else {
@@ -133,21 +187,36 @@ module.exports = {
     },
 };
 
-// This function defines the probability per class (rarity) in an array,
-// and determines the class to choose based on cumulative probability.
-function classProbability() {
-    const classes = [
-        { name: 'Safe', probability: 40 },
+// * This function defines the probability per class (rarity) in an array,
+// * and determines the class to choose based on cumulative probability.
+function classProbability(isPremium) {
+    const normalClasses = [
+        { name: 'Safe', probability: 43 },
         { name: 'Euclid', probability: 30 },
         { name: 'Keter', probability: 21 },
-        { name: 'Thaumiel', probability: 7 },
+        { name: 'Thaumiel', probability: 4 },
         { name: 'Apollyon', probability: 2 },
+    ];
+
+    const premiumClasses = [
+        { name: 'Safe', probability: 32 },
+        { name: 'Euclid', probability: 28 },
+        { name: 'Keter', probability: 27 },
+        { name: 'Thaumiel', probability: 8 },
+        { name: 'Apollyon', probability: 5 },
     ];
 
     const random = Math.random() * 100;
     let cumulative = 0;
+    let preferredClasses = null;
 
-    for (const classCard of classes) {
+    if (isPremium) {
+        preferredClasses = premiumClasses;
+    } else {
+        preferredClasses = normalClasses;
+    }
+
+    for (const classCard of preferredClasses) {
         cumulative += classCard.probability;
 
         if (random < cumulative) {
@@ -155,76 +224,157 @@ function classProbability() {
         }
     }
 
-    return classes[0].name;
+    return preferredClasses[0].name;
 }
 
-async function promotionProcess(classCard, userDocument, userReference, cardEmbed) {
-    const earnedXP = xp[classCard];
-    const maxXP = userXP[userDocument.rank];
+function holographicProbability() {
+    const randomNumber = Math.random();
 
-    // The variable determines what type of promotion will be performed (rank or level),
-    // so that a different type of message is displayed.
-    let promotionType = 'no';
+    /**
+     * * This algorithm sets the probability of drawing holographic cards as follows:
+     * * - Diamond 0.7%
+     * * - Golden 2%
+     * * - Emerald 7%
+     */
+    
+    if (randomNumber < 0.007) {
+        return 'Diamond';
+    } else if (randomNumber < 0.02) {
+        return 'Golden';
+    } else if (randomNumber < 0.07) {
+        return 'Emerald';
+    } else {
+        return 'Normal';
+    }
+}
 
-    // This section retrieves the next rank based on the user's current rank. If the current rank is
-    // 'Council O5 Member', there is no promotion.
+async function promotionProcess(classCard, holographicValue, userDocument, userReference, cardEmbed) {
+    let earnedXP = null;
+
+    if (userDocument.premium) {
+        earnedXP = premiumXP[classCard];     
+    } else {
+        earnedXP = normalXP[classCard];
+    }
+
+    let maxXP = userXP[userDocument.rank];
+
+    // * The variable determines what type of promotion will be performed (rank or level),
+    // * so that a different type of message is displayed.
+    let promotionType = 'none';
+
+    // * This section retrieves the next rank based on the user's current rank. If the current rank is
+    // * 'Council O5 Member', there is no promotion.
     let indexCurrentElement = ranks.indexOf(userDocument.rank);
     indexCurrentElement++;
 
-    if (indexCurrentElement == 6) {
+    if (indexCurrentElement === 7) {
         indexCurrentElement--;
     }
 
-    if ((userDocument.xp + earnedXP) >= maxXP) {
-        if (userDocument.level < 20) {
-            promotionType = 'level';
+    let holographicXP = null;
 
-            await userReference.update({
-                level: ++userDocument.level,
-                xp: (userDocument.xp + earnedXP) - maxXP,
-                dailyCaptures: ++userDocument.dailyCaptures,
-            });
-        } else {
-            promotionType = 'rank';
+    switch (holographicValue) {
+        case 'Diamond':
+            holographicXP = 100;
+            break;
+        case 'Golden':
+            holographicXP = 70;
+            break;
+        case 'Emerald':
+            holographicXP = 40;
+            break;
+        default:
+            holographicXP = 0;
+    }
 
-            await userReference.update({
-                rank: ranks[indexCurrentElement],
-                level: 1,
-                xp: (userDocument.xp + earnedXP) - maxXP,
-                dailyCaptures: ++userDocument.dailyCaptures,
-            });
+    let fullXP = userDocument.xp + earnedXP + holographicXP;
+
+    let rankPromotion = false;
+
+    if (fullXP >= maxXP) {
+        while (fullXP >= maxXP) {
+            if (userDocument.level < 500) {
+                fullXP -= maxXP;
+                userDocument.level++;
+    
+                promotionType = 'level';
+            } else {
+                // * If the rank is O5 Council Member, after level 500 keeps leveling up.
+                if (userDocument.rank === 'O5 Council Member') {
+                    fullXP -= maxXP;
+                    userDocument.level++;
+
+                    promotionType = 'level';
+                } else {
+                    fullXP -= maxXP;
+                    userDocument.level = 1;
+                    userDocument.rank = ranks[indexCurrentElement];
+    
+                    rankPromotion = true;
+                    maxXP = userXP[userDocument.rank];
+                }
+            }
         }
     } else {
         await userReference.update({
-            xp: firebase.firestore.FieldValue.increment(earnedXP),
-            dailyCaptures: ++userDocument.dailyCaptures,
+            level: userDocument.level,
+            xp: fullXP,
+            dailyAttemptsRemaining: --userDocument.dailyAttemptsRemaining,
         });
     }
-    
-    if (userDocument.dailyCaptures == 4) {
-        cardEmbed.setFooter({ text: `${5 - userDocument.dailyCaptures} shot remaining` });
-    } else {
-        cardEmbed.setFooter({ text: `${5 - userDocument.dailyCaptures} shots remaining` });
+
+    if (rankPromotion) {
+        promotionType = 'rank';
     }
+
+    if (promotionType === 'level') {
+        await userReference.update({
+            level: userDocument.level,
+            xp: fullXP,
+            dailyAttemptsRemaining: --userDocument.dailyAttemptsRemaining,
+        });
+    }
+
+    if (promotionType === 'rank') {
+        await userReference.update({
+            rank: userDocument.rank,
+            level: userDocument.level,
+            xp: fullXP,
+            dailyAttemptsRemaining: --userDocument.dailyAttemptsRemaining,
+        });
+    }
+
+    cardEmbed.setFooter({ text: `${userDocument.dailyAttemptsRemaining} ${userDocument.dailyAttemptsRemaining === 1 ? 'shot' : 'shots'} remaining` });
 
     return { cardEmbed, promotionType, userDocument, indexCurrentElement };
 }
 
-// This function resets the daily limit for card captures.
+// * This function resets the daily limit for card captures.
+// * Sets to five for non Premium users, and 10 for premium.
 async function resetDailyLimit() {
     const userReference = database.collection('user');
     const userSnapshot = await userReference.get();
 
     userSnapshot.forEach(async (user) => {
         if (user.exists) {
-            await user.ref.update({
-                dailyCaptures: 0,
-            });
+            const userDocument = user.data();
+            const isPremium = userDocument.premium;
+
+            if (isPremium) {
+                await user.ref.update({
+                    dailyAttemptsRemaining: 10, 
+                });
+            } else {
+                await user.ref.update({
+                    dailyAttemptsRemaining: 5, 
+                });
+            }
         }
     });
 }
 
-// The cron task executes the reset function at midnight.
+// * The cron task executes the reset function at midnight.
 cron.schedule('0 0 * * *', async () => {
     console.log('*** Resetting daily attempts limit ***');
     await resetDailyLimit();

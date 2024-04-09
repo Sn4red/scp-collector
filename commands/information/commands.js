@@ -19,7 +19,7 @@ module.exports = {
             .setThumbnail('attachment://commands-thumbnail.gif')
             .addFields(
                 { name: '📜   Information', value: '/commands - Lists all usable commands.\n' +
-                                            '/system - Explains how ranks, levels, and experience work.\n' +
+                                            '/system - Explains how ranks, levels, and XP work.\n' +
                                             '/classes - Details the different classes of SCPs.\n' +
                                             '/history - Provides details on the theme of the bot for more context and a brief history of what the SCP Foundation is.\n' +
                                             '/faq - Frequently Asked Questions about bot functionality.\n' +

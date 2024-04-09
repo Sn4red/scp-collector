@@ -6,35 +6,38 @@ const firebase = require('../../utils/firebase');
 const database = firebase.firestore();
 
 module.exports = {
-    cooldown: 300,
+    cooldown: 60 * 7,
     data: new SlashCommandBuilder()
         .setName('card')
         .setDescription('Displays your personal card and progress details.'),
     async execute(interaction) {
-        // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
-        // Database query is performed.
+        // * Database query is performed.
         const userReference = database.collection('user').doc(interaction.user.id);
         const userSnapshot = await userReference.get();
 
-        // If the user exists, his data is updated, in this case the nickame (if it was changed manually).
+        // * If the user exists, the data is updated, in this case the nickame (if it was changed manually).
         if (userSnapshot.exists) {
-            await userReference.update({
-                nickname: interaction.user.username,
-            });
-
             const document = userSnapshot.data();
-            const userId = interaction.user.id;
 
-            // Uses the AttachmentBuilder class to process the file and be able to attach it in the reply.
-            const attachment = await displayCard(document, userId, interaction);
+            if (document.nickname !== interaction.user.username) {
+                await userReference.update({
+                    nickname: interaction.user.username,
+                });
+            }
+
+            document.nickname = interaction.user.username;
+
+            // * Uses the AttachmentBuilder class to process the file and be able to attach it in the reply.
+            const attachment = await displayCard(document, userSnapshot.id, interaction);
 
             await interaction.editReply({ files: [attachment] });
         } else {
-            // If the user doesn't exist, a new document is created before displaying the card.
+            // * If the user doesn't exist, a new document is created before displaying the card.
 
-            // Formats the date in YYYY/MM/DD.
+            // * Formats the date in YYYY/MM/DD.
             const currentDate = new Date();
 
             const year = currentDate.getFullYear();
@@ -42,17 +45,19 @@ module.exports = {
             const day = ('0' + currentDate.getDate()).slice(-2);
 
             const newUser = {
-                dailyCaptures: 0,
+                acceptTradeOffers: true,
+                dailyAttemptsRemaining: 5,
                 issueDate: year + '/' + month + '/' + day,
                 level: 1,
                 nickname: interaction.user.username,
+                premium: false,
                 rank: 'Class D',
                 xp: 0,
             };
 
             await database.collection('user').doc(interaction.user.id).set(newUser);
 
-            // Uses the AttachmentBuilder class to process the file and be attached in the reply.
+            // * Uses the AttachmentBuilder class to process the file and be attached in the reply.
             const attachment = await displayCard(newUser, interaction.user.id, interaction);
 
             await interaction.editReply({ files: [attachment] });
@@ -62,7 +67,7 @@ module.exports = {
 };
 
 async function displayCard(document, userId, interaction) {
-    // User data.
+    // * User data.
     const issueDate = document.issueDate;
     const id = userId;
     const nickname = document.nickname;
@@ -70,42 +75,37 @@ async function displayCard(document, userId, interaction) {
     const rank = document.rank;
     const xp = document.xp.toString();
 
-    // Query to the database regarding the number of obtained SCPs.
-    let SCPCount = 0;
-    const obtainingReference = database.collection('obtaining');
-    const obtainingSnapshot = await obtainingReference.where('user', '==', database.collection('user').doc(id)).get();
+    // * Aggregation query to the database counting the number of obtained SCPs.
+    const obtainingReference = database.collection('user').doc(id).collection('obtaining');
+    const obtainingSnapshot = await obtainingReference.count().get();
 
-    if (obtainingSnapshot.empty) {
-        SCPCount = 0;
-    } else {
-        SCPCount = obtainingSnapshot.size;
-    }
+    const SCPCount = obtainingSnapshot.data().count;
     
-    // Creates a canvas of 450x250 pixels and obtain its context.
-    // The context will be used to modify the canvas.
+    // * Creates a canvas of 450x250 pixels and obtain its context.
+    // * The context will be used to modify the canvas.
     const canvas = Canvas.createCanvas(450, 250);
     const context = canvas.getContext('2d');
     
-    // Loads the background image onto the canvas and uses its dimensions to stretch it. 
+    // * Loads the background image onto the canvas and uses its dimensions to stretch it. 
     const background = await Canvas.loadImage('./images/card/background-card.jpg');
     context.drawImage(background, 0, 0, canvas.width, canvas.height);
     
-    // Card border.
+    // * Card border.
     context.strokeStyle = '#000000';
     context.lineWidth = 10;
     context.strokeRect(0, 0, canvas.width, canvas.height);
     
-    // User photo border.
+    // * User photo border.
     context.strokeStyle = '#FFFFFF';
     context.lineWidth = 5;
     context.strokeRect(25, 55, 100, 100);
     
-    // Header
+    // * Header
     context.font = 'bold 15px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.fillText('SCP FOUNDATION', 175, 28);
     
-    // Code name.
+    // * Code name.
     context.font = 'bold 16px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.fillText('Agent:', 145, 65);
@@ -113,7 +113,7 @@ async function displayCard(document, userId, interaction) {
     context.font = 'bold 14px Roboto Condensed';
     context.fillText(nickname, 194, 65);
     
-    // Rank.
+    // * Rank.
     context.font = 'bold 16px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.fillText('Rank:', 145, 91);
@@ -121,39 +121,39 @@ async function displayCard(document, userId, interaction) {
     context.font = 'bold 14px Roboto Condensed';
     context.fillText(rank, 188, 91);
     
-    // Issue date.
+    // * Issue date.
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.fillText('Issue Date:', 145, 117);
     context.fillText(issueDate, 195, 117);
     
-    // Captured SCPs.
+    // * Captured SCPs.
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.fillText('Captured SCPs:', 145, 132);
     context.fillText(SCPCount + '', 212, 132);
     
-    // Classified label.
+    // * Classified label.
     context.font = '13px Roboto Condensed';
     context.fillStyle = '#FF0000';
     context.fillText('[ Classified ]', 43, 28);
     
-    // User ID.
+    // * User ID.
     context.font = 'bold 8px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.fillText(id, 367, 98);
     
-    // User progress bar.
+    // * User progress bar.
     context.fillStyle = '#1A1A1A';
     context.fillRect(22, 210, 406, 15);
     
-    // User progress fill bar.
+    // * User progress fill bar.
     const gradient = context.createLinearGradient(0, 213, 0, 222);
     gradient.addColorStop(0, '#AEE064');
     gradient.addColorStop(0.5, '#2E6C1F');
     context.fillStyle = gradient;
     
-    // Progress filling according to the rank.
+    // * Progress filling according to the rank.
     const multiplicationFactors = {
         'Class D': 8,
         'Security Officer': 4,
@@ -166,12 +166,12 @@ async function displayCard(document, userId, interaction) {
     
     context.fillRect(25, 213, xp * multiplicationFactors[rank], 9);
     
-    // User level.
+    // * User level.
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.fillText(`Level: ${level}`, 25, 203);
     
-    // User XP.
+    // * User XP.
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     
@@ -180,37 +180,49 @@ async function displayCard(document, userId, interaction) {
     
     context.fillText(xp + ' XP', xPosition, 203);
     
-    // User's next level.
+    // * User's next level.
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     
     let nextLevel = level;
     nextLevel++;
     
-    if (nextLevel == 21) {
-        nextLevel = 'Rank Up!';
+    if (rank !== 'O5 Council Member') {
+        if (nextLevel === 501) {
+            nextLevel = 'Rank Up!';
+        }
     }
-        
-    if (nextLevel.length > 2) {
+
+    if (nextLevel === 'Rank Up!') {
         context.fillText(`Next Level: ${nextLevel}`, 341, 203);
+    } else if (nextLevel.toString().length > 3) {
+        context.fillText(`Next Level: ${nextLevel}`, 355, 203);
+    } else if (nextLevel.toString().length > 2) {
+        context.fillText(`Next Level: ${nextLevel}`, 364, 203);
     } else {
         context.fillText(`Next Level: ${nextLevel}`, 369, 203);
     }
     
-    // Using undici to make HTTP request with better performance.
-    // Loading the user's photo.
+    // * Using undici to make HTTP request with better performance.
+    // * Loading the user's photo.
     const { body: avatarBody } = await request(interaction.user.displayAvatarURL({ extension: 'jpg' }));
     const avatar = await Canvas.loadImage(await avatarBody.arrayBuffer());
     
-    // Loading the logo.
-    const logo = await Canvas.loadImage('./images/card/scp-logo-card.png');
+    // * Loading the logo.
+    let logo = null;
+
+    if (document.premium === true) {
+        logo = await Canvas.loadImage('./images/card/scp-premium-logo-card.png');
+    } else {
+        logo = await Canvas.loadImage('./images/card/scp-normal-logo-card.png');
+    }
     
-    // Loading the DataMatrix QR code.
+    // * Loading the DataMatrix QR code.
     const qr = await Canvas.loadImage('./images/card/qr-datamatrix-card.png');
     
-    // Dibuja las imágenes en el lienzo.
+    // * Dibuja las imágenes en el lienzo.
     context.drawImage(avatar, 25, 55, 100, 100);
-    context.drawImage(logo, 307, 110, 70, 70);
+    context.drawImage(logo, 280, 120, 70, 70);
     context.drawImage(qr, 365, 5, 80, 80);
     
     return new AttachmentBuilder(await canvas.encode('png'), { name: 'profile-image.png' });

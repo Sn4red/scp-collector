@@ -1,7 +1,3 @@
-/** 
- * * Investigar y aplicar transaction a los tiritos, para no aplicar cambios sueltos por si se pierde la conexion, o hay algun error.
- */
-
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
@@ -59,11 +55,11 @@ module.exports = {
 
         // * Database query is performed.
         const userReference = database.collection('user').doc(interaction.user.id);
-        const userSnapshot = await userReference.get();
+        let userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
             // * Data is retrieved from here for daily limit validation.
-            const userDocument = userSnapshot.data();
+            let userDocument = userSnapshot.data();
 
             // * Validates if there are still daily captures available.
             if (userDocument.dailyAttemptsRemaining === 0) {
@@ -74,111 +70,158 @@ module.exports = {
 
                 // * The subcollection has the same name as the document containing it, but is entirely in lowercase.
                 const subCollection = obtainedClass.charAt(0).toLowerCase() + obtainedClass.slice(1);
+
+                let transactionCardState = true;
+
+                let cardId = null;
+                let classCard = null;
+                let file = null;
+                let name = null;
+
+                let holographicValue = null;
+
+                let cardEmbed = null;
+
+                let promotionSystem = null;
     
-                // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
-                const cardReference = database.collection('card').doc(obtainedClass).collection(subCollection);
-                const cardSnapshot = await cardReference.count().get();
+                try {
+                    // * First transaction is performed, related to getting the card and registering it
+                    // * in the user's obtaining subcollection.
+                    // * The following are covered:
+                    // * - Number of documents in the collection randomly selected.
+                    // * - Card selection based on the randon number.
+                    // * - Inserting the obtaining into the user's subcollection.
+                    await database.runTransaction(async (transaction) => {
+                        // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
+                        const cardReference = database.collection('card').doc(obtainedClass).collection(subCollection);
+                        const cardSnapshot = await transaction.get(cardReference.count());
 
-                const classCount = cardSnapshot.data().count;
+                        const classCount = cardSnapshot.data().count;
 
-                // * Using the Math object, a random number is obtained based on the number of cards,
-                // * and a random card is selected matching the random number with the 'random' field in the document.
-                // * We add 1 to the result in case it returns 0.
-                const randomNumber = Math.floor(Math.random() * classCount) + 1;
+                        // * Using the Math object, a random number is obtained based on the number of cards,
+                        // * and a random card is selected matching the random number with the 'random' field in the document.
+                        // * We add 1 to the result in case it returns 0.
+                        const randomNumber = Math.floor(Math.random() * classCount) + 1;
                     
-                const selectedCardReference = database.collection('card').doc(obtainedClass).collection(subCollection);
-                const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
-                const selectedCardSnapshot = await selectedCardQuery.get();
+                        const selectedCardReference = database.collection('card').doc(obtainedClass).collection(subCollection);
+                        const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
+                        const selectedCardSnapshot = await selectedCardQuery.get();
 
-                const document = selectedCardSnapshot.docs[0];
-                const selectedCardDocument = document.data();
+                        const document = selectedCardSnapshot.docs[0];
+                        const selectedCardDocument = document.data();
+
+                        // * Card data.
+                        cardId = document.id;   
+                        classCard = obtainedClass;
+                        file = selectedCardDocument.file;
+                        name = selectedCardDocument.name;
+
+                        holographicValue = holographicProbability();
+
+                        // * The entry of obtaining the card is inserted.
+                        const obtainingEntry = database.collection('user').doc(userSnapshot.id).collection('obtaining').doc();
     
-                // * Card data.
-                const cardId = document.id;
-                const classCard = obtainedClass;
-                const file = selectedCardDocument.file;
-                const name = selectedCardDocument.name;
-    
-                const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
-                const image = new AttachmentBuilder(imagePath);
-    
-                // * To ensure all images have the same size,
-                // * they are resized to 300x200 pixels.
-                const cardEmbed = new EmbedBuilder()
-                    .setTitle(`🎲  Item #: \`${cardId}\` // \`${name}\``)
-                    .addFields(
-                        { name: '👾  Class', value: `\`${classCard}\``, inline: true },
-                    )
-                    .setImage(`attachment://${cardId}.jpg`)
-                    .setTimestamp();
-
-                let holographicValue = holographicProbability();
-                    
-                if (userDocument.premium) {
-                    cardEmbed.setDescription(`**+${premiumXP[classCard]} XP**`);
-
-                    switch (holographicValue) {
-                        case 'Diamond':
-                            cardEmbed.setColor(0x00bfff);
-
-                            cardEmbed.addFields(
-                                { name: '🟦  Diamond', value: '+100 XP', inline: true },
-                            );
-
-                            break;
-                        case 'Golden':
-                            cardEmbed.setColor(0xffd700);
-
-                            cardEmbed.addFields(
-                                { name: '🟨  Golden', value: '+70 XP', inline: true },
-                            );
-
-                            break;
-                        case 'Emerald':
-                            cardEmbed.setColor(0x00b65c);
-
-                            cardEmbed.addFields(
-                                { name: '🟩  Emerald', value: '+40 XP', inline: true },
-                            );
-
-                            break;
-                        default:
-                            cardEmbed.setColor(0x010101);
-                    }
-                } else {
-                    cardEmbed.setDescription(`**+${normalXP[classCard]} XP**`);
-                    cardEmbed.setColor(0x000000);
-
-                    holographicValue = 'Normal';
+                        await transaction.set(obtainingEntry, {
+                            card: database.collection('card').doc(obtainedClass).collection(subCollection).doc(cardId),
+                            holographic: holographicValue,
+                        });
+                    });
+                } catch (error) {
+                    transactionCardState = false;
                 }
 
-                cardEmbed.addFields(
-                    { name: '📄  File', value: `**[View Document](${file})**`, inline: true },
-                );
+                if (transactionCardState === true) {
+                    let transactionUserState = true;
+
+                    try {
+                        // * Second transaction is performed, related to the user's rank and level promotion.
+                        await database.runTransaction(async (transaction) => {
+                            // * To ensure all images have the same size,
+                            // * they are resized to 300x200 pixels.
+                            // * The definition of the embed is performed here because the it is needed
+                            // * by the promotionProcess function.
+                            cardEmbed = new EmbedBuilder()
+                                .setTitle(`🎲  Item #: \`${cardId}\` // \`${name}\``)
+                                .addFields(
+                                    { name: '👾  Class', value: `\`${classCard}\``, inline: true },
+                                )
+                                .setImage(`attachment://${cardId}.jpg`)
+                                .setTimestamp();
+
+                            userSnapshot = await transaction.get(userReference);
+                            userDocument = userSnapshot.data();
+
+                            // * The rank and level promotion is performed here, along with the increase of daily limits.
+                            promotionSystem = await promotionProcess(classCard, holographicValue, userDocument, userReference, cardEmbed, transaction);
+                        });
+                    } catch (error) {
+                        transactionUserState = false;
+                    }
+
+                    if (transactionUserState === true) {
+                        const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
+                        const image = new AttachmentBuilder(imagePath);
                     
-                // * The entry of obtaining the card is inserted.
-                const obtainingEntry = database.collection('user').doc(userSnapshot.id).collection('obtaining').doc();
+                        if (userDocument.premium) {
+                            promotionSystem.cardEmbed.setDescription(`**+${premiumXP[classCard]} XP**`);
+
+                            switch (holographicValue) {
+                                case 'Diamond':
+                                    promotionSystem.cardEmbed.setColor(0x00bfff);
+
+                                    promotionSystem.cardEmbed.addFields(
+                                        { name: '🟦  Diamond', value: '+100 XP', inline: true },
+                                    );
+
+                                    break;
+                                case 'Golden':
+                                    promotionSystem.cardEmbed.setColor(0xffd700);
+
+                                    promotionSystem.cardEmbed.addFields(
+                                        { name: '🟨  Golden', value: '+70 XP', inline: true },
+                                    );
+
+                                    break;
+                                case 'Emerald':
+                                    promotionSystem.cardEmbed.setColor(0x00b65c);
+
+                                    promotionSystem.cardEmbed.addFields(
+                                        { name: '🟩  Emerald', value: '+40 XP', inline: true },
+                                    );
+
+                                    break;
+                                default:
+                                    promotionSystem.cardEmbed.setColor(0x010101);
+                            }
+                        } else {
+                            promotionSystem.cardEmbed.setDescription(`**+${normalXP[classCard]} XP**`);
+                            promotionSystem.cardEmbed.setColor(0x000000);
+
+                            holographicValue = 'Normal';
+                        }
+
+                        promotionSystem.cardEmbed.addFields(
+                            { name: '📄  File', value: `**[View Document](${file})**`, inline: true },
+                        );
+
+                        await interaction.editReply({
+                            embeds: [promotionSystem.cardEmbed],
+                            files: [image],
+                        });
     
-                await obtainingEntry.set({
-                    card: database.collection('card').doc(obtainedClass).collection(subCollection).doc(cardId),
-                    holographic: holographicValue,
-                });
-
-                // * The rank and level promotion is performed here (if applicable), along with the increase of daily limits.
-                const promotionSystem = await promotionProcess(classCard, holographicValue, userDocument, userReference, cardEmbed);
-
-                await interaction.editReply({
-                    embeds: [promotionSystem.cardEmbed],
-                    files: [image],
-                });
-
-                switch (promotionSystem.promotionType) {
-                    case 'level':
-                        await interaction.followUp(`✨  Nice, ${promotionSystem.userDocument.nickname}! You are now level ${promotionSystem.userDocument.level}.  ✨`);
-                        break;
-                    case 'rank':
-                        await interaction.followUp(`✨  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**.  ✨`);
-                        break;
+                        switch (promotionSystem.promotionType) {
+                            case 'level':
+                                await interaction.followUp(`✨  Nice, ${promotionSystem.userDocument.nickname}! You are now level ${promotionSystem.userDocument.level}.  ✨`);
+                                break;
+                            case 'rank':
+                                await interaction.followUp(`✨  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**.  ✨`);
+                                break;
+                        }
+                    } else {
+                        await interaction.editReply('❌  An error occurred while capturing the SCP. Please try again.');
+                    }
+                } else {
+                    await interaction.editReply('❌  An error occurred while capturing the SCP. Please try again.');
                 }
             }
         } else {
@@ -248,7 +291,7 @@ function holographicProbability() {
     }
 }
 
-async function promotionProcess(classCard, holographicValue, userDocument, userReference, cardEmbed) {
+async function promotionProcess(classCard, holographicValue, userDocument, userReference, cardEmbed, transaction) {
     let earnedXP = null;
 
     if (userDocument.premium) {
@@ -317,10 +360,10 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
             }
         }
     } else {
-        await userReference.update({
+        await transaction.update(userReference, {
             level: userDocument.level,
             xp: fullXP,
-            dailyAttemptsRemaining: --userDocument.dailyAttemptsRemaining,
+            dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
         });
     }
 
@@ -329,21 +372,23 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
     }
 
     if (promotionType === 'level') {
-        await userReference.update({
+        await transaction.update(userReference, {
             level: userDocument.level,
             xp: fullXP,
-            dailyAttemptsRemaining: --userDocument.dailyAttemptsRemaining,
+            dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
         });
     }
 
     if (promotionType === 'rank') {
-        await userReference.update({
+        await transaction.update(userReference, {
             rank: userDocument.rank,
             level: userDocument.level,
             xp: fullXP,
-            dailyAttemptsRemaining: --userDocument.dailyAttemptsRemaining,
+            dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
         });
     }
+
+    userDocument.dailyAttemptsRemaining--;
 
     cardEmbed.setFooter({ text: `${userDocument.dailyAttemptsRemaining} ${userDocument.dailyAttemptsRemaining === 1 ? 'shot' : 'shots'} remaining` });
 

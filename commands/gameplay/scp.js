@@ -11,7 +11,7 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
 
-        // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
 
         const userReference = database.collection('user').doc(userId);
@@ -20,17 +20,17 @@ module.exports = {
         if (userSnapshot.exists) {
             const user = userSnapshot.data();
 
-            const obtainingReference = database.collection('obtaining').where('user', '==', userReference);
+            const obtainingReference = database.collection('user').doc(userId).collection('obtaining');
             const obtainingSnapshot = await obtainingReference.get();
 
             if (!obtainingSnapshot.empty) {
                 const sortedCards = await cardsSorting(obtainingSnapshot);
 
-                // The list is numerically sorted considering the ID after 'SCP-'
-                // (from the fifh character onward), and converts the collection's ID list into an array.
+                // * The list is numerically sorted considering the ID after 'SCP-'
+                // * (from the fifh character onward), and converts the collection's ID list into an array.
                 const cardsOrder = Array.from(sortedCards.cardsCount.keys()).sort((a, b) => parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10));
 
-                // The cards are listed by iterating in a single string to display it in the embed.
+                // * The cards are listed by iterating in a single string to display it in the embed.
                 let cardsList = '';
 
                 const embeds = [];
@@ -42,11 +42,16 @@ module.exports = {
                     const quantity = sortedCards.cardsCount.get(element);
                     const classCard = sortedCards.cardsClass.get(element);
 
-                    cardsList += `▫️**\`(${quantity})\`** \`${element}\` // \`${card.name}\` - **\`${classCard}\`**\n`;
+                    const emeraldQuantity = sortedCards.emeraldCards.get(element) || 0;
+                    const goldenQuantity = sortedCards.goldenCards.get(element) || 0;
+                    const diamondQuantity = sortedCards.diamondCards.get(element) || 0;
+
+                    // * TODO: Improve the way to display the holographic quantities.
+                    cardsList += `▫️**\`(${quantity})\`** \`${element}\` // \`${card.name}\` - **\`${classCard}\`**    🟩${emeraldQuantity} 🟨${goldenQuantity} 🟦${diamondQuantity} \n`;
 
                     entriesPerPageLimit++;
                     
-                    // When 10 card entries are accumulated, they are stored on a single page and the variable is reset.
+                    // * When 10 card entries are accumulated, they are stored on a single page and the variable is reset.
                     if (entriesPerPageLimit == 10) {
                         embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colección de ${user.nickname} **__`).setDescription(cardsList));
 
@@ -54,10 +59,10 @@ module.exports = {
                         entriesPerPageLimit = 0;
                     }
 
-                    // The validation is performed here for the last page in case 10 entries are not accumulated.
+                    // * The validation is performed here for the last page in case 10 entries are not accumulated.
                     if (index == array.length - 1) {
-                        // If there are only 10 entries, the execution will still enter here, which will result in an error because 'cardsList'
-                        // no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
+                        // * If there are only 10 entries, the execution will still enter here, which will result in an error because 'cardsList'
+                        // * no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
                         if (cardsList.length == 0) {
                             return;
                         }
@@ -66,7 +71,7 @@ module.exports = {
                     }
                 });
 
-                // A new ActionRow is created containing 2 buttons.
+                // * A new ActionRow is created containing 2 buttons.
                 const userRow = (id) => {
                     const row = new ActionRowBuilder();
 
@@ -132,20 +137,57 @@ module.exports = {
 };
 
 async function cardsSorting(obtainingSnapshot) {
-    // 'cardsCount' will store the quantity repeated per card.
-    // 'cards' will store the complete data of the card.
-    // 'cardsClass' will store the classes of the cards (they are not a field of the card but of its collection's name in Firebase).
+    // * 'cardsCount' will store the quantity repeated per card.
+    // * 'cards' will store the complete data of the card.
+    // * 'cardsClass' will store the classes of the cards (they are not a field of the card but of its collection's name in Firebase).
     const cardsCount = new Map();
     const cards = new Map();
     const cardsClass = new Map();
 
+    // * These maps will store the quantity of holographic cards per type.
+    const emeraldCards = new Map();
+    const goldenCards = new Map();
+    const diamondCards = new Map();
+
     const promises = [];
 
-    // Retrieves cards by the field that references them and stores the document in an array.
-    // This is to obtain the card data (the name is needed for the listing).
+    // * Retrieves cards by the field that references them and stores the document in an array.
+    // * This is to obtain the card data (the name is needed for the listing).
     for (const obtaining of obtainingSnapshot.docs) {
         const obtainingDocument = obtaining.data();
+
+        const cardId = obtainingDocument.card.id;
+        const holographic = obtainingDocument.holographic;
+
+        switch (holographic) {
+            case 'Emerald':
+                if (emeraldCards.has(cardId)) {
+                    emeraldCards.set(cardId, emeraldCards.get(cardId) + 1);
+                } else {
+                    emeraldCards.set(cardId, 1);
+                }
+
+                break;
+            case 'Golden':
+                if (goldenCards.has(cardId)) {
+                    goldenCards.set(cardId, goldenCards.get(cardId) + 1);
+                } else {
+                    goldenCards.set(cardId, 1);
+                }
+
+                break;
+            case 'Diamond':
+                if (diamondCards.has(cardId)) {
+                    diamondCards.set(cardId, diamondCards.get(cardId) + 1);
+                } else {
+                    diamondCards.set(cardId, 1);
+                }
+
+                break;
+        }
+
         const cardReference = obtainingDocument.card;
+
         const cardSnapshot = cardReference.get();
 
         promises.push(cardSnapshot);
@@ -153,7 +195,7 @@ async function cardsSorting(obtainingSnapshot) {
 
     const cardsArray = await Promise.all(promises);
 
-    // The required data is saved in the maps.
+    // * The required data is saved in the maps.
     cardsArray.forEach((x) => {
         const cardId = x.id;
 
@@ -167,5 +209,5 @@ async function cardsSorting(obtainingSnapshot) {
         cardsClass.set(cardId, x.ref.parent.parent.id);
     });
 
-    return { cardsCount, cards, cardsClass };
+    return { cardsCount, cards, cardsClass, emeraldCards, goldenCards, diamondCards };
 }

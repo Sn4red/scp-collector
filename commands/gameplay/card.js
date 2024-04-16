@@ -1,3 +1,8 @@
+/**
+ * * - Considerar mejorar el sello de Premium para la carta del usuario. Darle un toque brillante.
+ * 
+ */
+
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
 const { request } = require('undici');
@@ -61,7 +66,7 @@ module.exports = {
             const attachment = await displayCard(newUser, interaction.user.id, interaction);
 
             await interaction.editReply({ files: [attachment] });
-            await interaction.followUp('👋  New user! You can now use commands to collect cards and more.');
+            await interaction.followUp('<a:waving_hand:1229639454302670869>  New user! You can now use commands to collect cards and more.');
         }
     },
 };

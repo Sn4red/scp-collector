@@ -141,9 +141,9 @@ module.exports = {
                             // * The definition of the embed is performed here because the it is needed
                             // * by the promotionProcess function.
                             cardEmbed = new EmbedBuilder()
-                                .setTitle(`🎲  Item #: \`${cardId}\` // \`${name}\``)
+                                .setTitle(`<a:dice:1228555582655561810>  Item #: \`${cardId}\` // \`${name}\``)
                                 .addFields(
-                                    { name: '👾  Class', value: `\`${classCard}\``, inline: true },
+                                    { name: '<:invader:1228919814555177021>  Class', value: `\`${classCard}\``, inline: true },
                                 )
                                 .setImage(`attachment://${cardId}.jpg`)
                                 .setTimestamp();
@@ -170,7 +170,7 @@ module.exports = {
                                     promotionSystem.cardEmbed.setColor(0x00bfff);
 
                                     promotionSystem.cardEmbed.addFields(
-                                        { name: '🟦  Diamond', value: '+100 XP', inline: true },
+                                        { name: '<a:diamond:1228924014479671439>  Diamond', value: '+100 XP', inline: true },
                                     );
 
                                     break;
@@ -178,7 +178,7 @@ module.exports = {
                                     promotionSystem.cardEmbed.setColor(0xffd700);
 
                                     promotionSystem.cardEmbed.addFields(
-                                        { name: '🟨  Golden', value: '+70 XP', inline: true },
+                                        { name: '<a:golden:1228925086690443345>  Golden', value: '+70 XP', inline: true },
                                     );
 
                                     break;
@@ -186,7 +186,7 @@ module.exports = {
                                     promotionSystem.cardEmbed.setColor(0x00b65c);
 
                                     promotionSystem.cardEmbed.addFields(
-                                        { name: '🟩  Emerald', value: '+40 XP', inline: true },
+                                        { name: '<a:emerald:1228923470239367238>  Emerald', value: '+40 XP', inline: true },
                                     );
 
                                     break;
@@ -201,31 +201,33 @@ module.exports = {
                         }
 
                         promotionSystem.cardEmbed.addFields(
-                            { name: '📄  File', value: `**[View Document](${file})**`, inline: true },
+                            { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },
                         );
 
                         await interaction.editReply({
                             embeds: [promotionSystem.cardEmbed],
                             files: [image],
                         });
+
+                        await resetDailyLimit();
     
                         switch (promotionSystem.promotionType) {
                             case 'level':
-                                await interaction.followUp(`✨  Nice, ${promotionSystem.userDocument.nickname}! You are now level ${promotionSystem.userDocument.level}.  ✨`);
+                                await interaction.followUp(`<a:mixed_stars:1229605947895189534>  Nice, ${promotionSystem.userDocument.nickname}! You are now level **${promotionSystem.userDocument.level}**. <a:mixed_stars:1229605947895189534>`);
                                 break;
                             case 'rank':
-                                await interaction.followUp(`✨  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**.  ✨`);
+                                await interaction.followUp(`<a:mixed_stars:1229605947895189534>  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**. <a:mixed_stars:1229605947895189534>`);
                                 break;
                         }
                     } else {
-                        await interaction.editReply('❌  An error occurred while capturing the SCP. Please try again.');
+                        await interaction.editReply('<a:error:1229592805710762128>  An error occurred while capturing the SCP. Please try again.');
                     }
                 } else {
-                    await interaction.editReply('❌  An error occurred while capturing the SCP. Please try again.');
+                    await interaction.editReply('<a:error:1229592805710762128>  An error occurred while capturing the SCP. Please try again.');
                 }
             }
         } else {
-            await interaction.editReply('❌  You are not registered! Use /card to save your information.');
+            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use `/card` to save your information.');
         }
     },
 };
@@ -395,26 +397,32 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
     return { cardEmbed, promotionType, userDocument, indexCurrentElement };
 }
 
-// * This function resets the daily limit for card captures.
-// * Sets to five for non Premium users, and 10 for premium.
+// * This function resets the daily limit of attempts.
+// * Sets to 10 for Premium users, and 5 for non Premium.
 async function resetDailyLimit() {
-    const userReference = database.collection('user');
-    const userSnapshot = await userReference.get();
+    const premiumUserReference = database.collection('user');
+    const premiumUserQuery = premiumUserReference.where('premium', '==', true)
+                                                    .where('dailyAttemptsRemaining', '<', 10);
+    const premiumUserSnapshot = await premiumUserQuery.get();
 
-    userSnapshot.forEach(async (user) => {
+    premiumUserSnapshot.forEach(async (user) => {
         if (user.exists) {
-            const userDocument = user.data();
-            const isPremium = userDocument.premium;
+            await user.ref.update({
+                dailyAttemptsRemaining: 10, 
+            });
+        }
+    });
 
-            if (isPremium) {
-                await user.ref.update({
-                    dailyAttemptsRemaining: 10, 
-                });
-            } else {
-                await user.ref.update({
-                    dailyAttemptsRemaining: 5, 
-                });
-            }
+    const normalUserReference = database.collection('user');
+    const normalUserQuery = normalUserReference.where('premium', '==', false)
+                                                .where('dailyAttemptsRemaining', '<', 5);
+    const normalUserSnapshot = await normalUserQuery.get();
+
+    normalUserSnapshot.forEach(async (user) => {
+        if (user.exists) {
+            await user.ref.update({
+                dailyAttemptsRemaining: 5, 
+            });
         }
     });
 }

@@ -46,14 +46,16 @@ module.exports = {
                     const goldenQuantity = sortedCards.goldenCards.get(element) || 0;
                     const diamondQuantity = sortedCards.diamondCards.get(element) || 0;
 
-                    // * TODO: Improve the way to display the holographic quantities.
-                    cardsList += `▫️**\`(${quantity})\`** \`${element}\` // \`${card.name}\` - **\`${classCard}\`**    🟩${emeraldQuantity} 🟨${goldenQuantity} 🟦${diamondQuantity} \n`;
+                    cardsList += `<:white_dash:1228526885676388352>**\`(${quantity})\`** \`${element}\` // \`${card.name}\` - **\`${classCard}\`**    <:green_dot:1228521302864953394>**${emeraldQuantity}** <:yellow_dot:1228522038097084488>**${goldenQuantity}** <:blue_dot:1228521760580833421>**${diamondQuantity}** \n`;
 
                     entriesPerPageLimit++;
                     
                     // * When 10 card entries are accumulated, they are stored on a single page and the variable is reset.
                     if (entriesPerPageLimit == 10) {
-                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colección de ${user.nickname} **__`).setDescription(cardsList));
+                        embeds.push(new EmbedBuilder()
+                                        .setColor(0x000000)
+                                        .setTitle(`<:page:1228553113804476537>  __**Collection of ${user.nickname}**__`)
+                                        .setDescription(cardsList));
 
                         cardsList = '';
                         entriesPerPageLimit = 0;
@@ -67,7 +69,10 @@ module.exports = {
                             return;
                         }
 
-                        embeds.push(new EmbedBuilder().setColor(0x000000).setTitle(`📃  __**Colecction of ${user.nickname} **__`).setDescription(cardsList));
+                        embeds.push(new EmbedBuilder()
+                                        .setColor(0x000000)
+                                        .setTitle(`<:page:1228553113804476537>  __**Collection of ${user.nickname}**__`)
+                                        .setDescription(cardsList));
                     }
                 });
 
@@ -78,13 +83,13 @@ module.exports = {
                     const previousButton = new ButtonBuilder()
                         .setCustomId('previousButton')
                         .setStyle('Secondary')
-                        .setEmoji('⬅️')
+                        .setEmoji('<a:white_arrow_left:1228528429620789341>')
                         .setDisabled(pages[id] === 0);
 
                     const nextButton = new ButtonBuilder()
                         .setCustomId('nextButton')
                         .setStyle('Secondary')
-                        .setEmoji('➡️')
+                        .setEmoji('<a:white_arrow_right:1228528624517255209>')
                         .setDisabled(pages[id] === embeds.length - 1);
 
                     row.addComponents(previousButton, nextButton);
@@ -128,10 +133,10 @@ module.exports = {
                     });
                 });
             } else {
-                await interaction.editReply('❌  You don\'t have any SCPs captured!');
+                await interaction.editReply('<a:error:1229592805710762128>  You don\'t have any SCPs captured!');
             }
         } else {
-            await interaction.editReply('❌  You are not registered! Use /card to save your information.');
+            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
         }
     },
 };

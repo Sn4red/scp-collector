@@ -63,7 +63,7 @@ module.exports = {
 
             // * Validates if there are still daily captures available.
             if (userDocument.dailyAttemptsRemaining === 0) {
-                await interaction.editReply('💥  You have reached the daily limit of SCP captures.');
+                await interaction.editReply('<a:red_siren:1229660105692155904>  You have reached the daily limit of SCP captures.');
             } else {
                 // * Class obtained through probability.
                 const obtainedClass = classProbability(userDocument.premium);
@@ -208,8 +208,6 @@ module.exports = {
                             embeds: [promotionSystem.cardEmbed],
                             files: [image],
                         });
-
-                        await resetDailyLimit();
     
                         switch (promotionSystem.promotionType) {
                             case 'level':
@@ -227,7 +225,7 @@ module.exports = {
                 }
             }
         } else {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use `/card` to save your information.');
+            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
         }
     },
 };

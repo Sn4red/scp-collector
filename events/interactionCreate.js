@@ -30,7 +30,7 @@ module.exports = {
 
             if (now < expirationTime) {
                 const expiredTimestamp = Math.round(expirationTime / 1000);
-                return interaction.reply({ content: `⌛  You can use /\`${command.data.name}\` again <t:${expiredTimestamp}:R>.`, ephemeral: true });
+                return interaction.reply({ content: `<a:classic_hourglass:1229661134710247424>  You can use /\`${command.data.name}\` again <t:${expiredTimestamp}:R>.`, ephemeral: true });
             }
         }
 
@@ -42,9 +42,9 @@ module.exports = {
         } catch (error) {
             console.error(error);
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: '❌  An error occurred while executing this command!', ephemeral: true });
+                await interaction.followUp({ content: '<a:error:1229592805710762128>  An error occurred while executing this command!', ephemeral: true });
             } else {
-                await interaction.reply({ content: '❌  An error occurred while executing this command!', ephemeral: true });
+                await interaction.reply({ content: '<a:error:1229592805710762128>  An error occurred while executing this command!', ephemeral: true });
             }
         }
     },

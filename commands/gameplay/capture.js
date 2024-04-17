@@ -195,7 +195,7 @@ module.exports = {
                             }
                         } else {
                             promotionSystem.cardEmbed.setDescription(`**+${normalXP[classCard]} XP**`);
-                            promotionSystem.cardEmbed.setColor(0x000000);
+                            promotionSystem.cardEmbed.setColor(0x010101);
 
                             holographicValue = 'Normal';
                         }

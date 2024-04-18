@@ -14,9 +14,10 @@ module.exports = {
         const iconFooter = new AttachmentBuilder(iconFooterPath);
 
         const embed = new EmbedBuilder()
-            .setColor(0x000000)
-            .setTitle('🏛️   SCP Foundation')
-            .setDescription('Operating clandestinely and globally, The Foundation operates beyond any jurisdiction, reinforced by major national governments that have tasked ' +
+            .setColor(0x010101)
+            .setTitle('<:building:1230367857791991898>   SCP Foundation')
+            .setDescription('<a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694>\n' +
+                            'Operating clandestinely and globally, The Foundation operates beyond any jurisdiction, reinforced by major national governments that have tasked ' +
                             'it with containing anomalous objects, entities, and phenomena. These anomalies pose a significant threat to global security, as they are capable ' +
                             'of causing physical or psychological harm.\n\n' +
                             'The Foundation operates to maintain normalcy, ensuring that the civilian population worldwide can live and carry on their daily lives without fear, ' +

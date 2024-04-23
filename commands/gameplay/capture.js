@@ -62,7 +62,7 @@ module.exports = {
             let userDocument = userSnapshot.data();
 
             // * Validates if there are still daily captures available.
-            if (userDocument.dailyAttemptsRemaining === 0) {
+            if (userDocument.dailyAttemptsRemaining === 0) {                
                 await interaction.editReply('<a:red_siren:1229660105692155904>  You have reached the daily limit of SCP captures.');
             } else {
                 // * Class obtained through probability.
@@ -138,7 +138,7 @@ module.exports = {
                         await database.runTransaction(async (transaction) => {
                             // * To ensure all images have the same size,
                             // * they are resized to 300x200 pixels.
-                            // * The definition of the embed is performed here because the it is needed
+                            // * The definition of the embed is performed here because it is needed
                             // * by the promotionProcess function.
                             cardEmbed = new EmbedBuilder()
                                 .setTitle(`<a:dice:1228555582655561810>  Item #: \`${cardId}\` // \`${name}\``)

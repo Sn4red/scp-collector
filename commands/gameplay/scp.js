@@ -4,7 +4,7 @@ const firebase = require('../../utils/firebase');
 const database = firebase.firestore();
 
 module.exports = {
-    cooldown: 300,
+    cooldown: 60 * 5,
     data: new SlashCommandBuilder()
         .setName('scp')
         .setDescription('List your collection of SCPs.'),

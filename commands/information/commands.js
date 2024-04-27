@@ -2,7 +2,7 @@ const path = require('node:path');
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
-    cooldown: 1800,
+    cooldown: 60 * 30,
     data: new SlashCommandBuilder()
         .setName('commands')
         .setDescription('Lists all usable commands.'),
@@ -25,7 +25,7 @@ module.exports = {
                                             '/`history` - Provides details on the theme of the bot for more context and a brief history of what the SCP Foundation is.\n' +
                                             '/`faq` - Frequently Asked Questions about bot functionality.\n' +
                                             '**/`vip` - VIP Benefits Details. Get additional features by becoming a donor!** <a:thunder:1230360956056375317><a:thunder:1230360956056375317><a:thunder:1230360956056375317>' },
-                { name: '<a:dice:1228555582655561810>   Gameplay', value: '`/card` - Displays your personal card and progress details. It\'s the first command you should use to start using the bot.\n' +
+                { name: '<a:dice:1228555582655561810>   Gameplay', value: '`/card` - Displays your personal card and progress details. This is the first command you should use to start playing.\n' +
                                             '/`capture` - Capture an SCP and add it to your collection. You may obtain duplicates that can be used for trading with someone else. ' +
                                             'The rarity (class) of the SCP will influence the probabilities of obtaining it. You can only capture **5 SCPs** per day.\n' +
                                             '/`showcard` `<SCP ID>` - Shows one of your cards to the public.\n' +

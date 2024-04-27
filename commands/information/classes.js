@@ -2,7 +2,7 @@ const path = require('node:path');
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
-    cooldown: 1800,
+    cooldown: 60 * 30,
     data: new SlashCommandBuilder()
         .setName('classes')
         .setDescription('Details the different classes of SCPs.'),

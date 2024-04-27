@@ -2,7 +2,7 @@ const path = require('node:path');
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
-    cooldown: 1800,
+    cooldown: 60 * 30,
     data: new SlashCommandBuilder()
         .setName('history')
         .setDescription('Offers bot theme details and a brief history of the SCP Foundation for context.'),

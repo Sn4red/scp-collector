@@ -106,6 +106,7 @@ module.exports = {
     },
 };
 
+// * This function searches for the card data through all the card collections, and then with the reference it checks if the user has the card in his collection.
 async function findCard(userId, cardId, holographic) {
     let holographicValue = holographic;
 

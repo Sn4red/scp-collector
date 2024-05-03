@@ -1,10 +1,16 @@
+// * Queda pendiente lo siguiente:
+// * 1. Validar que el recipient no sea el mismo que el issuer.
+// * 2. Validar si el recipient tiene activada la opcion de aceptar trades.
+// * 3. Investigar si de verdad es posible arreglar lo del boton cancel y que no salga error de inactividad por parte del bot.
+// * 4. Validar trade requests exitosos con holograficas.
+
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
 
 module.exports = {
-    cooldown: 60,
+    cooldown: 60 * 1,
     data: new SlashCommandBuilder()
         .setName('trade')
         .setDescription('Creates a direct trade request to a user.'),
@@ -20,69 +26,79 @@ module.exports = {
             await interaction.showModal(modal);
 
             const filter = (userModal) => userModal.customId === `modal-${userId}`;
-            const time = 1000 * 60 * 1;
+            const time = 1000 * 50;
 
             interaction.awaitModalSubmit({ filter: filter, time: time }).then(async (modalInteraction) => {
                 const recipientValue = modalInteraction.fields.getTextInputValue('txtRecipient');
                 const issuerCardValue = modalInteraction.fields.getTextInputValue('txtIssuerCard');
+                const issuerHolographicValue = modalInteraction.fields.getTextInputValue('txtIssuerHolographic');
                 const recipientCardValue = modalInteraction.fields.getTextInputValue('txtRecipientCard');
+                const recipientHolographicValue = modalInteraction.fields.getTextInputValue('txtRecipientHolographic');
 
-                // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+                // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
                 await modalInteraction.deferReply({ ephemeral: true });
 
-                const fieldsValidation = validateFields(recipientValue, issuerCardValue, recipientCardValue);
+                // * TODO: Devolver los valores holograficos (si son aplicables) y realizar los queries fuera de esta funcion.
+                const fieldsValidation = validateFields(recipientValue, issuerCardValue, issuerHolographicValue, recipientCardValue, recipientHolographicValue);
 
                 if (!fieldsValidation.errorState) {
-                    const foundCardIssuer = await findCard(issuerUserReference, fieldsValidation.fixedIssuerCardValue);
+                    let tradeEntry = null;
 
-                    if (foundCardIssuer) {
-                        const recipientUserReference = database.collection('user').doc(recipientValue);
-                        const recipientUserSnapshot = await recipientUserReference.get();
-
-                        if (recipientUserSnapshot.exists) {
-                            const foundCardRecipient = await findCard(recipientUserReference, fieldsValidation.fixedRecipientCardValue);
-
-                            if (foundCardRecipient) {
-                                const tradeEntry = database.collection('trade').doc();
-                                
-                                await tradeEntry.set({
-                                    issuer: userId,
-                                    issuerCard: foundCardIssuer.ref,
-                                    recipientCard: foundCardRecipient.ref,
-                                    recipient: recipientValue,
-                                    securityCooldown: new Date(),
-                                    tradeConfirmation: false,
-                                    tradeDate: null,
-                                    
-                                });
-
-                                lockCard(issuerUserReference, foundCardIssuer);
-
-                                modalInteraction.editReply(`✅  Trade request sent with ID **\`${tradeEntry.id}\`**. You can use the same ID to cancel de request.`);
-                            } else {
-                                modalInteraction.editReply('❌  Request canceled! It seems that the user either doesn\'t have the card you want or it is locked.');
+                    try {
+                        await database.runTransaction(async (transaction) => {
+                            const foundCardIssuer = await findCard(userId, fieldsValidation.fixedIssuerCardValue, fieldsValidation.fixedIssuerHolographicValue, transaction);
+                            
+                            if (!foundCardIssuer.wasFound) {
+                                throw new Error('It seems that you don\'t have the card you are offering.');
                             }
-                        } else {
-                            modalInteraction.editReply('❌  Request canceled. The user you are trying to trade with is either not registered or not found.');
-                        }
-                    } else {
-                        modalInteraction.editReply('❌  Request canceled! It seems that you don\'t have the card you are offering, or it is locked.');
+
+                            const recipientUserReference = database.collection('user').doc(recipientValue);
+                            const recipientUserSnapshot = await recipientUserReference.get();
+
+                            if (!recipientUserSnapshot.exists) {
+                                throw new Error('The user you are trying to trade with is either not registered or not found.');
+                            }
+
+                            const foundCardRecipient = await findCard(recipientValue, fieldsValidation.fixedRecipientCardValue, fieldsValidation.fixedRecipientHolographicValue, transaction);
+
+                            if (!foundCardRecipient.wasFound) {
+                                throw new Error('It seems that the user doesn\'t have the card you want.');
+                            }
+
+                            tradeEntry = database.collection('trade').doc();
+
+                            await transaction.set(tradeEntry, {
+                                issuer: userId,
+                                issuerCard: foundCardIssuer.cardReference,
+                                recipientCard: foundCardRecipient.cardReference,
+                                recipient: recipientValue,
+                                securityCooldown: new Date(),
+                                tradeConfirmation: false,
+                                tradeDate: null,
+                            });
+                        });
+
+                        modalInteraction.editReply(`<a:check:1235800336317419580>  Trade request sent with ID **\`${tradeEntry.id}\`**. You can use the same ID to cancel the request.`);
+                    } catch (error) {
+                        modalInteraction.editReply(`<a:error:1229592805710762128>  Request cancelled! ${error.message}`);
                     }
+
+
                 } else {
                     modalInteraction.editReply(fieldsValidation.errorMessage);
                 }
             }).catch((error) => {
                 console.log(`Error: ${error}`);
 
-                interaction.followUp({ content: '❌  Request canceled due to inactivity.', ephemeral: true });
+                interaction.followUp({ content: '<a:error:1229592805710762128>  Request cancelled due to inactivity.', ephemeral: true });
             });
         } else {
-            await interaction.reply({ content: '❌  You are not registered! Use /card to save your information.', ephemeral: true });
+            await interaction.reply({ content: '<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.', ephemeral: true });
         }
     },
 };
 
-// Function that builds the modal.
+// * Function that builds the modal.
 function displayModal(idUsuario) {
     const modal = new ModalBuilder()
         .setCustomId(`modal-${idUsuario}`)
@@ -90,103 +106,235 @@ function displayModal(idUsuario) {
         
     const txtRecipient = new TextInputBuilder()
         .setCustomId('txtRecipient')
-        .setLabel('User:')
+        .setLabel('👤  User:')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('123456789')
         .setRequired(true);
 
     const txtIssuerCard = new TextInputBuilder()
         .setCustomId('txtIssuerCard')
-        .setLabel('Card to offer:')
+        .setLabel('📄  Card to offer:')
         .setStyle(TextInputStyle.Short)
         .setMinLength(7)
         .setMaxLength(8)
         .setPlaceholder('SCP-000')
         .setRequired(true);
+
+    const txtIssuerHolographic = new TextInputBuilder()
+        .setCustomId('txtIssuerHolographic')
+        .setLabel('❇️  Holographic (optional):')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('Emerald/Golden/Diamond')
+        .setRequired(false);
         
     const txtRecipientCard = new TextInputBuilder()
         .setCustomId('txtRecipientCard')
-        .setLabel('Desired card:')
+        .setLabel('📄  Desired card:')
         .setStyle(TextInputStyle.Short)
         .setMinLength(7)
         .setMaxLength(8)
         .setPlaceholder('SCP-000')
         .setRequired(true);
+
+    const txtRecipientHolographic = new TextInputBuilder()
+        .setCustomId('txtRecipientHolographic')
+        .setLabel('❇️  Holographic (optional):')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('Emerald/Golden/Diamond')
+        .setRequired(false);
             
     const recipientRow = new ActionRowBuilder().addComponents(txtRecipient);
     const issuerCardRow = new ActionRowBuilder().addComponents(txtIssuerCard);
+    const issuerHolographicRow = new ActionRowBuilder().addComponents(txtIssuerHolographic);
     const recipientCardRow = new ActionRowBuilder().addComponents(txtRecipientCard);
+    const recipientHolographicRow = new ActionRowBuilder().addComponents(txtRecipientHolographic);
         
-    modal.addComponents(recipientRow, issuerCardRow, recipientCardRow);
+    modal.addComponents(recipientRow, issuerCardRow, issuerHolographicRow, recipientCardRow, recipientHolographicRow);
 
     return modal;
 }
 
-// The function validates that the fields of the modal are entered correctly.
-function validateFields(recipientValue, issuerCardValue, recipientCardValue) {
-    // The validation is performed to ensure that the user ID contains only numbers.
+// *The function validates that the fields of the modal are entered correctly.
+function validateFields(recipientValue, issuerCardValue, issuerHolographicValue, recipientCardValue, recipientHolographicValue) {    
+    // * The validation is performed to ensure that the user ID contains only numbers.
     const recipientValidation = /^[0-9]+$/.test(recipientValue);
 
-    // The card IDs are converted to uppercase.
+    // * The card IDs are formatted to uppercase.
     const fixedIssuerCardValue = issuerCardValue.toUpperCase();
     const fixedRecipientCardValue = recipientCardValue.toUpperCase();
 
-    // Validates that the card format is correct.
+    // * Validates that the card format is correct.
     const issuerCardValidation = /^scp-\d{3,4}$/i.test(fixedIssuerCardValue);
     const recipientCardValidation = /^scp-\d{3,4}$/i.test(fixedRecipientCardValue);
+
+    // * Array that contains the valid holographic values.
+    const validHolographics = ['', 'Emerald', 'Golden', 'Diamond'];
+
+    // * Formats the holographic values and validates that are correct.
+    const fixedIssuerHolographicValue = issuerHolographicValue.charAt(0).toUpperCase() + issuerHolographicValue.toLowerCase().slice(1);
+    const fixedRecipientHolographicValue = recipientHolographicValue.charAt(0).toUpperCase() + recipientHolographicValue.toLowerCase().slice(1);
+
+    const issuerHolographicValidation = validHolographics.includes(fixedIssuerHolographicValue);
+    const recipientHolographicValidation = validHolographics.includes(fixedRecipientHolographicValue);
     
-    let errorMessage = '❌  The following data was entered incorrectly:\n';
+    let errorMessage = '<a:error:1229592805710762128>  The following data was entered incorrectly:\n';
     let errorState = false;
 
     if (!recipientValidation) {
-        errorMessage += '▫️ User ID\n';
+        errorMessage += '▫️ User ID. It should only contain numbers.\n';
         errorState = true;
     }
     
     if (!issuerCardValidation) {
-        errorMessage += '▫️ Offered card\n';
+        errorMessage += '▫️ Offered card. Card ID format is `SCP-XXXX`.\n';
+        errorState = true;
+    }
+
+    if (!issuerHolographicValidation) {
+        errorMessage += '▫️ Offered holographic. Allowed values are Emerald/Golden/Diamond.\n';
         errorState = true;
     }
 
     if (!recipientCardValidation) {
-        errorMessage += '▫️ Desired card';
+        errorMessage += '▫️ Desired card. Card ID format is `SCP-XXXX`.\n';
         errorState = true;
     }
 
-    return { fixedIssuerCardValue, fixedRecipientCardValue, errorState, errorMessage };
-}
-
-// This function searches for a card from a user that is not 'locked'.
-async function findCard(userReference, cardValue) {
-    const obtainingReference = database.collection('obtaining').where('user', '==', userReference).where('locked', '==', false);
-    const obtainingSnapshot = await obtainingReference.get();
-
-    const promises = [];
-    
-    for (const x of obtainingSnapshot.docs) {
-        const obtaining = x.data();
-        const cardReference = obtaining.card;
-        const cardSnapshot = cardReference.get();
-
-        promises.push(cardSnapshot);
+    if (!recipientHolographicValidation) {
+        errorMessage += '▫️ Desired holographic. Allowed values are Emerald/Golden/Diamond.';
+        errorState = true;
     }
 
-    const cardsArray = await Promise.all(promises);
-    const foundCard = cardsArray.find((x) => x.id === cardValue);
-
-    return foundCard;
+    return { fixedIssuerCardValue, fixedIssuerHolographicValue, fixedRecipientCardValue, fixedRecipientHolographicValue, errorState, errorMessage };
 }
 
-// This function 'locks' the card of the user who creates de request so that it cannot be used for other trades in parallel.
-async function lockCard(issuerUserReference, foundCardIssuer) {
-    const obtainingReference = database.collection('obtaining').where('user', '==', issuerUserReference)
-                                                            .where('card', '==', foundCardIssuer.ref)
-                                                            .where('locked', '==', false).limit(1);
-    const obtainingSnapshot = await obtainingReference.get();
-    
-    const obtainingDocument = obtainingSnapshot.docs[0];
+// * This function searches for the card data through all the card collections, and then with the reference it checks if the user has the card in his collection.
+async function findCard(userId, cardId, holographic, transaction) {
+    let holographicValue = holographic;
 
-    obtainingDocument.ref.update({
-        locked: true,
-    });
+    if (holographicValue.length < 2) {
+        holographicValue = 'Normal';
+    }
+
+    const cardSafeReference = database.collection('card').doc('Safe').collection('safe').doc(cardId);
+    const cardSafeSnapshot = await cardSafeReference.get();
+
+    const cardEuclidReference = database.collection('card').doc('Euclid').collection('euclid').doc(cardId);
+    const cardEuclidSnapshot = await cardEuclidReference.get();
+
+    const cardKeterReference = database.collection('card').doc('Keter').collection('keter').doc(cardId);
+    const cardKeterSnapshot = await cardKeterReference.get();
+
+    const cardThaumielReference = database.collection('card').doc('Thaumiel').collection('thaumiel').doc(cardId);
+    const cardThaumielSnapshot = await cardThaumielReference.get();
+
+    const cardApollyonReference = database.collection('card').doc('Apollyon').collection('apollyon').doc(cardId);
+    const cardApollyonSnapshot = await cardApollyonReference.get();
+
+    if (cardSafeSnapshot.exists) {
+        const cardData = cardSafeSnapshot.data();
+        
+        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
+        const obtentionQuery = obtentionReference.where('card', '==', cardSafeSnapshot.ref)
+                                                    .where('holographic', '==', holographicValue).limit(1);
+        const obtentionSnapshot = await transaction.get(obtentionQuery);
+
+        if (!obtentionSnapshot.empty) {
+            return {
+                wasFound: true,
+                cardData: cardData,
+                class: 'Safe',
+                holographic: holographicValue,
+                cardReference: cardSafeSnapshot.ref,
+            };
+        } else {
+            return { wasFound: false };
+        }
+    }
+
+    if (cardEuclidSnapshot.exists) {
+        const cardData = cardEuclidSnapshot.data();
+        
+        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
+        const obtentionQuery = obtentionReference.where('card', '==', cardEuclidSnapshot.ref)
+                                                    .where('holographic', '==', holographicValue).limit(1);
+        const obtentionSnapshot = await transaction.get(obtentionQuery);
+
+        if (!obtentionSnapshot.empty) {
+            return {
+                wasFound: true,
+                cardData: cardData,
+                class: 'Euclid',
+                holographic: holographicValue,
+                cardReference: cardEuclidSnapshot.ref,
+            };
+        } else {
+            return { wasFound: false };
+        }
+    }
+
+    if (cardKeterSnapshot.exists) {
+        const cardData = cardKeterSnapshot.data();
+        
+        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
+        const obtentionQuery = obtentionReference.where('card', '==', cardKeterSnapshot.ref)
+                                                    .where('holographic', '==', holographicValue).limit(1);
+        const obtentionSnapshot = await transaction.get(obtentionQuery);
+
+        if (!obtentionSnapshot.empty) {
+            return {
+                wasFound: true,
+                cardData: cardData,
+                class: 'Keter',
+                holographic: holographicValue,
+                cardReference: cardKeterSnapshot.ref,
+            };
+        } else {
+            return { wasFound: false };
+        }
+    }
+
+    if (cardThaumielSnapshot.exists) {
+        const cardData = cardThaumielSnapshot.data();
+        
+        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
+        const obtentionQuery = obtentionReference.where('card', '==', cardThaumielSnapshot.ref)
+                                                    .where('holographic', '==', holographicValue).limit(1);
+        const obtentionSnapshot = await transaction.get(obtentionQuery);
+
+        if (!obtentionSnapshot.empty) {
+            return {
+                wasFound: true,
+                cardData: cardData,
+                class: 'Thaumiel',
+                holographic: holographicValue,
+                cardReference: cardThaumielSnapshot.ref,
+            };
+        } else {
+            return { wasFound: false };
+        }
+    }
+
+    if (cardApollyonSnapshot.exists) {
+        const cardData = cardApollyonSnapshot.data();
+        
+        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
+        const obtentionQuery = obtentionReference.where('card', '==', cardApollyonSnapshot.ref)
+                                                    .where('holographic', '==', holographicValue).limit(1);
+        const obtentionSnapshot = await transaction.get(obtentionQuery);
+
+        if (!obtentionSnapshot.empty) {
+            return {
+                wasFound: true,
+                cardData: cardData,
+                class: 'Apollyon',
+                holographic: holographicValue,
+                cardReference: cardApollyonSnapshot.ref,
+            };
+        } else {
+            return { wasFound: false };
+        }
+    }
+
+    return { wasFound: false };
 }

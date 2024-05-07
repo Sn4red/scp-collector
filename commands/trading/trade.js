@@ -1,9 +1,3 @@
-// * Queda pendiente lo siguiente:
-// * 1. Validar que el recipient no sea el mismo que el issuer.
-// * 2. Validar si el recipient tiene activada la opcion de aceptar trades.
-// * 3. Investigar si de verdad es posible arreglar lo del boton cancel y que no salga error de inactividad por parte del bot.
-// * 4. Validar trade requests exitosos con holograficas.
-
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
@@ -38,57 +32,68 @@ module.exports = {
                 // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
                 await modalInteraction.deferReply({ ephemeral: true });
 
-                // * TODO: Devolver los valores holograficos (si son aplicables) y realizar los queries fuera de esta funcion.
                 const fieldsValidation = validateFields(recipientValue, issuerCardValue, issuerHolographicValue, recipientCardValue, recipientHolographicValue);
 
-                if (!fieldsValidation.errorState) {
-                    let tradeEntry = null;
+                if (!fieldsValidation.errorState) {   
+                    const specialConditionValidations = validateSpecialConditions(userId, fieldsValidation.recipientValue, fieldsValidation.fixedIssuerCardValue, fieldsValidation.fixedIssuerHolographicValue, fieldsValidation.fixedRecipientCardValue, fieldsValidation.fixedRecipientHolographicValue);
 
-                    try {
-                        await database.runTransaction(async (transaction) => {
-                            const foundCardIssuer = await findCard(userId, fieldsValidation.fixedIssuerCardValue, fieldsValidation.fixedIssuerHolographicValue, transaction);
+                    if (!specialConditionValidations.errorState) {
+                        let tradeEntry = null;
+
+                        try {
+                            await database.runTransaction(async (transaction) => {
+                                const foundCardIssuer = await findCard(userId, fieldsValidation.fixedIssuerCardValue, fieldsValidation.fixedIssuerHolographicValue, transaction);
                             
-                            if (!foundCardIssuer.wasFound) {
-                                throw new Error('It seems that you don\'t have the card you are offering.');
-                            }
+                                if (!foundCardIssuer.wasFound) {
+                                    throw new Error('It seems that you don\'t have the card you are offering.');
+                                }
 
-                            const recipientUserReference = database.collection('user').doc(recipientValue);
-                            const recipientUserSnapshot = await recipientUserReference.get();
+                                const recipientUserReference = database.collection('user').doc(recipientValue);
+                                const recipientUserSnapshot = await recipientUserReference.get();
 
-                            if (!recipientUserSnapshot.exists) {
-                                throw new Error('The user you are trying to trade with is either not registered or not found.');
-                            }
+                                if (!recipientUserSnapshot.exists) {
+                                    throw new Error('The user you are trying to trade with is either not registered or not found.');
+                                }
 
-                            const foundCardRecipient = await findCard(recipientValue, fieldsValidation.fixedRecipientCardValue, fieldsValidation.fixedRecipientHolographicValue, transaction);
+                                const recipientDocument = recipientUserSnapshot.data();
 
-                            if (!foundCardRecipient.wasFound) {
-                                throw new Error('It seems that the user doesn\'t have the card you want.');
-                            }
+                                if (recipientDocument.acceptTradeOffers === false) {
+                                    throw new Error('The user you are trying to trade with has disabled trade requests.');
+                                }
 
-                            tradeEntry = database.collection('trade').doc();
+                                const foundCardRecipient = await findCard(recipientValue, fieldsValidation.fixedRecipientCardValue, fieldsValidation.fixedRecipientHolographicValue, transaction);
 
-                            await transaction.set(tradeEntry, {
-                                issuer: userId,
-                                issuerCard: foundCardIssuer.cardReference,
-                                recipientCard: foundCardRecipient.cardReference,
-                                recipient: recipientValue,
-                                securityCooldown: new Date(),
-                                tradeConfirmation: false,
-                                tradeDate: null,
+                                if (!foundCardRecipient.wasFound) {
+                                    throw new Error('It seems that the user doesn\'t have the card you want.');
+                                }
+
+                                tradeEntry = database.collection('trade').doc();
+
+                                await transaction.set(tradeEntry, {
+                                    issuer: userId,
+                                    issuerCard: foundCardIssuer.cardReference,
+                                    issuerHolographic: foundCardIssuer.holographic,
+                                    recipient: recipientValue,
+                                    recipientCard: foundCardRecipient.cardReference,
+                                    recipientHolographic: foundCardRecipient.holographic,
+                                    securityCooldown: new Date(),
+                                    tradeConfirmation: false,
+                                    tradeDate: null,
+                                });
                             });
-                        });
 
-                        modalInteraction.editReply(`<a:check:1235800336317419580>  Trade request sent with ID **\`${tradeEntry.id}\`**. You can use the same ID to cancel the request.`);
-                    } catch (error) {
-                        modalInteraction.editReply(`<a:error:1229592805710762128>  Request cancelled! ${error.message}`);
+                            modalInteraction.editReply(`<a:check:1235800336317419580>  Trade request sent with ID **\`${tradeEntry.id}\`**. You can use the same ID to cancel the request.`);
+                        } catch (error) {
+                            modalInteraction.editReply(`<a:error:1229592805710762128>  Request cancelled! ${error.message}`);
+                        }
+                    } else {
+                        modalInteraction.editReply(specialConditionValidations.errorMessage);
                     }
-
-
                 } else {
                     modalInteraction.editReply(fieldsValidation.errorMessage);
                 }
             }).catch((error) => {
-                console.log(`Error: ${error}`);
+                console.log(error.message);
 
                 interaction.followUp({ content: '<a:error:1229592805710762128>  Request cancelled due to inactivity.', ephemeral: true });
             });
@@ -205,7 +210,25 @@ function validateFields(recipientValue, issuerCardValue, issuerHolographicValue,
         errorState = true;
     }
 
-    return { fixedIssuerCardValue, fixedIssuerHolographicValue, fixedRecipientCardValue, fixedRecipientHolographicValue, errorState, errorMessage };
+    return { recipientValue, fixedIssuerCardValue, fixedIssuerHolographicValue, fixedRecipientCardValue, fixedRecipientHolographicValue, errorState, errorMessage };
+}
+
+// * This function does special validations that are not covered by the previous function, such as trading with yourself or trading the same card.
+function validateSpecialConditions(userId, recipientValue, issuerCardValue, issuerHolographicValue, recipientCardValue, recipientHolographicValue) {
+    let errorMessage = '<a:error:1229592805710762128>  You can\'t perform the following actions:\n';
+    let errorState = false;
+    
+    if (userId === recipientValue) {
+        errorMessage += '▫️ You can\'t trade with yourself.\n';
+        errorState = true;
+    }
+
+    if (issuerCardValue === recipientCardValue && issuerHolographicValue === recipientHolographicValue) {
+        errorMessage += '▫️ You can\'t trade the same card.';
+        errorState = true;
+    }
+
+    return { errorState, errorMessage };
 }
 
 // * This function searches for the card data through all the card collections, and then with the reference it checks if the user has the card in his collection.

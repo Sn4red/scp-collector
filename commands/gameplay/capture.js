@@ -53,8 +53,10 @@ module.exports = {
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
+        const userId = interaction.user.id;
+
         // * Database query is performed.
-        const userReference = database.collection('user').doc(interaction.user.id);
+        const userReference = database.collection('user').doc(userId);
         let userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {

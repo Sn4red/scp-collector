@@ -1,10 +1,10 @@
 /**
  * * - Considerar mejorar el sello de Premium para la carta del usuario. Darle un toque brillante.
- * * - Anadir los emojis del rango de usuario (especificado en el comando 'system').
  */
 
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
+const fetch = require('node-fetch');
 const { request } = require('undici');
 const firebase = require('../../utils/firebase');
 
@@ -125,6 +125,38 @@ async function displayCard(document, userId, interaction) {
     
     context.font = 'bold 14px Roboto Condensed';
     context.fillText(rank, 188, 91);
+
+    let emojiImage = null;
+
+    switch (rank) {
+        case 'Class D':
+            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230353704972976128');
+            break;
+        case 'Security Officer':
+            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230354487559061504');
+            break;
+        case 'Investigator':
+            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230354913780039793');
+            break;
+        case 'Containment Specialist':
+            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230355217607037040');
+            break;
+        case 'Field Agent':
+            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230356442913968128');
+            break;
+        case 'Site Director':
+            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230357575644479539');
+            break;
+        case 'O5 Council Member':
+            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230357613049286797');
+            break;
+    }
+
+    // * This section is used to calculate the position of the emoji according to the rank, and give it a margin.
+    const rankTextWidth = context.measureText(rank).width;
+    const emojiX = 188 + rankTextWidth + 10;
+
+    context.drawImage(emojiImage, emojiX, 91 - 17, 20, 20);
     
     // * Issue date.
     context.font = 'bold 10px Roboto Condensed';
@@ -231,4 +263,12 @@ async function displayCard(document, userId, interaction) {
     context.drawImage(qr, 365, 5, 80, 80);
     
     return new AttachmentBuilder(await canvas.encode('png'), { name: 'profile-image.png' });
+}
+
+// * This function is to convert the emoji URL into an image, to be used in the canvas.
+async function loadEmoji(emojiUrl) {
+    const response = await fetch(emojiUrl);
+    const image = await Canvas.loadImage(await response.buffer());
+
+    return image;
 }

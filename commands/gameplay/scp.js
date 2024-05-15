@@ -53,7 +53,7 @@ module.exports = {
                     // * When 10 card entries are accumulated, they are stored on a single page and the variable is reset.
                     if (entriesPerPageLimit == 10) {
                         embeds.push(new EmbedBuilder()
-                                        .setColor(0x000000)
+                                        .setColor(0x010101)
                                         .setTitle(`<:page:1228553113804476537>  __**Collection of ${user.nickname}**__`)
                                         .setDescription(cardsList));
 
@@ -70,7 +70,7 @@ module.exports = {
                         }
 
                         embeds.push(new EmbedBuilder()
-                                        .setColor(0x000000)
+                                        .setColor(0x010101)
                                         .setTitle(`<:page:1228553113804476537>  __**Collection of ${user.nickname}**__`)
                                         .setDescription(cardsList));
                     }

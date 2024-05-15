@@ -1,6 +1,6 @@
 /**
  * * - Considerar mejorar el sello de Premium para la carta del usuario. Darle un toque brillante.
- * 
+ * * - Anadir los emojis del rango de usuario (especificado en el comando 'system').
  */
 
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');

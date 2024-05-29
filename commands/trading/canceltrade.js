@@ -9,11 +9,11 @@ module.exports = {
         .setName('canceltrade')
         .setDescription('Cancels a specific trade request you have sent.')
         .addStringOption(option =>
-            option.setName('request')
+            option.setName('trade')
             .setDescription('Trade request ID to cancel.')
             .setRequired(true)),
     async execute(interaction) {
-        // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
 
         const userId = interaction.user.id;
@@ -30,66 +30,84 @@ module.exports = {
             if (tradeSnapshot.exists) {
                 const tradeDocument = tradeSnapshot.data();
 
-                if (tradeDocument.issuer == userId) {
-                    const buttonsRow = displayButtons();
+                if (tradeDocument.issuer === userId) {
+                    if (!tradeDocument.tradeConfirmation) {
+                        const buttonsRow = displayButtons();
 
-                    const reply = await interaction.editReply({
-                        content: `⛔  Are you sure you want to cancel the trade request **\`${tradeSnapshot.id}\`**?`,
-                        components: [buttonsRow],
-                    });
+                        const reply = await interaction.editReply({
+                            content: `<a:stop:1243398806402240582>  Are you sure you want to cancel the trade request **\`${tradeSnapshot.id}\`**?`,
+                            components: [buttonsRow],
+                        });
 
-                    const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.issuer;
-                    const time = 1000 * 30;
+                        const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.issuer;
+                        const time = 1000 * 30;
 
-                    const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
+                        const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
 
-                    let deletedMessage = false;
+                        let deletedMessage = false;
 
-                    collector.on('collect', async (button) => {
-                        if (button.customId === 'confirm') {
-                            deletedMessage = true;
+                        collector.on('collect', async (button) => {
+                            if (button.customId === 'confirm') {
+                                deletedMessage = true;
 
-                            // The card is searched for the user whom it belongs, and it is unlocked. After that, the trade document
-                            // is deleted.
-                            const obtainingReference = database.collection('obtaining').where('user', '==', userReference)
-                                                                                    .where('card', '==', tradeDocument.issuerCard)
-                                                                                    .where('locked', '==', true).limit(1);
+                                // * TODO: Hay errores en el flujo dentro de la transaccion.
+                                try {
+                                    await database.runTransaction(async (transaction) => {
+                                        const newTradeSnapshot = await transaction.get(tradeReference);
 
-                            const obtainingSnapshot = await obtainingReference.get();
+                                        if (!newTradeSnapshot.exists) {
+                                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been cancelled.', ephemeral: true });
 
-                            const obtainingDocument = obtainingSnapshot.docs[0];
+                                            await interaction.deleteReply();
 
-                            obtainingDocument.ref.update({
-                                locked: false,
-                            });
+                                            return;
+                                        }
 
-                            await database.collection('trade').doc(tradeSnapshot.id).delete();
-                            
-                            await interaction.followUp({ content: `✅  Trade >> **\`${tradeSnapshot.id}\`** << successfully canceled.`, ephemeral: true });
-                            await interaction.deleteReply();
-                        }
+                                        if (tradeSnapshot.data().tradeConfirmation !== newTradeSnapshot.data().tradeConfirmation) {
+                                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been made.', ephemeral: true });
 
-                        if (button.customId === 'cancel') {
-                            deletedMessage = true;
+                                            await interaction.deleteReply();
 
-                            await interaction.deleteReply();
-                        }
-                    });
+                                            return;
+                                        }
 
-                    collector.on('end', async () => {
-                        // Only the message is deleted through here if the user doesn't reply in the indicated time.
-                        if (!deletedMessage) {
-                            await interaction.deleteReply();
-                        }
-                    });
+                                        await transaction.delete(tradeReference);
+
+                                        await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << successfully cancelled.`, ephemeral: true });
+
+                                        await interaction.deleteReply();
+                                    });
+                                } catch (error) {
+                                    console.error(error);
+
+                                    await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to cancel the request. Please try again.', ephemeral: true });
+                                }
+                            }
+
+                            if (button.customId === 'cancel') {
+                                deletedMessage = true;
+
+                                await interaction.deleteReply();
+                            }
+                        });
+
+                        collector.on('end', async () => {
+                            // * Only the message is deleted through here if the user doesn't reply in the indicated time.
+                            if (!deletedMessage) {
+                                await interaction.deleteReply();
+                            }
+                        });
+                    } else {
+                        await interaction.editReply('<a:error:1229592805710762128>  Error. The trade has already been made.');
+                    }
                 } else {
-                    await interaction.editReply('❌  Error. You cannot cancel this trade because you are not the owner.');
+                    await interaction.editReply('<a:error:1229592805710762128>  Error. You cannot cancel this trade because you are not the owner.');
                 }
             } else {
-                await interaction.editReply('❌  There is no trade with that ID!');
+                await interaction.editReply('<a:error:1229592805710762128>  There is no trade with that ID!');
             }
         } else {
-            await interaction.editReply('❌  You are not registered! Use /card to save your information.');
+            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
         }
     },
 };

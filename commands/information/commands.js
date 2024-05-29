@@ -34,10 +34,10 @@ module.exports = {
                 { name: '<a:box:1230371194302234644>   Trading System', value: '/`trade` - Creates a trade request to a user, specifying the user, the SCP they have, and the one you are willing to trade. ' +
                                                     'When the other user accepts your request, the trade will be executed automatically. **Before accepting, there is a 1-minute cooldown ' +
                                                     'in case a request was sent by mistake.**\n' +
-                                                    '/`accepttrade` `<Request ID>` - Accepts the request, and the trade is done.\n' +
-                                                    '/`declinetrade` `<Request ID>` - Declines a trade offer.\n' +
-                                                    '/`canceltrade` `<Request ID>` - Cancels a specific trade you have sent.\n' +
-                                                    '/`viewtrade` `<Request ID>` - Displays the details of a trade.\n' +
+                                                    '/`accepttrade` `<Trade ID>` - Accepts the request, and the trade is done.\n' +
+                                                    '/`declinetrade` `<Trade ID>` - Declines a trade offer.\n' +
+                                                    '/`canceltrade` `<Trade ID>` - Cancels a specific trade you have sent.\n' +
+                                                    '/`viewtrade` `<Trade ID>` - Displays the details of a trade.\n' +
                                                     '/`senttrades` - Lists pending trades along with a history of trades you have completed.\n' +
                                                     '/`receivedtrades` - Lists the trade requests you have pending to accept or decline.' },
             )

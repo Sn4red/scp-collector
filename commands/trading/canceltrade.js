@@ -46,6 +46,7 @@ module.exports = {
 
                         let deletedMessage = false;
 
+                        // * The return statements are used to get out of the collector event.
                         collector.on('collect', async (button) => {
                             if (button.customId === 'confirm') {
                                 deletedMessage = true;

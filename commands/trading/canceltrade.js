@@ -50,7 +50,6 @@ module.exports = {
                             if (button.customId === 'confirm') {
                                 deletedMessage = true;
 
-                                // * TODO: Hay errores en el flujo dentro de la transaccion.
                                 try {
                                     await database.runTransaction(async (transaction) => {
                                         const newTradeSnapshot = await transaction.get(tradeReference);

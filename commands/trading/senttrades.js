@@ -11,17 +11,18 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
 
-        // Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
 
         const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
         if (userSnapshot.exists) {
-            const pendingTradeReference = database.collection('trade').where('issuer', '==', userId)
-                                                                    .where('tradeConfirmation', '==', false);
+            const pendingTradeReference = database.collection('trade');
 
-            const pendingTradeSnapshot = await pendingTradeReference.get();
+            const pendingTradeQuery = pendingTradeReference.where('issuer', '==', userId)
+                                                            .where('tradeConfirmation', '==', false);
+            const pendingTradeSnapshot = await pendingTradeQuery.get();
 
             if (!pendingTradeSnapshot.empty) {
                 // The trades are listed by iterating in a single string to display it in the embed.
@@ -140,32 +141,36 @@ module.exports = {
                 });
             } else {
                 const embed = new EmbedBuilder()
-                    .setColor(0x000000)
-                    .setTitle('📃  __**List of Sent Trades**__')
-                    .setDescription('No pending trade requests found.\n\n**🔻🔻🔻  Recent Trade History  🔻🔻🔻**');
+                    .setColor(0x010101)
+                    .setTitle('<:page:1228553113804476537>  __**List of Sent Trades**__')
+                    .setDescription('No pending trade requests found.\n\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**');
 
                 const filledEmbed = await historyTrades(userId, embed);
 
                 await interaction.editReply({ embeds: [filledEmbed] });
             }
         } else {
-            await interaction.editReply('❌  You are not registered! Use /card to save your information.');
+            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
         }
     },
 };
 
+// * TODO: Pendiente de revision (ahora en el flujo del else del comando). Falta limitar el historial de trades a 7, maquillarlo un poco y agregar simbolos para cartas holograficas.
 async function historyTrades(userId, embed) {
-    const issuerCompleteTradeReference = database.collection('trade').where('issuer', '==', userId)
-                                                                    .where('tradeConfirmation', '==', true);
+    const issuerCompleteTradeReference = database.collection('trade');
+    const issuerCompleteTradeQuery = issuerCompleteTradeReference.where('issuer', '==', userId)
+                                                                    .where('tradeConfirmation', '==', true).limit(7);
+    const issuerCompleteTradeSnapshot = await issuerCompleteTradeQuery.get();
 
-    const issuerCompleteTradeSnapshot = await issuerCompleteTradeReference.get();
-
-    const recipientCompleteTradeReference = database.collection('trade').where('recipient', '==', userId)
-                                                                        .where('tradeConfirmation', '==', true);
-            
-    const recipientCompleteTradeSnapshot = await recipientCompleteTradeReference.get();
+    const recipientCompleteTradeReference = database.collection('trade');
+    const recipientCompleteTradeQuery = recipientCompleteTradeReference.where('recipient', '==', userId)
+                                                                        .where('tradeConfirmation', '==', true).limit(7);
+    const recipientCompleteTradeSnapshot = await recipientCompleteTradeQuery.get();
 
     const userCompleteTradeSnapshot = issuerCompleteTradeSnapshot.docs.concat(recipientCompleteTradeSnapshot.docs);
+
+    // * This line sorts the trades by date in descending order.
+    userCompleteTradeSnapshot.sort((a, b) => b.data().tradeDate.toMillis() - a.data().tradeDate.toMillis());
 
     for (const document of userCompleteTradeSnapshot) {
         const tradeDocument = document.data();
@@ -184,7 +189,7 @@ async function historyTrades(userId, embed) {
         const issuerNickname = issuerDocument.nickname;
 
         embed.addFields(
-            { name: ' ', value: `* ${issuerCardSnapshot.id} for ${recipientCardSnapshot.id} (${tradeDate}) -> ${issuerNickname}` },
+            { name: ' ', value: `<:white_dash:1228526885676388352> ${issuerCardSnapshot.id} for ${recipientCardSnapshot.id} (${tradeDate}) -> ${issuerNickname}` },
         );
     }
 

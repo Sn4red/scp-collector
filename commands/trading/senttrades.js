@@ -155,6 +155,7 @@ module.exports = {
     },
 };
 
+// * TODO: Pendiente de revision (ahora en el flujo del else del comando). Falta limitar el historial de trades a 7, maquillarlo un poco y agregar simbolos para cartas holograficas.
 async function historyTrades(userId, embed) {
     const issuerCompleteTradeReference = database.collection('trade');
     const issuerCompleteTradeQuery = issuerCompleteTradeReference.where('issuer', '==', userId)

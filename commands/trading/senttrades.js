@@ -25,7 +25,7 @@ module.exports = {
             const pendingTradeSnapshot = await pendingTradeQuery.get();
 
             if (!pendingTradeSnapshot.empty) {
-                // The trades are listed by iterating in a single string to display it in the embed.
+                // * The trades are listed by iterating in a single string to display it in the embed.
                 let tradesList = '';
 
                 const embeds = [];
@@ -42,17 +42,17 @@ module.exports = {
                     const recipientDocument = recipientSnapshot.data();
                     const recipientNickname = recipientDocument.nickname;
 
-                    tradesList += `▫️**\`${document.id}\`** // \`${tradeDate}\` a \`${recipientNickname}\`\n`;
+                    tradesList += `<:small_white_dash:1247247464172355695>**\`${document.id}\`** // \`${tradeDate}\` a \`${recipientNickname}\`\n`;
 
                     entriesPerPageLimit++;
 
-                    // When 10 trade entries are accumulated, they are stored on a single page and the variable is reset.
+                    // * When 10 trade entries are accumulated, they are stored on a single page and the variable is reset.
                     if (entriesPerPageLimit == 10) {
-                        tradesList += '\n**🔻🔻🔻  Recent Trade History  🔻🔻🔻**';
+                        tradesList += '\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**';
 
                         const pageEmbed = new EmbedBuilder()
-                            .setColor(0x000000)
-                            .setTitle('📃  __**List of Sent Trades**__')
+                            .setColor(0x010101)
+                            .setTitle('<:page:1228553113804476537>  __**List of Sent Trades**__')
                             .setDescription(tradesList);
 
                         const filledEmbed = await historyTrades(userId, pageEmbed);
@@ -63,19 +63,19 @@ module.exports = {
                         entriesPerPageLimit = 0;
                     }
 
-                    // The validation is performed here for the last page in case 10 entries are not accumulated.
+                    // * The validation is performed here for the last page in case 10 entries are not accumulated.
                     if (index == pendingTradeSnapshot.size - 1) {
-                        // If there are only 10 entries, the execution will still enter here, which will result in an error because 'cardsList'
-                        // no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
+                        // * If there are only 10 entries, the execution will still enter here, which will result in an error because 'cardsList'
+                        // * no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
                         if (tradesList.length == 0) {
                             return;
                         }
 
-                        tradesList += '\n**🔻🔻🔻  Recent Trade History  🔻🔻🔻**';
+                        tradesList += '\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**';
 
                         const pageEmbed = new EmbedBuilder()
-                            .setColor(0x000000)
-                            .setTitle('📃  __**List of Sent Trades**__')
+                            .setColor(0x010101)
+                            .setTitle('<:page:1228553113804476537>  __**List of Pending Sent Trades**__')
                             .setDescription(tradesList);
 
                         const filledEmbed = await historyTrades(userId, pageEmbed);
@@ -90,13 +90,13 @@ module.exports = {
                     const previousButton = new ButtonBuilder()
                         .setCustomId('previousButton')
                         .setStyle('Secondary')
-                        .setEmoji('⬅️')
+                        .setEmoji('<a:white_arrow_left:1228528429620789341>')
                         .setDisabled(pages[id] === 0);
 
                     const nextButton = new ButtonBuilder()
                         .setCustomId('nextButton')
                         .setStyle('Secondary')
-                        .setEmoji('➡️')
+                        .setEmoji('<a:white_arrow_right:1228528624517255209>')
                         .setDisabled(pages[id] === embeds.length - 1);
 
                     row.addComponents(previousButton, nextButton);
@@ -142,7 +142,7 @@ module.exports = {
             } else {
                 const embed = new EmbedBuilder()
                     .setColor(0x010101)
-                    .setTitle('<:page:1228553113804476537>  __**List of Sent Trades**__')
+                    .setTitle('<:page:1228553113804476537>  __**List of Pending Sent Trades**__')
                     .setDescription('No pending trade requests found.\n\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**');
 
                 const filledEmbed = await historyTrades(userId, embed);
@@ -155,16 +155,15 @@ module.exports = {
     },
 };
 
-// * TODO: Pendiente de revision (ahora en el flujo del else del comando). Falta limitar el historial de trades a 7, maquillarlo un poco y agregar simbolos para cartas holograficas.
 async function historyTrades(userId, embed) {
     const issuerCompleteTradeReference = database.collection('trade');
     const issuerCompleteTradeQuery = issuerCompleteTradeReference.where('issuer', '==', userId)
-                                                                    .where('tradeConfirmation', '==', true).limit(7);
+                                                                    .where('tradeConfirmation', '==', true);
     const issuerCompleteTradeSnapshot = await issuerCompleteTradeQuery.get();
 
     const recipientCompleteTradeReference = database.collection('trade');
     const recipientCompleteTradeQuery = recipientCompleteTradeReference.where('recipient', '==', userId)
-                                                                        .where('tradeConfirmation', '==', true).limit(7);
+                                                                        .where('tradeConfirmation', '==', true);
     const recipientCompleteTradeSnapshot = await recipientCompleteTradeQuery.get();
 
     const userCompleteTradeSnapshot = issuerCompleteTradeSnapshot.docs.concat(recipientCompleteTradeSnapshot.docs);
@@ -172,7 +171,13 @@ async function historyTrades(userId, embed) {
     // * This line sorts the trades by date in descending order.
     userCompleteTradeSnapshot.sort((a, b) => b.data().tradeDate.toMillis() - a.data().tradeDate.toMillis());
 
+    let historyLimit = 0;
+
     for (const document of userCompleteTradeSnapshot) {
+        if (historyLimit === 7) {
+            break;
+        }
+        
         const tradeDocument = document.data();
 
         const issuerCardReference = tradeDocument.issuerCard;
@@ -188,9 +193,20 @@ async function historyTrades(userId, embed) {
         const issuerDocument = issuerSnapshot.data();
         const issuerNickname = issuerDocument.nickname;
 
+        const holographicEmojis = {
+            'Emerald': '<a:emerald:1228923470239367238>',
+            'Golden': '<a:golden:1228925086690443345>',
+            'Diamond': '<a:diamond:1228924014479671439>',
+        };  
+
+        const issuerCard = tradeDocument.issuerHolographic !== 'Normal' ? `${issuerCardSnapshot.id} (${holographicEmojis[tradeDocument.issuerHolographic]})` : `${issuerCardSnapshot.id}`;
+        const recipientCard = tradeDocument.recipientHolographic !== 'Normal' ? `${recipientCardSnapshot.id} (${holographicEmojis[tradeDocument.recipientHolographic]})` : `${recipientCardSnapshot.id}`;
+
         embed.addFields(
-            { name: ' ', value: `<:white_dash:1228526885676388352> ${issuerCardSnapshot.id} for ${recipientCardSnapshot.id} (${tradeDate}) -> ${issuerNickname}` },
+            { name: ' ', value: `<:white_dash:1228526885676388352> ${issuerCard} for ${recipientCard} (${tradeDate}) <:right_arrow:1247232535038132346> **${issuerNickname}**` },
         );
+
+        historyLimit++;
     }
 
     return embed;

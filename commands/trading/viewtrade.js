@@ -85,36 +85,15 @@ async function formattingValues(tradeDocument) {
     const recipientCardId = recipientCardSnapshot.id;
     const recipientCardName = recipientCardDocument.name;
 
-    let issuerHolographicEmoji = null;
-    let recipientHolographicEmoji = null;
+    const holographicEmojis = {
+        'Normal': '<:normal:1247244326409601076>',
+        'Emerald': '<a:emerald:1228923470239367238>',
+        'Golden': '<a:golden:1228925086690443345>',
+        'Diamond': '<a:diamond:1228924014479671439>',
+    }; 
 
-    switch (tradeDocument.issuerHolographic) {
-        case 'Diamond':
-            issuerHolographicEmoji = '<a:diamond:1228924014479671439>';
-            break;
-        case 'Golden':
-            issuerHolographicEmoji = '<a:golden:1228925086690443345>';
-            break;
-        case 'Emerald':
-            issuerHolographicEmoji = '<a:emerald:1228923470239367238>';
-            break;
-        default:
-            issuerHolographicEmoji = '<:normal:1240109824696516689>';
-    }
-
-    switch (tradeDocument.recipientHolographic) {
-        case 'Diamond':
-            recipientHolographicEmoji = '<a:diamond:1228924014479671439>';
-            break;
-        case 'Golden':
-            recipientHolographicEmoji = '<a:golden:1228925086690443345>';
-            break;
-        case 'Emerald':
-            recipientHolographicEmoji = '<a:emerald:1228923470239367238>';
-            break;
-        default:
-            recipientHolographicEmoji = '<:normal:1240109824696516689>';
-    }
+    const issuerHolographicEmoji = holographicEmojis[tradeDocument.issuerHolographic];
+    const recipientHolographicEmoji = holographicEmojis[tradeDocument.recipientHolographic];
 
     const creationDate = new Date(tradeDocument.securityCooldown._seconds * 1000 + tradeDocument.securityCooldown._nanoseconds / 1000000).toLocaleString();
 

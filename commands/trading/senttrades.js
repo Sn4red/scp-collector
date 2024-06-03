@@ -21,7 +21,8 @@ module.exports = {
             const pendingTradeReference = database.collection('trade');
 
             const pendingTradeQuery = pendingTradeReference.where('issuer', '==', userId)
-                                                            .where('tradeConfirmation', '==', false);
+                                                            .where('tradeConfirmation', '==', false)
+                                                            .orderBy('securityCooldown', 'desc');
             const pendingTradeSnapshot = await pendingTradeQuery.get();
 
             if (!pendingTradeSnapshot.empty) {
@@ -42,7 +43,7 @@ module.exports = {
                     const recipientDocument = recipientSnapshot.data();
                     const recipientNickname = recipientDocument.nickname;
 
-                    tradesList += `<:small_white_dash:1247247464172355695>**\`${document.id}\`** // \`${tradeDate}\` a \`${recipientNickname}\`\n`;
+                    tradesList += `<:small_white_dash:1247247464172355695>**\`${document.id}\`** // \`${tradeDate}\` to \`${recipientNickname}\`\n`;
 
                     entriesPerPageLimit++;
 
@@ -52,7 +53,7 @@ module.exports = {
 
                         const pageEmbed = new EmbedBuilder()
                             .setColor(0x010101)
-                            .setTitle('<:page:1228553113804476537>  __**List of Sent Trades**__')
+                            .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
                             .setDescription(tradesList);
 
                         const filledEmbed = await historyTrades(userId, pageEmbed);
@@ -65,17 +66,18 @@ module.exports = {
 
                     // * The validation is performed here for the last page in case 10 entries are not accumulated.
                     if (index == pendingTradeSnapshot.size - 1) {
-                        // * If there are only 10 entries, the execution will still enter here, which will result in an error because 'cardsList'
+                        // * If there are only 10 entries, the execution will still enter here, which will result in an error because 'tradesList'
                         // * no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
                         if (tradesList.length == 0) {
-                            return;
+                            // * 'break' is used for 'for'.
+                            break;
                         }
 
                         tradesList += '\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**';
 
                         const pageEmbed = new EmbedBuilder()
                             .setColor(0x010101)
-                            .setTitle('<:page:1228553113804476537>  __**List of Pending Sent Trades**__')
+                            .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
                             .setDescription(tradesList);
 
                         const filledEmbed = await historyTrades(userId, pageEmbed);
@@ -142,7 +144,7 @@ module.exports = {
             } else {
                 const embed = new EmbedBuilder()
                     .setColor(0x010101)
-                    .setTitle('<:page:1228553113804476537>  __**List of Pending Sent Trades**__')
+                    .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
                     .setDescription('No pending trade requests found.\n\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**');
 
                 const filledEmbed = await historyTrades(userId, embed);
@@ -174,6 +176,9 @@ async function historyTrades(userId, embed) {
 
     let historyLimit = 0;
 
+    const promises = [];
+
+    // * First for structure is used to iterate over the trades using promises and get the information faster.
     for (const document of userCompleteTradeSnapshot) {
         if (historyLimit === 7) {
             break;
@@ -182,15 +187,27 @@ async function historyTrades(userId, embed) {
         const tradeDocument = document.data();
 
         const issuerCardReference = tradeDocument.issuerCard;
-        const issuerCardSnapshot = await issuerCardReference.get();
-
         const recipientCardReference = tradeDocument.recipientCard;
-        const recipientCardSnapshot = await recipientCardReference.get();
+        const issuerReference = database.collection('user').doc(tradeDocument.issuer);
+
+        promises.push(issuerCardReference.get());
+        promises.push(recipientCardReference.get());
+        promises.push(issuerReference.get());
+
+        historyLimit++;
+    }
+
+    const results = await Promise.all(promises);
+
+    // * Second for structure is used to iterate over the results and fill the embed with the trade information.
+    for (let i = 0; i < results.length; i += 3) {
+        const issuerCardSnapshot = results[i];
+        const recipientCardSnapshot = results[i + 1];
+        const issuerSnapshot = results[i + 2];
+
+        const tradeDocument = userCompleteTradeSnapshot[i / 3].data();
 
         const tradeDate = new Date(tradeDocument.tradeDate._seconds * 1000 + tradeDocument.tradeDate._nanoseconds / 1000000).toLocaleString();
-                
-        const issuerReference = database.collection('user').doc(tradeDocument.issuer);
-        const issuerSnapshot = await issuerReference.get();
         const issuerDocument = issuerSnapshot.data();
         const issuerNickname = issuerDocument.nickname;
 
@@ -206,8 +223,6 @@ async function historyTrades(userId, embed) {
         embed.addFields(
             { name: ' ', value: `<:white_dash:1228526885676388352> ${issuerCard} for ${recipientCard} (${tradeDate}) <:right_arrow:1247232535038132346> **${issuerNickname}**` },
         );
-
-        historyLimit++;
     }
 
     return embed;

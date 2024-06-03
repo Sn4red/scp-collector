@@ -66,6 +66,7 @@ module.exports = {
                         // * If there are only 10 entries, the execution will still enter here, which will result in an error because 'cardsList'
                         // * no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
                         if (cardsList.length == 0) {
+                            // * 'return' is used for 'forEach'.
                             return;
                         }
 

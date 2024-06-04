@@ -186,27 +186,27 @@ function validateFields(recipientValue, issuerCardValue, issuerHolographicValue,
     let errorState = false;
 
     if (!recipientValidation) {
-        errorMessage += '▫️ User ID. It should only contain numbers.\n';
+        errorMessage += '<:small_white_dash:1247247464172355695>User ID. It should only contain numbers.\n';
         errorState = true;
     }
     
     if (!issuerCardValidation) {
-        errorMessage += '▫️ Offered card. Card ID format is `SCP-XXXX`.\n';
+        errorMessage += '<:small_white_dash:1247247464172355695>Offered card. Card ID format is `SCP-XXXX`.\n';
         errorState = true;
     }
 
     if (!issuerHolographicValidation) {
-        errorMessage += '▫️ Offered holographic. Allowed values are Emerald/Golden/Diamond.\n';
+        errorMessage += '<:small_white_dash:1247247464172355695>Offered holographic. Allowed values are Emerald/Golden/Diamond.\n';
         errorState = true;
     }
 
     if (!recipientCardValidation) {
-        errorMessage += '▫️ Desired card. Card ID format is `SCP-XXXX`.\n';
+        errorMessage += '<:small_white_dash:1247247464172355695>Desired card. Card ID format is `SCP-XXXX`.\n';
         errorState = true;
     }
 
     if (!recipientHolographicValidation) {
-        errorMessage += '▫️ Desired holographic. Allowed values are Emerald/Golden/Diamond.';
+        errorMessage += '<:small_white_dash:1247247464172355695>Desired holographic. Allowed values are Emerald/Golden/Diamond.';
         errorState = true;
     }
 
@@ -219,12 +219,12 @@ function validateSpecialConditions(userId, recipientValue, issuerCardValue, issu
     let errorState = false;
     
     if (userId === recipientValue) {
-        errorMessage += '▫️ You can\'t trade with yourself.\n';
+        errorMessage += '<:small_white_dash:1247247464172355695>You can\'t trade with yourself.\n';
         errorState = true;
     }
 
     if (issuerCardValue === recipientCardValue && issuerHolographicValue === recipientHolographicValue) {
-        errorMessage += '▫️ You can\'t trade the same card.';
+        errorMessage += '<:small_white_dash:1247247464172355695>You can\'t trade the same card.';
         errorState = true;
     }
 

@@ -26,6 +26,23 @@ module.exports = {
             const pendingTradeSnapshot = await pendingTradeQuery.get();
 
             if (!pendingTradeSnapshot.empty) {
+                const promises = [];
+
+                // * First for structure is used to iterate over the trades using promises and get the information faster.
+                for (const trade of pendingTradeSnapshot.docs) {
+                    const tradeDocument = trade.data();
+
+                    const tradeDate = new Date(tradeDocument.securityCooldown._seconds * 1000 + tradeDocument.securityCooldown._nanoseconds / 1000000).toLocaleString();
+
+                    const recipientReference = database.collection('user').doc(tradeDocument.recipient);
+                    const recipientSnapshot = recipientReference.get();
+
+                    promises.push(recipientSnapshot);
+                    promises.push(tradeDate);
+                }
+
+                const results = await Promise.all(promises);
+
                 // * The trades are listed by iterating in a single string to display it in the embed.
                 let tradesList = '';
 
@@ -33,17 +50,15 @@ module.exports = {
                 const pages = {};
                 let entriesPerPageLimit = 0;
 
-                for (const [index, document] of pendingTradeSnapshot.docs.entries()) {
-                    const tradeDocument = document.data();
+                // * Second for structure is used to iterate over the results and fill the embed with the trade information.
+                for (let i = 0; i < results.length; i += 2) {
+                    const recipientSnapshot = results[i];
+                    const tradeDate = results[i + 1];
 
-                    const tradeDate = new Date(tradeDocument.securityCooldown._seconds * 1000 + tradeDocument.securityCooldown._nanoseconds / 1000000).toLocaleString();
-
-                    const recipientReference = database.collection('user').doc(tradeDocument.recipient);
-                    const recipientSnapshot = await recipientReference.get();
                     const recipientDocument = recipientSnapshot.data();
                     const recipientNickname = recipientDocument.nickname;
 
-                    tradesList += `<:small_white_dash:1247247464172355695>**\`${document.id}\`** // \`${tradeDate}\` to \`${recipientNickname}\`\n`;
+                    tradesList += `<:small_white_dash:1247247464172355695>**\`${pendingTradeSnapshot.docs[i / 2].id}\`** // \`${tradeDate}\` to \`${recipientNickname}\`\n`;
 
                     entriesPerPageLimit++;
 
@@ -65,7 +80,7 @@ module.exports = {
                     }
 
                     // * The validation is performed here for the last page in case 10 entries are not accumulated.
-                    if (index == pendingTradeSnapshot.size - 1) {
+                    if (i / 2 == pendingTradeSnapshot.size - 1) {
                         // * If there are only 10 entries, the execution will still enter here, which will result in an error because 'tradesList'
                         // * no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
                         if (tradesList.length == 0) {
@@ -157,7 +172,6 @@ module.exports = {
     },
 };
 
-// * TODO: Pendiente de revision (ahora en el flujo del else del comando). Falta limitar el historial de trades a 7, maquillarlo un poco y agregar simbolos para cartas holograficas.
 async function historyTrades(userId, embed) {
     const issuerCompleteTradeReference = database.collection('trade');
     const issuerCompleteTradeQuery = issuerCompleteTradeReference.where('issuer', '==', userId)

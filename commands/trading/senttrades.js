@@ -201,12 +201,17 @@ async function historyTrades(userId, embed) {
         const tradeDocument = document.data();
 
         const issuerCardReference = tradeDocument.issuerCard;
-        const recipientCardReference = tradeDocument.recipientCard;
-        const issuerReference = database.collection('user').doc(tradeDocument.issuer);
+        const issuerCardSnapshot = issuerCardReference.get();
 
-        promises.push(issuerCardReference.get());
-        promises.push(recipientCardReference.get());
-        promises.push(issuerReference.get());
+        const recipientCardReference = tradeDocument.recipientCard;
+        const recipientCardSnapshot = recipientCardReference.get();
+
+        const issuerReference = database.collection('user').doc(tradeDocument.issuer);
+        const issuerSnapshot = issuerReference.get();
+
+        promises.push(issuerCardSnapshot);
+        promises.push(recipientCardSnapshot);
+        promises.push(issuerSnapshot);
 
         historyLimit++;
     }

@@ -6,11 +6,11 @@ const database = firebase.firestore();
 module.exports = {
     cooldown: 20,
     data: new SlashCommandBuilder()
-        .setName('canceltrade')
-        .setDescription('Cancels a specific trade request you have sent.')
+        .setName('declinetrade')
+        .setDescription('Declines a trade offer.')
         .addStringOption(option =>
             option.setName('trade')
-            .setDescription('Trade request ID to cancel.')
+            .setDescription('Trade request ID to decline.')
             .setRequired(true)),
     async execute(interaction) {
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
@@ -30,16 +30,21 @@ module.exports = {
             if (tradeSnapshot.exists) {
                 const tradeDocument = tradeSnapshot.data();
 
-                if (tradeDocument.issuer === userId) {
+                if (tradeDocument.recipient === userId) {
                     if (!tradeDocument.tradeConfirmation) {
                         const buttonsRow = displayButtons();
 
+                        const issuerReference = database.collection('user').doc(tradeDocument.issuer);
+                        const issuerSnapshot = await issuerReference.get();
+                        const issuerDocument = issuerSnapshot.data();
+                        const issuerNickname = issuerDocument.nickname;
+
                         const reply = await interaction.editReply({
-                            content: `<a:stop:1243398806402240582>  Are you sure you want to cancel the trade request **\`${tradeSnapshot.id}\`**?`,
+                            content: `<a:stop:1243398806402240582>  Are you sure you want to decline the trade request **\`${tradeSnapshot.id}\`** from \`${issuerNickname}\`?`,
                             components: [buttonsRow],
                         });
 
-                        const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.issuer;
+                        const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.recipient;
                         const time = 1000 * 30;
 
                         const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
@@ -73,14 +78,14 @@ module.exports = {
 
                                         await transaction.delete(tradeReference);
 
-                                        await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << successfully cancelled. <a:trash:1247734945552531628>`, ephemeral: true });
+                                        await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << was declined. <a:trash:1247734945552531628>`, ephemeral: true });
 
                                         await interaction.deleteReply();
                                     });
                                 } catch (error) {
                                     console.error(error);
 
-                                    await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to cancel the request. Please try again.', ephemeral: true });
+                                    await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to decline the request. Please try again.', ephemeral: true });
                                 }
                             }
 
@@ -101,7 +106,7 @@ module.exports = {
                         await interaction.editReply('<a:error:1229592805710762128>  Error. The trade has already been made.');
                     }
                 } else {
-                    await interaction.editReply('<a:error:1229592805710762128>  Error. You cannot cancel this trade because you are not the owner.');
+                    await interaction.editReply('<a:error:1229592805710762128>  Error. You cannot decline this trade because it wasn\'t sent it to you.');
                 }
             } else {
                 await interaction.editReply('<a:error:1229592805710762128>  There is no trade with that ID!');

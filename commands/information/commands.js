@@ -38,7 +38,7 @@ module.exports = {
                                                     '/`declinetrade` `<Trade ID>` - Declines a trade offer.\n' +
                                                     '/`canceltrade` `<Trade ID>` - Cancels a specific trade you have sent.\n' +
                                                     '/`viewtrade` `<Trade ID>` - Displays the details of a trade.\n' +
-                                                    '/`senttrades` - Lists pending trades along with a history of trades you have completed.\n' +
+                                                    '/`senttrades` - Lists pending trades along with a history of trades you have done.\n' +
                                                     '/`receivedtrades` - Lists the trade requests you have pending to accept or decline.' },
             )
             .setTimestamp()

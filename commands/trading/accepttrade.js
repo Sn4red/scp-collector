@@ -33,6 +33,7 @@ module.exports = {
                 if (tradeDocument.issuer === userId) {
                     if (!tradeDocument.tradeConfirmation) {
                         // * TODO: Implementar la logica de intercambio de cartas, no pero sin antes validar que haya pasado el cooldown de un minuto para poder aceptar el trade request.
+                        // * Commit/Push de prueba.
                     } else {
                         await interaction.editReply('<a:error:1229592805710762128>  Error. The trade has already been made.');
                     }

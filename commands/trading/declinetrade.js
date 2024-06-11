@@ -30,6 +30,7 @@ module.exports = {
             if (tradeSnapshot.exists) {
                 const tradeDocument = tradeSnapshot.data();
 
+                // * TODO: realizar todas las validaciones de los 'else' para pasar el control de calidad.
                 if (tradeDocument.recipient === userId) {
                     if (!tradeDocument.tradeConfirmation) {
                         const buttonsRow = displayButtons();

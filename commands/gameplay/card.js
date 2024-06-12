@@ -1,5 +1,5 @@
 /**
- * * - Considerar mejorar el sello de Premium para la carta del usuario. Darle un toque brillante.
+ * * TODO: Considerar mejorar el sello de Premium para la carta del usuario. Darle un toque brillante.
  */
 
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
@@ -179,7 +179,7 @@ async function displayCard(document, userId, interaction) {
     context.font = 'bold 8px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.fillText(id, 367, 98);
-    
+  
     // * User progress bar.
     context.fillStyle = '#1A1A1A';
     context.fillRect(22, 210, 406, 15);

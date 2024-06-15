@@ -40,13 +40,13 @@ module.exports = {
                         { name: `${tradeObject.issuerHolographicEmoji}  Card`, value: `\`${tradeObject.issuerCardId}\` // \`${tradeObject.issuerCardName}\`` },
                         { name: '<:user:1240099663541960795>  Recipient', value: `\`${tradeObject.recipientNickname}\` (\`${tradeObject.recipientId}\`)` },
                         { name: `${tradeObject.recipientHolographicEmoji}  Card`, value: `\`${tradeObject.recipientCardId}\` // \`${tradeObject.recipientCardName}\`` },
-                        { name: '<a:clock:1240110707295387718>  Creation Date', value: `\`${tradeObject.creationDate}\`` },
+                        { name: '<a:bit_clock:1240110707295387718>  Creation Date', value: `\`${tradeObject.creationDate}\`` },
                         { name: '<a:pin:1230368962496434338>  Status', value: `**\`${tradeObject.tradeStatus}\`**  ${tradeObject.statusEmoji}` },
                     )
                     .setTimestamp();
 
                 if (tradeObject.tradeDate != null) {
-                    tradeEmbed.addFields({ name: '<a:clock:1240110707295387718>  Trade Date', value: `\`${tradeObject.tradeDate}\`` });
+                    tradeEmbed.addFields({ name: '<a:bit_clock:1240110707295387718>  Trade Date', value: `\`${tradeObject.tradeDate}\`` });
                 }
 
                 await interaction.editReply({ embeds: [tradeEmbed] });

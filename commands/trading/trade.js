@@ -255,8 +255,6 @@ async function findCard(userId, cardId, holographic, transaction) {
     const cardApollyonSnapshot = await cardApollyonReference.get();
 
     if (cardSafeSnapshot.exists) {
-        const cardData = cardSafeSnapshot.data();
-        
         const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
         const obtentionQuery = obtentionReference.where('card', '==', cardSafeSnapshot.ref)
                                                     .where('holographic', '==', holographicValue).limit(1);
@@ -265,8 +263,6 @@ async function findCard(userId, cardId, holographic, transaction) {
         if (!obtentionSnapshot.empty) {
             return {
                 wasFound: true,
-                cardData: cardData,
-                class: 'Safe',
                 holographic: holographicValue,
                 cardReference: cardSafeSnapshot.ref,
             };
@@ -275,9 +271,7 @@ async function findCard(userId, cardId, holographic, transaction) {
         }
     }
 
-    if (cardEuclidSnapshot.exists) {
-        const cardData = cardEuclidSnapshot.data();
-        
+    if (cardEuclidSnapshot.exists) {    
         const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
         const obtentionQuery = obtentionReference.where('card', '==', cardEuclidSnapshot.ref)
                                                     .where('holographic', '==', holographicValue).limit(1);
@@ -286,8 +280,6 @@ async function findCard(userId, cardId, holographic, transaction) {
         if (!obtentionSnapshot.empty) {
             return {
                 wasFound: true,
-                cardData: cardData,
-                class: 'Euclid',
                 holographic: holographicValue,
                 cardReference: cardEuclidSnapshot.ref,
             };
@@ -296,9 +288,7 @@ async function findCard(userId, cardId, holographic, transaction) {
         }
     }
 
-    if (cardKeterSnapshot.exists) {
-        const cardData = cardKeterSnapshot.data();
-        
+    if (cardKeterSnapshot.exists) {   
         const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
         const obtentionQuery = obtentionReference.where('card', '==', cardKeterSnapshot.ref)
                                                     .where('holographic', '==', holographicValue).limit(1);
@@ -307,8 +297,6 @@ async function findCard(userId, cardId, holographic, transaction) {
         if (!obtentionSnapshot.empty) {
             return {
                 wasFound: true,
-                cardData: cardData,
-                class: 'Keter',
                 holographic: holographicValue,
                 cardReference: cardKeterSnapshot.ref,
             };
@@ -318,8 +306,6 @@ async function findCard(userId, cardId, holographic, transaction) {
     }
 
     if (cardThaumielSnapshot.exists) {
-        const cardData = cardThaumielSnapshot.data();
-        
         const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
         const obtentionQuery = obtentionReference.where('card', '==', cardThaumielSnapshot.ref)
                                                     .where('holographic', '==', holographicValue).limit(1);
@@ -328,8 +314,6 @@ async function findCard(userId, cardId, holographic, transaction) {
         if (!obtentionSnapshot.empty) {
             return {
                 wasFound: true,
-                cardData: cardData,
-                class: 'Thaumiel',
                 holographic: holographicValue,
                 cardReference: cardThaumielSnapshot.ref,
             };
@@ -339,8 +323,6 @@ async function findCard(userId, cardId, holographic, transaction) {
     }
 
     if (cardApollyonSnapshot.exists) {
-        const cardData = cardApollyonSnapshot.data();
-        
         const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
         const obtentionQuery = obtentionReference.where('card', '==', cardApollyonSnapshot.ref)
                                                     .where('holographic', '==', holographicValue).limit(1);
@@ -349,8 +331,6 @@ async function findCard(userId, cardId, holographic, transaction) {
         if (!obtentionSnapshot.empty) {
             return {
                 wasFound: true,
-                cardData: cardData,
-                class: 'Apollyon',
                 holographic: holographicValue,
                 cardReference: cardApollyonSnapshot.ref,
             };

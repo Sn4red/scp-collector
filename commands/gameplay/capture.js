@@ -132,7 +132,7 @@ module.exports = {
                     transactionCardState = false;
                 }
 
-                if (transactionCardState === true) {
+                if (transactionCardState) {
                     let transactionUserState = true;
 
                     try {

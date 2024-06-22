@@ -1,6 +1,6 @@
-// * TODO: el codigo funciona. Queda pendiente realizar pruebas para verificar que todo funcione correctamente.
-// * Asi mismo, se analizaran las transacciones de este comando para verificar que hayan buenas practicas.
-// * Tambien queda pendiente ver si se borran los trade request pendientes si el usuario ya no tiene la carta necesaria para completar el trade.
+// * TODO: Queda pendiente realizar varias variantes de testing para ver si se borran los trade request pendientes
+// * si el usuario ya no tiene la carta necesaria para completar el trade.
+// * Tambien se haran pruebas extra para confirmar que el trade se realiza correctamente.
 
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType } = require('discord.js');
 const firebase = require('../../utils/firebase');
@@ -62,7 +62,6 @@ module.exports = {
                             collector.on('collect', async (button) => {
                                 if (button.customId === 'confirm') {
                                     deletedMessage = true;
-                                    transactionState = true;
 
                                     try {
                                         await database.runTransaction(async (transaction) => {

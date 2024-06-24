@@ -39,7 +39,9 @@ module.exports = {
                                                     '/`canceltrade` `<Trade ID>` - Cancels a specific trade you have sent.\n' +
                                                     '/`viewtrade` `<Trade ID>` - Displays the details of a trade.\n' +
                                                     '/`senttrades` - Lists pending trades along with a history of trades you have done.\n' +
-                                                    '/`receivedtrades` - Lists the trade requests you have pending to accept or decline.' },
+                                                    '/`receivedtrades` - Lists the trade requests you have pending to accept or decline.\n' +
+                                                    '/`disabletrades` - Use it if you don\'t want to receive trade offers.\n' +
+                                                    '/`enabletrades` - Use it if you want to receive trade offers (**enabled by default**).' },
             )
             .setTimestamp()
             .setFooter({ text: 'To submit suggestions or report errors: <Google Form> (reward given for finding errors)', iconURL: 'attachment://commands-iconFooter.jpg' });

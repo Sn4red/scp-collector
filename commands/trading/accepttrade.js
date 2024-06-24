@@ -1,7 +1,3 @@
-// * TODO: Queda pendiente realizar varias variantes de testing para ver si se borran los trade request pendientes
-// * si el usuario ya no tiene la carta necesaria para completar el trade.
-// * Tambien se haran pruebas extra para confirmar que el trade se realiza correctamente.
-
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
@@ -56,7 +52,7 @@ module.exports = {
                             const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
 
                             let deletedMessage = false;
-                            let transactionState = false;
+                            let transactionState = true;
 
                             // * The return statements are used to get out of the collector event.
                             collector.on('collect', async (button) => {
@@ -69,7 +65,6 @@ module.exports = {
 
                                             if (!newTradeSnapshot.exists) {
                                                 await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been cancelled/declined.', ephemeral: true });
-    
                                                 await interaction.deleteReply();
     
                                                 return;
@@ -77,7 +72,6 @@ module.exports = {
 
                                             if (tradeSnapshot.data().tradeConfirmation !== newTradeSnapshot.data().tradeConfirmation) {
                                                 await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been made.', ephemeral: true });
-    
                                                 await interaction.deleteReply();
     
                                                 return;
@@ -130,7 +124,8 @@ module.exports = {
                                                 await cleaningPendingTrades(tradeDocument.issuer, tradeDocument.issuerCard, tradeDocument.issuerHolographic, transaction);
                                                 await cleaningPendingTrades(tradeDocument.recipient, tradeDocument.recipientCard, tradeDocument.recipientHolographic, transaction);
 
-                                                await interaction.followUp({ content: '<a:check:1235800336317419580>  The trade was successfully completed!', ephemeral: true });
+                                                await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** <<  was successfully completed!`, ephemeral: true });
+                                                await interaction.deleteReply();
                                             });
                                         } catch (error) {
                                             console.error(error);

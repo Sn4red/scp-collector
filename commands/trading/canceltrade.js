@@ -57,7 +57,6 @@ module.exports = {
 
                                         if (!newTradeSnapshot.exists) {
                                             await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been cancelled/declined.', ephemeral: true });
-
                                             await interaction.deleteReply();
 
                                             return;
@@ -65,7 +64,6 @@ module.exports = {
 
                                         if (tradeSnapshot.data().tradeConfirmation !== newTradeSnapshot.data().tradeConfirmation) {
                                             await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been made.', ephemeral: true });
-
                                             await interaction.deleteReply();
 
                                             return;
@@ -74,7 +72,6 @@ module.exports = {
                                         await transaction.delete(tradeReference);
 
                                         await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << successfully cancelled. <a:trash:1247734945552531628>`, ephemeral: true });
-
                                         await interaction.deleteReply();
                                     });
                                 } catch (error) {

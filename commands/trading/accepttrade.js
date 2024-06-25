@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType } = require('discord.js');
 const firebase = require('../../utils/firebase');
+const moment = require('moment');
 
 const database = firebase.firestore();
 
@@ -32,11 +33,10 @@ module.exports = {
 
                 if (tradeDocument.recipient === userId) {
                     if (!tradeDocument.tradeConfirmation) {
+                        // * Using moment, the difference between the current date and the securityCooldown (trade) is calculated in minutes.
                         const tradeDate = tradeDocument.securityCooldown.toDate();
-                        const currentDate = new Date();
-                        const diff = currentDate - tradeDate;
-                        const diffSeconds = diff / 1000;
-                        const diffMinutes = diffSeconds / 60;
+                        const currentDate = moment();
+                        const diffMinutes = currentDate.diff(moment(tradeDate), 'minutes');
 
                         if (diffMinutes >= 1) {
                             const buttonsRow = displayButtons();

@@ -1,7 +1,6 @@
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
-const cron = require('node-cron');
 
 const database = firebase.firestore();
 
@@ -396,39 +395,3 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
 
     return { cardEmbed, promotionType, userDocument, indexCurrentElement };
 }
-
-// * This function resets the daily limit of attempts.
-// * Sets to 10 for Premium users, and 5 for non Premium.
-async function resetDailyLimit() {
-    const premiumUserReference = database.collection('user');
-    const premiumUserQuery = premiumUserReference.where('premium', '==', true)
-                                                    .where('dailyAttemptsRemaining', '<', 10);
-    const premiumUserSnapshot = await premiumUserQuery.get();
-
-    premiumUserSnapshot.forEach(async (user) => {
-        if (user.exists) {
-            await user.ref.update({
-                dailyAttemptsRemaining: 10, 
-            });
-        }
-    });
-
-    const normalUserReference = database.collection('user');
-    const normalUserQuery = normalUserReference.where('premium', '==', false)
-                                                .where('dailyAttemptsRemaining', '<', 5);
-    const normalUserSnapshot = await normalUserQuery.get();
-
-    normalUserSnapshot.forEach(async (user) => {
-        if (user.exists) {
-            await user.ref.update({
-                dailyAttemptsRemaining: 5, 
-            });
-        }
-    });
-}
-
-// * The cron task executes the reset function at midnight.
-cron.schedule('0 0 * * *', async () => {
-    console.log('*** Resetting daily attempts limit ***');
-    await resetDailyLimit();
-});

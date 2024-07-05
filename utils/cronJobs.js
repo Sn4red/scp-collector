@@ -69,13 +69,13 @@ async function deleteOldTradeRequests() {
 // * This function starts all the cron jobs.
 function startCronJobs() {
     // * The cron task executes the reset function at midnight.
-    cron.schedule('26 17 * * *', async () => {
+    cron.schedule('0 0 * * *', async () => {
         console.log('*** Resetting daily attempts limit ***');
         await resetDailyLimit();
     });
 
     // * The cron task executes the delete function at 23 hours.
-    cron.schedule('27 17 * * *', async () => {
+    cron.schedule('23 0 * * *', async () => {
         console.log('*** Deleting old trade requests ***');
         await deleteOldTradeRequests();
     });

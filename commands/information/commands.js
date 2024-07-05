@@ -24,13 +24,15 @@ module.exports = {
                                             '/`classes` - Details the different classes of SCPs.\n' +
                                             '/`history` - Provides details on the theme of the bot for more context and a brief history of what the SCP Foundation is.\n' +
                                             '/`faq` - Frequently Asked Questions about bot functionality.\n' +
+                                            '/`combinations` - Explains about how combinations works.\n' +
                                             '**/`vip` - VIP Benefits Details. Get additional features by becoming a donor!** <a:thunder:1230360956056375317><a:thunder:1230360956056375317><a:thunder:1230360956056375317>' },
                 { name: '<a:dice:1228555582655561810>   Gameplay', value: '`/card` - Displays your personal card and progress details. This is the first command you should use to start playing.\n' +
                                             '/`capture` - Capture an SCP and add it to your collection. You may obtain duplicates that can be used for trading with someone else. ' +
                                             'The rarity (class) of the SCP will influence the probabilities of obtaining it. You can only capture **5 SCPs** per day.\n' +
                                             '/`showcard` `<SCP ID>` - Shows one of your cards to the public.\n' +
                                             '/`viewcard` `<SCP ID>` - Privately displays one of your owned cards.\n' +
-                                            '/`scp` - Lists the SCPs you currently have, including duplicates.' },
+                                            '/`scp` - Lists the SCPs you currently have, including duplicates.\n' +
+                                            '/`combine` - Combines 10 cards to turn it into a higher class card.' },
                 { name: '<a:box:1230371194302234644>   Trading System', value: '/`trade` - Creates a trade request to a user, specifying the user, the SCP they have, and the one you are willing to trade. ' +
                                                     'When the other user accepts your request, the trade will be executed automatically. **Before accepting, there is a 1-minute cooldown ' +
                                                     'in case a request was sent by mistake.**\n' +

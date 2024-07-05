@@ -25,10 +25,11 @@ module.exports = {
                             '- Thaumiel -> +100XP -> 4% probability\n' +
                             '- Apollyon -> +200XP -> 2% probability')
             .addFields(
-                { name: '<a:holographic_card:1230360738653016095>   Holographics  <a:thunder:1230360956056375317> VIP FEATURE <a:thunder:1230360956056375317>', value: 'Also, there are chances of obtaining holographic cards. These are rares to collect and provide additional XP too!\n\n' +
-                                                        '- <a:emerald:1228923470239367238>   Emerald -> +40XP -> 7% probability\n' +
-                                                        '- <a:golden:1228925086690443345>   Golden -> +70XP -> 2% probability\n' +
-                                                        '- <a:diamond:1228924014479671439>   Diamond -> +100XP -> 0.7% probability' },
+                { name: '<a:holographic_card:1230360738653016095>   Holographics  <a:thunder:1230360956056375317> VIP FEATURE <a:thunder:1230360956056375317>',
+                    value: 'Also, there are chances of obtaining holographic cards. These are rares to collect and provide additional XP too!\n\n' +
+                            '- <a:emerald:1228923470239367238>   Emerald -> +40XP -> 7% probability\n' +
+                            '- <a:golden:1228925086690443345>   Golden -> +70XP -> 2% probability\n' +
+                            '- <a:diamond:1228924014479671439>   Diamond -> +100XP -> 0.7% probability' },
             )
             .setThumbnail('attachment://classes-thumbnail.jpg')
             .setTimestamp()

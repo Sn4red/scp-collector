@@ -104,9 +104,9 @@ module.exports = {
 };
 
 // * Function that builds the modal.
-function displayModal(idUsuario) {
+function displayModal(userId) {
     const modal = new ModalBuilder()
-        .setCustomId(`modal-${idUsuario}`)
+        .setCustomId(`modal-${userId}`)
         .setTitle('Trade Request  📑');
         
     const txtRecipient = new TextInputBuilder()

@@ -69,9 +69,6 @@ module.exports = {
                 // * Class obtained through probability.
                 const obtainedClass = classProbability(userDocument.premium);
 
-                // * The subcollection has the same name as the document containing it, but is entirely in lowercase.
-                const subCollection = obtainedClass.charAt(0).toLowerCase() + obtainedClass.slice(1);
-
                 let transactionCardState = true;
 
                 let cardId = null;
@@ -94,7 +91,7 @@ module.exports = {
                     // * - Inserting the obtaining into the user's subcollection.
                     await database.runTransaction(async (transaction) => {
                         // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
-                        const cardReference = database.collection('card').doc(obtainedClass).collection(subCollection);
+                        const cardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
                         const cardSnapshot = await transaction.get(cardReference.count());
 
                         const classCount = cardSnapshot.data().count;
@@ -104,15 +101,15 @@ module.exports = {
                         // * We add 1 to the result in case it returns 0.
                         const randomNumber = Math.floor(Math.random() * classCount) + 1;
                     
-                        const selectedCardReference = database.collection('card').doc(obtainedClass).collection(subCollection);
+                        const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
                         const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
                         const selectedCardSnapshot = await selectedCardQuery.get();
 
-                        const document = selectedCardSnapshot.docs[0];
-                        const selectedCardDocument = document.data();
+                        const cardDocument = selectedCardSnapshot.docs[0];
+                        const selectedCardDocument = cardDocument.data();
 
                         // * Card data.
-                        cardId = document.id;   
+                        cardId = cardDocument.id;   
                         classCard = obtainedClass;
                         file = selectedCardDocument.file;
                         name = selectedCardDocument.name;
@@ -123,7 +120,7 @@ module.exports = {
                         const obtainingEntry = database.collection('user').doc(userSnapshot.id).collection('obtaining').doc();
     
                         await transaction.set(obtainingEntry, {
-                            card: database.collection('card').doc(obtainedClass).collection(subCollection).doc(cardId),
+                            card: database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase()).doc(cardId),
                             holographic: holographicValue,
                         });
                     });

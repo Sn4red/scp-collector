@@ -32,7 +32,7 @@ module.exports = {
                                             '/`showcard` `<SCP ID>` - Shows one of your cards to the public.\n' +
                                             '/`viewcard` `<SCP ID>` - Privately displays one of your owned cards.\n' +
                                             '/`scp` - Lists the SCPs you currently have, including duplicates.\n' +
-                                            '/`combine` - Combines 10 cards to turn it into a higher class card.' },
+                                            '/`combine` - Combines 5 cards to turn it into a higher class card.' },
                 { name: '<a:box:1230371194302234644>   Trading System', value: '/`trade` - Creates a trade request to a user, specifying the user, the SCP they have, and the one you are willing to trade. ' +
                                                     'When the other user accepts your request, the trade will be executed automatically. **Before accepting, there is a 1-minute cooldown ' +
                                                     'in case a request was sent by mistake.**\n' +

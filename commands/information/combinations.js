@@ -7,7 +7,6 @@ module.exports = {
         .setName('combinations')
         .setDescription('Explains about how combinations works.'),
     async execute(interaction) {
-        // * TODO: Falta subir una imagen o gif para el thumbnail.
         const thumbnailPath = path.join(__dirname, '../../images/embed/combinations-thumbnail.gif');
         const iconFooterPath = path.join(__dirname, '../../images/embed/combinations-iconFooter.gif');
 
@@ -32,7 +31,7 @@ module.exports = {
                         '- <a:emerald:1228923470239367238>   Emerald -> 7% probability\n' +
                         '- <a:golden:1228925086690443345>   Golden -> 2% probability\n' +
                         '- <a:diamond:1228924014479671439>   Diamond -> 0.7% probability' },
-                { name: '<a:distorted_warning:1230359869316661330>   Limitations', value: 'Note that this function is only limited to Safe, Euclid and Keter class cards with no holographic attributes.' },
+                { name: '<a:distorted_warning:1230359869316661330>   Limitations', value: 'Note that this function is only limited to Safe, Euclid and Keter class cards with **no holographic attributes**.' },
             )
             .setThumbnail('attachment://combinations-thumbnail.gif')
             .setTimestamp()

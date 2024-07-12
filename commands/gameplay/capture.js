@@ -76,7 +76,7 @@ module.exports = {
                 let file = null;
                 let name = null;
 
-                let holographicValue = null;
+                let holographicValue = 'Normal';
 
                 let cardEmbed = null;
 
@@ -113,8 +113,11 @@ module.exports = {
                         classCard = obtainedClass;
                         file = selectedCardDocument.file;
                         name = selectedCardDocument.name;
-
-                        holographicValue = holographicProbability();
+                    
+                        // * Only premium users can obtain holographic cards.
+                        if (userDocument.premium) {
+                            holographicValue = holographicProbability();
+                        }
 
                         // * The entry of obtaining the card is inserted.
                         const obtainingEntry = database.collection('user').doc(userSnapshot.id).collection('obtaining').doc();

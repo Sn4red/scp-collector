@@ -1,3 +1,5 @@
+// TODO: pendiente de aplicar la nueva estructura de findCard en otros comandos.
+
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
@@ -358,146 +360,45 @@ function validateFields(card1Value, card2Value, card3Value, card4Value, card5Val
 
 // * This function searches for the card data through all the card collections, and then with the reference it checks if the user has the card in his collection.
 async function findCard(userId, cardId, cards, transaction) {
-    // TODO: queda pendiente investigar para saber si esto se puede usar con promesas, para agilizar el tiempo de ejecucion del comando.
-    // TODO: de llegar a implementarse, analizar si es que realmente disminuye considerablemente el tiempo de ejecucion. Caso contrario, borrarlo.
-    const cardSafeReference = database.collection('card').doc('Safe').collection('safe').doc(cardId);
-    const cardSafeSnapshot = await cardSafeReference.get();
+    const cardReferences = [
+        database.collection('card').doc('Safe').collection('safe').doc(cardId),
+        database.collection('card').doc('Euclid').collection('euclid').doc(cardId),
+        database.collection('card').doc('Keter').collection('keter').doc(cardId),
+        database.collection('card').doc('Thaumiel').collection('thaumiel').doc(cardId),
+        database.collection('card').doc('Apollyon').collection('apollyon').doc(cardId),
+    ];
 
-    const cardEuclidReference = database.collection('card').doc('Euclid').collection('euclid').doc(cardId);
-    const cardEuclidSnapshot = await cardEuclidReference.get();
+    const cardPromises = cardReferences.map(reference => reference.get());
 
-    const cardKeterReference = database.collection('card').doc('Keter').collection('keter').doc(cardId);
-    const cardKeterSnapshot = await cardKeterReference.get();
+    const snapshots = await Promise.all(cardPromises);
+    
+    for (const snapshot of snapshots) {
+        if (snapshot.exists) {
+            const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
+            const obtentionQuery = obtentionReference.where('card', '==', snapshot.ref)
+                                                        .where('holographic', '==', 'Normal')
+                                                        .where(firebase.firestore.FieldPath.documentId(), 'not-in', cards).limit(1);
+            const obtentionSnapshot = await transaction.get(obtentionQuery);
 
-    const cardThaumielReference = database.collection('card').doc('Thaumiel').collection('thaumiel').doc(cardId);
-    const cardThaumielSnapshot = await cardThaumielReference.get();
+            if (!obtentionSnapshot.empty) {
+                cards.push(obtentionSnapshot.docs[0].id);
 
-    const cardApollyonReference = database.collection('card').doc('Apollyon').collection('apollyon').doc(cardId);
-    const cardApollyonSnapshot = await cardApollyonReference.get();
+                const pathSegments = snapshot.ref.path.split('/');
+                const collectionName = pathSegments[1];
 
-    if (cardSafeSnapshot.exists) {
-        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtentionQuery = obtentionReference.where('card', '==', cardSafeSnapshot.ref)
-                                                    .where('holographic', '==', 'Normal')
-                                                    .where(firebase.firestore.FieldPath.documentId(), 'not-in', cards).limit(1);
-        const obtentionSnapshot = await transaction.get(obtentionQuery);
-
-        if (!obtentionSnapshot.empty) {
-            cards.push(obtentionSnapshot.docs[0].id);
-
-            return {
-                wasFound: true,
-                cards: cards,
-                collection: 'Safe',
-                cardId: cardId,
-                obtentionReference: obtentionSnapshot.docs[0].ref,
-            };
-        } else {
-            return {
-                wasFound: false,
-                cards: cards,
-            };
-        }
-    }
-
-    if (cardEuclidSnapshot.exists) {
-        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtentionQuery = obtentionReference.where('card', '==', cardEuclidSnapshot.ref)
-                                                    .where('holographic', '==', 'Normal')
-                                                    .where(firebase.firestore.FieldPath.documentId(), 'not-in', cards).limit(1);
-
-        const obtentionSnapshot = await transaction.get(obtentionQuery);
-
-        if (!obtentionSnapshot.empty) {
-            cards.push(obtentionSnapshot.docs[0].id);
-
-            return {
-                wasFound: true,
-                cards: cards,
-                collection: 'Euclid',
-                cardId: cardId,
-                obtentionReference: obtentionSnapshot.docs[0].ref,
-            };
-        } else {
-            return {
-                wasFound: false,
-                cards: cards,
-            };
-        }
-    }
-
-    if (cardKeterSnapshot.exists) {   
-        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtentionQuery = obtentionReference.where('card', '==', cardKeterSnapshot.ref)
-                                                    .where('holographic', '==', 'Normal')
-                                                    .where(firebase.firestore.FieldPath.documentId(), 'not-in', cards).limit(1);
-        const obtentionSnapshot = await transaction.get(obtentionQuery);
-
-        if (!obtentionSnapshot.empty) {
-            cards.push(obtentionSnapshot.docs[0].id);
-
-            return {
-                wasFound: true,
-                cards: cards,
-                collection: 'Keter',
-                cardId: cardId,
-                obtentionReference: obtentionSnapshot.docs[0].ref,
-            };
-        } else {
-            return {
-                wasFound: false,
-                cards: cards,
-            };
-        }
-    }
-
-    if (cardThaumielSnapshot.exists) {
-        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtentionQuery = obtentionReference.where('card', '==', cardThaumielSnapshot.ref)
-                                                    .where('holographic', '==', 'Normal')
-                                                    .where(firebase.firestore.FieldPath.documentId(), 'not-in', cards).limit(1);
-        const obtentionSnapshot = await transaction.get(obtentionQuery);
-
-        if (!obtentionSnapshot.empty) {
-            cards.push(obtentionSnapshot.docs[0].id);
-
-            // TODO: falta validar cuales atributos no se usan.
-            return {
-                wasFound: true,
-                cards: cards,
-                collection: 'Thaumiel',
-                cardId: cardId,
-            };
-        } else {
-            return {
-                wasFound: false,
-                cards: cards,
-            };
-        }
-    }
-
-    if (cardApollyonSnapshot.exists) {
-        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtentionQuery = obtentionReference.where('card', '==', cardApollyonSnapshot.ref)
-                                                    .where('holographic', '==', 'Normal')
-                                                    .where(firebase.firestore.FieldPath.documentId(), 'not-in', cards).limit(1);
-        const obtentionSnapshot = await transaction.get(obtentionQuery);
-
-        if (!obtentionSnapshot.empty) {
-            cards.push(obtentionSnapshot.docs[0].id);
-
-            // TODO: falta validar cuales atributos no se usan.
-            return {
-                wasFound: true,
-                cards: cards,
-                collection: 'Apollyon',
-                cardId: cardId,
-            };
-        } else {
-            return {
-                wasFound: false,
-                cards: cards,
-            };
+                return {
+                    wasFound: true,
+                    cards: cards,
+                    collection: collectionName,
+                    cardId: cardId,
+                    obtentionReference: obtentionSnapshot.docs[0].ref,
+                };
+            } else {
+                return {
+                    wasFound: false,
+                    cards: cards,
+                };
+            }
         }
     }
 
@@ -546,27 +447,27 @@ function validateClasses(classCard1, cardName1, classCard2, cardName2, classCard
     let errorState = false;
 
     if (classCard1 === 'Thaumiel' || classCard1 === 'Apollyon') {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName1}** (${classCard1}).\n`;
+        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName1}** (${classCard1})\n`;
         errorState = true;
     }
 
     if (classCard2 === 'Thaumiel' || classCard2 === 'Apollyon') {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName2}** (${classCard2}).\n`;
+        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName2}** (${classCard2})\n`;
         errorState = true;
     }
 
     if (classCard3 === 'Thaumiel' || classCard3 === 'Apollyon') {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName3}** (${classCard3}).\n`;
+        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName3}** (${classCard3})\n`;
         errorState = true;
     }
 
     if (classCard4 === 'Thaumiel' || classCard4 === 'Apollyon') {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName4}** (${classCard4}).\n`;
+        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName4}** (${classCard4})\n`;
         errorState = true;
     }
 
     if (classCard5 === 'Thaumiel' || classCard5 === 'Apollyon') {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName5}** (${classCard5}).`;
+        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName5}** (${classCard5})`;
         errorState = true;
     }
 

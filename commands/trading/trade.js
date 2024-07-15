@@ -239,103 +239,34 @@ async function findCard(userId, cardId, holographic, transaction) {
         holographicValue = 'Normal';
     }
 
-    const cardSafeReference = database.collection('card').doc('Safe').collection('safe').doc(cardId);
-    const cardSafeSnapshot = await cardSafeReference.get();
+    const cardReferences = [
+        database.collection('card').doc('Safe').collection('safe').doc(cardId),
+        database.collection('card').doc('Euclid').collection('euclid').doc(cardId),
+        database.collection('card').doc('Keter').collection('keter').doc(cardId),
+        database.collection('card').doc('Thaumiel').collection('thaumiel').doc(cardId),
+        database.collection('card').doc('Apollyon').collection('apollyon').doc(cardId),
+    ];
 
-    const cardEuclidReference = database.collection('card').doc('Euclid').collection('euclid').doc(cardId);
-    const cardEuclidSnapshot = await cardEuclidReference.get();
+    const cardPromises = cardReferences.map(reference => reference.get());
 
-    const cardKeterReference = database.collection('card').doc('Keter').collection('keter').doc(cardId);
-    const cardKeterSnapshot = await cardKeterReference.get();
+    const snapshots = await Promise.all(cardPromises);
 
-    const cardThaumielReference = database.collection('card').doc('Thaumiel').collection('thaumiel').doc(cardId);
-    const cardThaumielSnapshot = await cardThaumielReference.get();
+    for (const snapshot of snapshots) {
+        if (snapshot.exists) {
+            const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
+            const obtentionQuery = obtentionReference.where('card', '==', snapshot.ref)
+                                                        .where('holographic', '==', holographicValue).limit(1);
+            const obtentionSnapshot = await transaction.get(obtentionQuery);
 
-    const cardApollyonReference = database.collection('card').doc('Apollyon').collection('apollyon').doc(cardId);
-    const cardApollyonSnapshot = await cardApollyonReference.get();
-
-    if (cardSafeSnapshot.exists) {
-        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtentionQuery = obtentionReference.where('card', '==', cardSafeSnapshot.ref)
-                                                    .where('holographic', '==', holographicValue).limit(1);
-        const obtentionSnapshot = await transaction.get(obtentionQuery);
-
-        if (!obtentionSnapshot.empty) {
-            return {
-                wasFound: true,
-                holographic: holographicValue,
-                cardReference: cardSafeSnapshot.ref,
-            };
-        } else {
-            return { wasFound: false };
-        }
-    }
-
-    if (cardEuclidSnapshot.exists) {    
-        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtentionQuery = obtentionReference.where('card', '==', cardEuclidSnapshot.ref)
-                                                    .where('holographic', '==', holographicValue).limit(1);
-        const obtentionSnapshot = await transaction.get(obtentionQuery);
-
-        if (!obtentionSnapshot.empty) {
-            return {
-                wasFound: true,
-                holographic: holographicValue,
-                cardReference: cardEuclidSnapshot.ref,
-            };
-        } else {
-            return { wasFound: false };
-        }
-    }
-
-    if (cardKeterSnapshot.exists) {   
-        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtentionQuery = obtentionReference.where('card', '==', cardKeterSnapshot.ref)
-                                                    .where('holographic', '==', holographicValue).limit(1);
-        const obtentionSnapshot = await transaction.get(obtentionQuery);
-
-        if (!obtentionSnapshot.empty) {
-            return {
-                wasFound: true,
-                holographic: holographicValue,
-                cardReference: cardKeterSnapshot.ref,
-            };
-        } else {
-            return { wasFound: false };
-        }
-    }
-
-    if (cardThaumielSnapshot.exists) {
-        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtentionQuery = obtentionReference.where('card', '==', cardThaumielSnapshot.ref)
-                                                    .where('holographic', '==', holographicValue).limit(1);
-        const obtentionSnapshot = await transaction.get(obtentionQuery);
-
-        if (!obtentionSnapshot.empty) {
-            return {
-                wasFound: true,
-                holographic: holographicValue,
-                cardReference: cardThaumielSnapshot.ref,
-            };
-        } else {
-            return { wasFound: false };
-        }
-    }
-
-    if (cardApollyonSnapshot.exists) {
-        const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtentionQuery = obtentionReference.where('card', '==', cardApollyonSnapshot.ref)
-                                                    .where('holographic', '==', holographicValue).limit(1);
-        const obtentionSnapshot = await transaction.get(obtentionQuery);
-
-        if (!obtentionSnapshot.empty) {
-            return {
-                wasFound: true,
-                holographic: holographicValue,
-                cardReference: cardApollyonSnapshot.ref,
-            };
-        } else {
-            return { wasFound: false };
+            if (!obtentionSnapshot.empty) {
+                return {
+                    wasFound: true,
+                    holographic: holographicValue,
+                    cardReference: snapshot.ref,
+                };
+            } else {
+                return { wasFound: false };
+            }
         }
     }
 

@@ -1,4 +1,5 @@
-// TODO: pendiente de aplicar la nueva estructura de findCard en otros comandos.
+// TODO: falta mejorar el manejo de errores en los demas comandos, como se hizo en este.
+// TODO: falta agregar mensajes en consola cuando hay errores en catch (este y en otros comandos).
 
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
@@ -164,61 +165,66 @@ module.exports = {
                     const tradeEntry = database.collection('user').doc(userId).collection('obtaining').doc();
 
                     await transaction.set(tradeEntry, {
-                        card: database.collection('card').doc(resultingClass).collection(resultingClass.toLowerCase()).doc(cardId),
+                        card: database.collection('card').doc(classCard).collection(classCard.toLowerCase()).doc(cardId),
                         holographic: holograhicValue,
                     });
 
                     const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
                     const image = new AttachmentBuilder(imagePath);
 
-                    let holographicEmoji = null;
+                    let holographicEmojiLeft = null;
+                    let holographicEmojiRight = null;
                     let embedColor = null;
 
                     switch (holograhicValue) {
                         case 'Emerald':
-                            holographicEmoji = '<a:emerald:1228923470239367238>';
+                            holographicEmojiLeft = '<a:emerald:1228923470239367238>';
+                            holographicEmojiRight = holographicEmojiLeft;
                             embedColor = 0x00b65c;
 
                             break;
                         case 'Golden':
-                            holographicEmoji = '<a:golden:1228925086690443345>';
+                            holographicEmojiLeft = '<a:golden:1228925086690443345>';
+                            holographicEmojiRight = holographicEmojiLeft;
                             embedColor = 0xffd700;
 
                             break;
                         case 'Diamond':
-                            holographicEmoji = '<a:diamond:1228924014479671439>';
+                            holographicEmojiLeft = '<a:diamond:1228924014479671439>';
+                            holographicEmojiRight = holographicEmojiLeft;
                             embedColor = 0x00bfff;
 
                             break;
                         default:
-                            holographicEmoji = ' ';
+                            holographicEmojiLeft = '      ';
+                            holographicEmojiRight = ' ';
                             embedColor = 0x010101;
 
                             break;
                     }
 
-                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.**');
+                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** <a:combination:1262543042364051529>');
 
                     setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.**');
+                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** <a:combination:1262543042364051529>');
                     }, 1000);
 
                     setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.**');
+                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** <a:combination:1262543042364051529>');
                     }, 2000);
 
                     setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.**');
+                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** <a:combination:1262543042364051529>');
                     }, 3000);
 
                     setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** **.** **Done!**');
+                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** **.** <a:check:1235800336317419580>');
                     }, 4000);
 
                     setTimeout(async () => {
                         const cardEmbed = new EmbedBuilder()
                             .setColor(embedColor)
-                            .setTitle(`${holographicEmoji}  Item #: \`${cardId}\` // \`${name}\``)
+                            .setTitle(`${holographicEmojiLeft}  Item #: \`${cardId}\` // \`${name}\``)
                             .addFields(
                                 { name: '<:invader:1228919814555177021>  Class', value: `\`${classCard}\``, inline: true },
                                 { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },
@@ -233,9 +239,14 @@ module.exports = {
                     }, 5000);
 
                     setTimeout(async () => {
-                        await modalInteraction.followUp(`Combination Summary: [\`${fieldsValidation.fixedCard1Value}\`] [\`${fieldsValidation.fixedCard2Value}\`] ` +
-                                                        `[\`${fieldsValidation.fixedCard3Value}\`] [\`${fieldsValidation.fixedCard4Value}\` ` +
-                                                        `[\`${fieldsValidation.fixedCard5Value}\`] = ${holographicEmoji} **[[\`${cardId}\`]]** ${holographicEmoji}`);
+                        await modalInteraction.followUp({ content: '<:summary:1262544727786651688>  Combination Summary:\n' +
+                                                                    `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard1Value}\`<:close_bracket:1262546397840801912>// ${foundCard1.collection}\n` +
+                                                                    `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard2Value}\`<:close_bracket:1262546397840801912>// ${foundCard2.collection}\n` +
+                                                                    `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard3Value}\`<:close_bracket:1262546397840801912>// ${foundCard3.collection}\n` +
+                                                                    `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard4Value}\`<:close_bracket:1262546397840801912>// ${foundCard4.collection}\n` +
+                                                                    `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard5Value}\`<:close_bracket:1262546397840801912>// ${foundCard5.collection}\n` +
+                                                                    `${holographicEmojiLeft}<:parenthesis_left:1262547567795900497>**\`${cardId}\`**<:parenthesis_right:1262547494202769470>${holographicEmojiRight}// **${classCard}**`,
+                                                            ephemeral: true });
                     }, 6000);
                 });
             } catch (error) {
@@ -479,9 +490,23 @@ function disputeClassTie(class1, class2) {
     const result = (Math.floor(Math.random() * 2) == 0);
 
     if (result) {
-        return class1;
+        switch (class1) {
+            case 'Safe':
+                return 'Euclid';
+            case 'Euclid':
+                return 'Keter';
+            case 'Keter':
+                return 'Thaumiel';
+        }
     } else {
-        return class2;
+        switch (class2) {
+            case 'Safe':
+                return 'Euclid';
+            case 'Euclid':
+                return 'Keter';
+            case 'Keter':
+                return 'Thaumiel';
+        }
     }
 }
 

@@ -1,4 +1,21 @@
+// TODO: el comando se demora en actualizar. Se hara la prueba el dia de manana para validar que todo el cambio del nombre del comando se encuentra listo.
 // TODO: falta mejorar el manejo de errores en los demas comandos, como se hizo en este.
+// TODO: borrar de esta lista cuando se haya completado.
+// * capture
+// * card
+// * scp
+// * showcard
+// * viewcard
+// * accepttrade
+// * canceltrade
+// * declinetrade
+// * disabletrades
+// * enabletrades
+// * receivedtrades
+// * senttrades
+// * trade
+// * viewtrade
+
 // TODO: falta agregar mensajes en consola cuando hay errores en catch (este y en otros comandos).
 
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
@@ -10,8 +27,8 @@ const database = firebase.firestore();
 module.exports = {
     cooldown: 60 * 2,
     data: new SlashCommandBuilder()
-        .setName('combine')
-        .setDescription('Combines 5 cards to turn it into a higher class card.'),
+        .setName('merge')
+        .setDescription('Merges 5 cards to turn it into a higher class card.'),
     async execute(interaction) {
         const userId = interaction.user.id;
 
@@ -203,18 +220,18 @@ module.exports = {
                             break;
                     }
 
-                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** <a:combination:1262543042364051529>');
+                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** <a:merge:1262543042364051529>');
 
                     setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** <a:combination:1262543042364051529>');
+                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** <a:merge:1262543042364051529>');
                     }, 1000);
 
                     setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** <a:combination:1262543042364051529>');
+                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** <a:merge:1262543042364051529>');
                     }, 2000);
 
                     setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** <a:combination:1262543042364051529>');
+                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** <a:merge:1262543042364051529>');
                     }, 3000);
 
                     setTimeout(async () => {
@@ -239,7 +256,7 @@ module.exports = {
                     }, 5000);
 
                     setTimeout(async () => {
-                        await modalInteraction.followUp({ content: '<:summary:1262544727786651688>  Combination Summary:\n' +
+                        await modalInteraction.followUp({ content: '<:summary:1262544727786651688>  Merge Summary:\n' +
                                                                     `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard1Value}\`<:close_bracket:1262546397840801912>// ${foundCard1.collection}\n` +
                                                                     `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard2Value}\`<:close_bracket:1262546397840801912>// ${foundCard2.collection}\n` +
                                                                     `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard3Value}\`<:close_bracket:1262546397840801912>// ${foundCard3.collection}\n` +
@@ -250,12 +267,12 @@ module.exports = {
                     }, 6000);
                 });
             } catch (error) {
-                modalInteraction.editReply(`<a:error:1229592805710762128>  Card Combination cancelled! ${error.message}`);
+                modalInteraction.editReply(`<a:error:1229592805710762128>  Card Merge cancelled! ${error.message}`);
             }
         }).catch((error) => {
             console.log(error.message);
 
-            interaction.followUp({ content: '<a:error:1229592805710762128>  Card Combination cancelled due to inactivity.', ephemeral: true });
+            interaction.followUp({ content: '<a:error:1229592805710762128>  Card Merge cancelled due to inactivity.', ephemeral: true });
         });
     },
 };
@@ -264,7 +281,7 @@ module.exports = {
 function displayModal(userId) {
     const modal = new ModalBuilder()
         .setCustomId(`modal-${userId}`)
-        .setTitle('Card Combination  📑');
+        .setTitle('Card Merge  📑');
 
     const txtCard1 = new TextInputBuilder()
         .setCustomId('txtCard1')

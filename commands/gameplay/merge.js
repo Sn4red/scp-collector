@@ -3,9 +3,6 @@
 // TODO: borrar de esta lista cuando se haya completado.
 // * capture
 // * card
-// * scp
-// * showcard
-// * viewcard
 // * accepttrade
 // * canceltrade
 // * declinetrade

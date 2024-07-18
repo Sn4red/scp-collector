@@ -31,78 +31,90 @@ module.exports = {
         const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
-        if (userSnapshot.exists) {
-            const cardId = interaction.options.getString('card');
-            const holographic = interaction.options.getString('holographic');
-
-            const fixedCardId = cardId.toUpperCase();
-            const cardIdValidation = /^scp-\d{3,4}$/i.test(fixedCardId);
-
-            if (cardIdValidation) {
-                const foundCard = await findCard(userId, fixedCardId, holographic);
-
-                if (foundCard.wasFound) {
-                    const cardData = foundCard.cardData;
-
-                    const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
-                    const image = new AttachmentBuilder(imagePath);
-
-                    let holographicEmoji = null;
-                    let embedColor = null;
-
-                    switch (foundCard.holographic) {
-                        case 'Emerald':
-                            holographicEmoji = '<a:emerald:1228923470239367238>';
-                            embedColor = 0x00b65c;
-
-                            break;
-                        case 'Golden':
-                            holographicEmoji = '<a:golden:1228925086690443345>';
-                            embedColor = 0xffd700;
-
-                            break;
-                        case 'Diamond':
-                            holographicEmoji = '<a:diamond:1228924014479671439>';
-                            embedColor = 0x00bfff;
-
-                            break;
-                        default:
-                            holographicEmoji = ' ';
-                            embedColor = 0x010101;
-
-                            break;
-                    }
-
-                    const cardEmbed = new EmbedBuilder()
-                        .setColor(embedColor)
-                        .setTitle(`${holographicEmoji}  Item #: \`${fixedCardId}\` // \`${cardData.name}\``)
-                        .addFields(
-                            { name: '<:invader:1228919814555177021>  Class', value: `\`${foundCard.class}\``, inline: true },
-                            { name: '<:files:1228920361723236412>  File', value: `**[View Document](${cardData.file})**`, inline: true },
-                        )
-                        .setImage(`attachment://${fixedCardId}.jpg`)
-                        .setTimestamp();
-
-                        await interaction.editReply({
-                            embeds: [cardEmbed],
-                            files: [image],
-                        });
-                } else {
-                    let formattedValue = holographic;
-
-                    // * This conditional es performed to avoid the 'null' value to be displayed in the message (when the card type is Normal).
-                    if (holographic === null) {
-                        formattedValue = 'Normal';
-                    }
-
-                    await interaction.editReply(`<a:magnifying:1232095150935642214>  Card \`${fixedCardId}\` (${formattedValue}) not found in your collection!`);
-                }
-            } else {
-                await interaction.editReply('<a:error:1229592805710762128>  Invalid card ID format. Please use the following format: `SCP-XXXX`.');
-            }
-        } else {
+        // ! If the user is not registered, returns an error message.
+        if (!userSnapshot.exists) {
             await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            return;
         }
+
+        const cardId = interaction.options.getString('card');
+        const holographic = interaction.options.getString('holographic');
+
+        const fixedCardId = cardId.toUpperCase();
+        const cardIdValidation = /^scp-\d{3,4}$/i.test(fixedCardId);
+    
+        // ! If the field has wrong data, returns an error message.
+        if (!cardIdValidation) {
+            await interaction.editReply('<a:error:1229592805710762128>  Invalid card ID format. Please use the following format: `SCP-XXXX`.');
+            return;
+        }
+
+        const foundCard = await findCard(userId, fixedCardId, holographic);
+
+        // ! If the card is not found in the user's collection, returns an error message.
+        if (!foundCard.wasFound) {
+            let formattedValue = holographic;
+
+            // * This conditional es performed to avoid the 'null' value to be displayed in the message (when the card type is Normal).
+            if (holographic === null) {
+                formattedValue = 'Normal';
+            }
+
+            await interaction.editReply(`<a:magnifying:1232095150935642214>  Card \`${fixedCardId}\` (${formattedValue}) not found in your collection!`);
+            return;
+        }
+
+        /**
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         * * The command passes all validations and the operation is performed. *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         */
+        
+        const cardData = foundCard.cardData;
+
+        const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
+        const image = new AttachmentBuilder(imagePath);
+
+        let holographicEmoji = null;
+        let embedColor = null;
+
+        switch (foundCard.holographic) {
+            case 'Emerald':
+                holographicEmoji = '<a:emerald:1228923470239367238>';
+                embedColor = 0x00b65c;
+
+                break;
+            case 'Golden':
+                holographicEmoji = '<a:golden:1228925086690443345>';
+                embedColor = 0xffd700;
+
+                break;
+            case 'Diamond':
+                holographicEmoji = '<a:diamond:1228924014479671439>';
+                embedColor = 0x00bfff;
+
+                break;
+            default:
+                holographicEmoji = ' ';
+                embedColor = 0x010101;
+
+                break;
+        }
+
+        const cardEmbed = new EmbedBuilder()
+            .setColor(embedColor)
+            .setTitle(`${holographicEmoji}  Item #: \`${fixedCardId}\` // \`${cardData.name}\``)
+            .addFields(
+                { name: '<:invader:1228919814555177021>  Class', value: `\`${foundCard.class}\``, inline: true },
+                { name: '<:files:1228920361723236412>  File', value: `**[View Document](${cardData.file})**`, inline: true },
+            )
+            .setImage(`attachment://${fixedCardId}.jpg`)
+            .setTimestamp();
+
+        await interaction.editReply({
+            embeds: [cardEmbed],
+            files: [image],
+         });
     },
 };
 
@@ -139,6 +151,7 @@ async function findCard(userId, cardId, holographic) {
                 const pathSegments = snapshot.ref.path.split('/');
                 const className = pathSegments[1];
 
+                // * If the card exist and the user has it in his collection.
                 return {
                     wasFound: true,
                     cardData: cardData,
@@ -146,10 +159,12 @@ async function findCard(userId, cardId, holographic) {
                     holographic: holographicValue,
                 };
             } else {
+                // * If the card exist but the user does not have it in his collection.
                 return { wasFound: false };
             }
         }
     }
 
+    // * If the card is not found in any collection, in other words, the card does not exist.
     return { wasFound: false };
 }

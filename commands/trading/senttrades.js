@@ -17,158 +17,168 @@ module.exports = {
         const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
-        if (userSnapshot.exists) {
-            const pendingTradeReference = database.collection('trade');
+        // ! If the user is not registered, returns an error message.
+        if (!userSnapshot.exists) {
+            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            return;
+        }
 
-            const pendingTradeQuery = pendingTradeReference.where('issuer', '==', userId)
-                                                            .where('tradeConfirmation', '==', false)
-                                                            .orderBy('securityCooldown', 'desc');
-            const pendingTradeSnapshot = await pendingTradeQuery.get();
+        const pendingTradeReference = database.collection('trade');
 
-            if (!pendingTradeSnapshot.empty) {
-                const promises = [];
+        const pendingTradeQuery = pendingTradeReference.where('issuer', '==', userId)
+                                                        .where('tradeConfirmation', '==', false)
+                                                        .orderBy('securityCooldown', 'desc');
+        const pendingTradeSnapshot = await pendingTradeQuery.get();
 
-                // * First for structure is used to iterate over the trades using promises and get the information faster.
-                for (const trade of pendingTradeSnapshot.docs) {
-                    const tradeDocument = trade.data();
+        // ! If the user has no pending sent trades, it displays the embed with no details and the history of recent trades performed.
+        if (pendingTradeSnapshot.empty) {
+            const embed = new EmbedBuilder()
+                .setColor(0x010101)
+                .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
+                .setDescription('No pending trade requests found.\n\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**');
 
-                    const tradeDate = new Date(tradeDocument.securityCooldown._seconds * 1000 + tradeDocument.securityCooldown._nanoseconds / 1000000).toLocaleString();
+            const filledEmbed = await historyTrades(userId, embed);
 
-                    const recipientReference = database.collection('user').doc(tradeDocument.recipient);
-                    const recipientSnapshot = recipientReference.get();
+            await interaction.editReply({ embeds: [filledEmbed] });
+            return;
+        }
 
-                    promises.push(recipientSnapshot);
-                    promises.push(tradeDate);
-                }
+        /**
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         * * The command passes all validations and the operation is performed. *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         */
 
-                const results = await Promise.all(promises);
+        const promises = [];
 
-                // * The trades are listed by iterating in a single string to display it in the embed.
-                let tradesList = '';
+        // * First for structure is used to iterate over the trades using promises and get the information faster.
+        for (const trade of pendingTradeSnapshot.docs) {
+            const tradeDocument = trade.data();
 
-                const embeds = [];
-                const pages = {};
-                let entriesPerPageLimit = 0;
+            const tradeDate = new Date(tradeDocument.securityCooldown._seconds * 1000 + tradeDocument.securityCooldown._nanoseconds / 1000000).toLocaleString();
 
-                // * Second for structure is used to iterate over the results and fill the embed with the trade information.
-                for (let i = 0; i < results.length; i += 2) {
-                    const recipientSnapshot = results[i];
-                    const tradeDate = results[i + 1];
+            const recipientReference = database.collection('user').doc(tradeDocument.recipient);
+            const recipientSnapshot = recipientReference.get();
 
-                    const recipientDocument = recipientSnapshot.data();
-                    const recipientNickname = recipientDocument.nickname;
+            promises.push(recipientSnapshot);
+            promises.push(tradeDate);
+        }
 
-                    tradesList += `<:small_white_dash:1247247464172355695>**\`${pendingTradeSnapshot.docs[i / 2].id}\`** // \`${tradeDate}\` to \`${recipientNickname}\`\n`;
+        const results = await Promise.all(promises);
 
-                    entriesPerPageLimit++;
+        // * The trades are listed by iterating in a single string to display it in the embed.
+        let tradesList = '';
 
-                    // * When 10 trade entries are accumulated, they are stored on a single page and the variable is reset.
-                    if (entriesPerPageLimit == 10) {
-                        tradesList += '\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**';
+        const embeds = [];
+        const pages = {};
+        let entriesPerPageLimit = 0;
 
-                        const pageEmbed = new EmbedBuilder()
-                            .setColor(0x010101)
-                            .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
-                            .setDescription(tradesList);
+        // * Second for structure is used to iterate over the results and fill the embed with the trade information.
+        for (let i = 0; i < results.length; i += 2) {
+            const recipientSnapshot = results[i];
+            const tradeDate = results[i + 1];
 
-                        const filledEmbed = await historyTrades(userId, pageEmbed);
+            const recipientDocument = recipientSnapshot.data();
+            const recipientNickname = recipientDocument.nickname;
 
-                        embeds.push(filledEmbed);
+            tradesList += `<:small_white_dash:1247247464172355695>**\`${pendingTradeSnapshot.docs[i / 2].id}\`** // \`${tradeDate}\` to \`${recipientNickname}\`\n`;
 
-                        tradesList = '';
-                        entriesPerPageLimit = 0;
-                    }
+            entriesPerPageLimit++;
 
-                    // * The validation is performed here for the last page in case 10 entries are not accumulated.
-                    if (i / 2 == pendingTradeSnapshot.size - 1) {
-                        // * If there are only 10 entries, the execution will still enter here, which will result in an error because 'tradesList'
-                        // * no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
-                        if (tradesList.length == 0) {
-                            // * 'break' is used for 'for'.
-                            break;
-                        }
+            // * When 10 trade entries are accumulated, they are stored on a single page and the variable is reset.
+            if (entriesPerPageLimit == 10) {
+                tradesList += '\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**';
 
-                        tradesList += '\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**';
-
-                        const pageEmbed = new EmbedBuilder()
-                            .setColor(0x010101)
-                            .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
-                            .setDescription(tradesList);
-
-                        const filledEmbed = await historyTrades(userId, pageEmbed);
-
-                        embeds.push(filledEmbed);
-                    }
-                }
-
-                const userRow = (id) => {
-                    const row = new ActionRowBuilder();
-
-                    const previousButton = new ButtonBuilder()
-                        .setCustomId('previousButton')
-                        .setStyle('Secondary')
-                        .setEmoji('<a:white_arrow_left:1228528429620789341>')
-                        .setDisabled(pages[id] === 0);
-
-                    const nextButton = new ButtonBuilder()
-                        .setCustomId('nextButton')
-                        .setStyle('Secondary')
-                        .setEmoji('<a:white_arrow_right:1228528624517255209>')
-                        .setDisabled(pages[id] === embeds.length - 1);
-
-                    row.addComponents(previousButton, nextButton);
-
-                    return row;
-                };
-
-                pages[userId] = pages[userId] || 0;
-
-                const embed = embeds[pages[userId]];
-                const collectorFilter = (x) => x.user.id === userId;
-                const time = 1000 * 60 * 5;
-
-                const reply = await interaction.editReply({
-                    embeds: [embed],
-                    components: [userRow(userId)],
-                });
-
-                const collector = reply.createMessageComponentCollector({ filter: collectorFilter, time: time });
-
-                collector.on('collect', async (button) => {
-                    if (!button) {
-                        return;
-                    }
-
-                    button.deferUpdate();
-
-                    if (button.customId !== 'previousButton' && button.customId !== 'nextButton') {
-                        return;
-                    }
-
-                    if (button.customId === 'previousButton' && pages[userId] > 0) {
-                        --pages[userId];
-                    } else if (button.customId === 'nextButton' && pages[userId] < embeds.length - 1) {
-                        ++pages[userId];
-                    }
-
-                    await interaction.editReply({
-                        embeds: [embeds[pages[userId]]],
-                        components: [userRow(userId)],
-                    });
-                });
-            } else {
-                const embed = new EmbedBuilder()
+                const pageEmbed = new EmbedBuilder()
                     .setColor(0x010101)
                     .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
-                    .setDescription('No pending trade requests found.\n\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**');
+                    .setDescription(tradesList);
 
-                const filledEmbed = await historyTrades(userId, embed);
+                const filledEmbed = await historyTrades(userId, pageEmbed);
 
-                await interaction.editReply({ embeds: [filledEmbed] });
+                embeds.push(filledEmbed);
+
+                tradesList = '';
+                entriesPerPageLimit = 0;
             }
-        } else {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+
+            // * The validation is performed here for the last page in case 10 entries are not accumulated.
+            if (i / 2 == pendingTradeSnapshot.size - 1) {
+                // * If there are only 10 entries, the execution will still enter here, which will result in an error because 'tradesList'
+                // * no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
+                if (tradesList.length == 0) {
+                    // * 'break' is used for 'for'.
+                    break;
+                }
+
+                tradesList += '\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**';
+
+                const pageEmbed = new EmbedBuilder()
+                    .setColor(0x010101)
+                    .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
+                    .setDescription(tradesList);
+
+                const filledEmbed = await historyTrades(userId, pageEmbed);
+
+                embeds.push(filledEmbed);
+            }
         }
+
+        const userRow = (id) => {
+            const row = new ActionRowBuilder();
+
+            const previousButton = new ButtonBuilder()
+                .setCustomId('previousButton')
+                .setStyle('Secondary')
+                .setEmoji('<a:white_arrow_left:1228528429620789341>')
+                .setDisabled(pages[id] === 0);
+
+            const nextButton = new ButtonBuilder()
+                .setCustomId('nextButton')
+                .setStyle('Secondary')
+                .setEmoji('<a:white_arrow_right:1228528624517255209>')
+                .setDisabled(pages[id] === embeds.length - 1);
+
+            row.addComponents(previousButton, nextButton);
+
+            return row;
+        };
+
+        pages[userId] = pages[userId] || 0;
+
+        const embed = embeds[pages[userId]];
+        const collectorFilter = (x) => x.user.id === userId;
+        const time = 1000 * 60 * 5;
+
+        const reply = await interaction.editReply({
+            embeds: [embed],
+            components: [userRow(userId)],
+        });
+
+        const collector = reply.createMessageComponentCollector({ filter: collectorFilter, time: time });
+
+        collector.on('collect', async (button) => {
+            if (!button) {
+                return;
+            }
+
+            button.deferUpdate();
+
+            if (button.customId !== 'previousButton' && button.customId !== 'nextButton') {
+                return;
+            }
+
+            if (button.customId === 'previousButton' && pages[userId] > 0) {
+                --pages[userId];
+            } else if (button.customId === 'nextButton' && pages[userId] < embeds.length - 1) {
+                ++pages[userId];
+            }
+
+            await interaction.editReply({
+                embeds: [embeds[pages[userId]]],
+                components: [userRow(userId)],
+            });
+        });
     },
 };
 

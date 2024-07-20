@@ -10,8 +10,8 @@ module.exports = {
         .setDescription('Displays the details of a trade.')
         .addStringOption(option =>
             option.setName('trade')
-            .setDescription('Trade request ID to inquire about.')
-            .setRequired(true)),
+                .setDescription('Trade request ID to inquire about.')
+                .setRequired(true)),
     async execute(interaction) {
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
@@ -21,41 +21,51 @@ module.exports = {
         const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
-        if (userSnapshot.exists) {
-            const tradeId = interaction.options.getString('trade');
-
-            const tradeReference = database.collection('trade').doc(tradeId);
-            const tradeSnapshot = await tradeReference.get();
-
-            if (tradeSnapshot.exists) {
-                const tradeDocument = tradeSnapshot.data();
-
-                const tradeObject = await formattingValues(tradeDocument);
-
-                const tradeEmbed = new EmbedBuilder()
-                    .setColor(0x010101)
-                    .setTitle(`<:page:1228553113804476537>  Trade #: \`${tradeSnapshot.id}\``)
-                    .addFields(
-                        { name: '<:user:1240099663541960795>  Issuer', value: `\`${tradeObject.issuerNickname}\` (\`${tradeObject.issuerId}\`)` },
-                        { name: `${tradeObject.issuerHolographicEmoji}  Card`, value: `\`${tradeObject.issuerCardId}\` // \`${tradeObject.issuerCardName}\`` },
-                        { name: '<:user:1240099663541960795>  Recipient', value: `\`${tradeObject.recipientNickname}\` (\`${tradeObject.recipientId}\`)` },
-                        { name: `${tradeObject.recipientHolographicEmoji}  Card`, value: `\`${tradeObject.recipientCardId}\` // \`${tradeObject.recipientCardName}\`` },
-                        { name: '<a:bit_clock:1240110707295387718>  Creation Date', value: `\`${tradeObject.creationDate}\`` },
-                        { name: '<a:pin:1230368962496434338>  Status', value: `**\`${tradeObject.tradeStatus}\`**  ${tradeObject.statusEmoji}` },
-                    )
-                    .setTimestamp();
-
-                if (tradeObject.tradeDate != null) {
-                    tradeEmbed.addFields({ name: '<a:bit_clock:1240110707295387718>  Trade Date', value: `\`${tradeObject.tradeDate}\`` });
-                }
-
-                await interaction.editReply({ embeds: [tradeEmbed] });
-            } else {
-                await interaction.editReply('<a:error:1229592805710762128>  There is no trade with that ID!');
-            }
-        } else {
+        // ! If the user is not registered, returns an error message.
+        if (!userSnapshot.exists) {
             await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            return;
         }
+
+        const tradeId = interaction.options.getString('trade');
+
+        const tradeReference = database.collection('trade').doc(tradeId);
+        const tradeSnapshot = await tradeReference.get();
+
+        // ! If the trade ID provided does not exist, returns an error message.
+        if (!tradeSnapshot.exists) {
+            await interaction.editReply('<a:error:1229592805710762128>  There is no trade with that ID!');
+            return;
+        }
+
+        /**
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         * * The command passes all validations and the operation is performed. *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         */
+
+        const tradeDocument = tradeSnapshot.data();
+
+        const tradeObject = await formattingValues(tradeDocument);
+
+        const tradeEmbed = new EmbedBuilder()
+            .setColor(0x010101)
+            .setTitle(`<:page:1228553113804476537>  Trade #: \`${tradeSnapshot.id}\``)
+            .addFields(
+                { name: '<:user:1240099663541960795>  Issuer', value: `\`${tradeObject.issuerNickname}\` (\`${tradeObject.issuerId}\`)` },
+                { name: `${tradeObject.issuerHolographicEmoji}  Card`, value: `\`${tradeObject.issuerCardId}\` // \`${tradeObject.issuerCardName}\`` },
+                { name: '<:user:1240099663541960795>  Recipient', value: `\`${tradeObject.recipientNickname}\` (\`${tradeObject.recipientId}\`)` },
+                { name: `${tradeObject.recipientHolographicEmoji}  Card`, value: `\`${tradeObject.recipientCardId}\` // \`${tradeObject.recipientCardName}\`` },
+                { name: '<a:bit_clock:1240110707295387718>  Creation Date', value: `\`${tradeObject.creationDate}\`` },
+                { name: '<a:pin:1230368962496434338>  Status', value: `**\`${tradeObject.tradeStatus}\`**  ${tradeObject.statusEmoji}` },
+            )
+            .setTimestamp();
+
+        if (tradeObject.tradeDate != null) {
+            tradeEmbed.addFields({ name: '<a:bit_clock:1240110707295387718>  Trade Date', value: `\`${tradeObject.tradeDate}\`` });
+        }
+
+        await interaction.editReply({ embeds: [tradeEmbed] });
     },
 };
 

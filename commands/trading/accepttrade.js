@@ -22,154 +22,174 @@ module.exports = {
         const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
-        if (userSnapshot.exists) {
-            const tradeId = interaction.options.getString('trade');
-
-            const tradeReference = database.collection('trade').doc(tradeId);
-            const tradeSnapshot = await tradeReference.get();
-
-            if (tradeSnapshot.exists) {
-                const tradeDocument = tradeSnapshot.data();
-
-                if (tradeDocument.recipient === userId) {
-                    if (!tradeDocument.tradeConfirmation) {
-                        // * Using moment, the difference between the current date and the securityCooldown (trade) is calculated in minutes.
-                        const tradeDate = tradeDocument.securityCooldown.toDate();
-                        const currentDate = moment();
-                        const diffMinutes = currentDate.diff(moment(tradeDate), 'minutes');
-
-                        if (diffMinutes >= 1) {
-                            const buttonsRow = displayButtons();
-
-                            const reply = await interaction.editReply({
-                                content: `<a:stop:1243398806402240582>  Are you sure you want to accept the trade request **\`${tradeSnapshot.id}\`**?`,
-                                components: [buttonsRow],
-                            });
-
-                            const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.recipient;
-                            const time = 1000 * 30;
-
-                            const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
-
-                            let deletedMessage = false;
-                            let transactionState = true;
-
-                            // * The return statements are used to get out of the collector event.
-                            collector.on('collect', async (button) => {
-                                if (button.customId === 'confirm') {
-                                    deletedMessage = true;
-
-                                    try {
-                                        await database.runTransaction(async (transaction) => {
-                                            const newTradeSnapshot = await transaction.get(tradeReference);
-
-                                            if (!newTradeSnapshot.exists) {
-                                                await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been cancelled/declined.', ephemeral: true });
-                                                await interaction.deleteReply();
-    
-                                                return;
-                                            }
-
-                                            if (tradeSnapshot.data().tradeConfirmation !== newTradeSnapshot.data().tradeConfirmation) {
-                                                await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been made.', ephemeral: true });
-                                                await interaction.deleteReply();
-    
-                                                return;
-                                            }
-
-                                            const foundCardIssuer = await findCard(tradeDocument.issuer, tradeDocument.issuerCard, tradeDocument.issuerHolographic, transaction);
-
-                                            if (!foundCardIssuer.wasFound) {
-                                                await transaction.delete(tradeReference);
-
-                                                await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. The user no longer have the card needed to proceed with the trade. The trade request was automatically cancelled.', ephemeral: true });
-                                                await interaction.deleteReply();
-
-                                                return;
-                                            }
-
-                                            const foundCardRecipient = await findCard(tradeDocument.recipient, tradeDocument.recipientCard, tradeDocument.recipientHolographic, transaction);
-
-                                            if (!foundCardRecipient.wasFound) {
-                                                await transaction.delete(tradeReference);
-
-                                                await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. You no longer have the card needed to proceed with the trade. The trade request was automatically cancelled.', ephemeral: true });
-                                                await interaction.deleteReply();
-
-                                                return;
-                                            }
-
-                                            await sendCard(foundCardIssuer.obtentionReference, tradeDocument.recipient, tradeDocument.issuerCard, tradeDocument.issuerHolographic, transaction);
-                                            await sendCard(foundCardRecipient.obtentionReference, tradeDocument.issuer, tradeDocument.recipientCard, tradeDocument.recipientHolographic, transaction);
-
-                                            // * The trade is confirmed by updating some fields.
-                                            await transaction.update(tradeReference, {
-                                                tradeConfirmation: true,
-                                                tradeDate: new Date(),
-                                            });
-                                        });
-                                    } catch (error) {
-                                        console.error(error);
-
-                                        transactionState = false;
-
-                                        await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to accept the request. Please try again.', ephemeral: true });
-                                    }
-
-                                    if (transactionState) {
-                                        try {
-                                            await database.runTransaction(async (transaction) => {
-                                                // * This function is used for each user involved in the trade to clean up (delete) the pending trades that are no longer possible to complete,
-                                                // * if they no longer have the necessary cards.
-                                                await cleaningPendingTrades(tradeDocument.issuer, tradeDocument.issuerCard, tradeDocument.issuerHolographic, transaction);
-                                                await cleaningPendingTrades(tradeDocument.recipient, tradeDocument.recipientCard, tradeDocument.recipientHolographic, transaction);
-
-                                                await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** <<  was successfully completed!`, ephemeral: true });
-                                                await interaction.deleteReply();
-                                            });
-                                        } catch (error) {
-                                            console.error(error);
-
-                                            await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to accept the request. Please try again.', ephemeral: true });
-                                        }
-                                    }
-                                }
-
-                                if (button.customId === 'cancel') {
-                                    deletedMessage = true;
-    
-                                    await interaction.deleteReply();
-                                }
-                            });
-
-                            collector.on('end', async () => {
-                                // * Only the message is deleted through here if the user doesn't reply in the indicated time.
-                                if (!deletedMessage) {
-                                    await interaction.deleteReply();
-                                }
-                            });
-                        } else {
-                            const cooldownDuration = 1;
-                            const futureTime = new Date(tradeDate.getTime() + cooldownDuration * 60000);
-                            const futureTimestamp = Math.round(futureTime.getTime() / 1000);
-
-                            await interaction.editReply(`<a:error:1229592805710762128>  This trade has been created recently. You can accept it <t:${futureTimestamp}:R>.  <a:bit_clock:1240110707295387718>`);
-                        }
-                    } else {
-                        await interaction.editReply('<a:error:1229592805710762128>  Error. The trade has already been made.');
-                    }
-                } else {
-                    await interaction.editReply('<a:error:1229592805710762128>  Error. You cannot accept this trade because it wasn\'t sent to you.');
-                }
-            } else {
-                await interaction.editReply('<a:error:1229592805710762128>  There is no trade with that ID!');
-            }
-        } else {
+        // ! If the user is not registered, returns an error message.
+        if (!userSnapshot.exists) {
             await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            return;
         }
+
+        const tradeId = interaction.options.getString('trade');
+
+        const tradeReference = database.collection('trade').doc(tradeId);
+        const tradeSnapshot = await tradeReference.get();
+
+        // ! If the trade ID provided does not exist, returns an error message.
+        if (!tradeSnapshot.exists) {
+            await interaction.editReply('<a:error:1229592805710762128>  There is no trade with that ID!');
+            return;
+        }
+
+        const tradeDocument = tradeSnapshot.data();
+
+        // ! If the user it's not the recipient of the trade request, returns an error message.
+        if (tradeDocument.recipient !== userId) {
+            await interaction.editReply('<a:error:1229592805710762128>  Error. You cannot accept this trade because it wasn\'t sent to you.');
+            return;
+        }
+
+        // ! If the trade request has already been confirmed, returns an error message.
+        if (tradeDocument.tradeConfirmation) {
+            await interaction.editReply('<a:error:1229592805710762128>  Error. The trade has already been made.');
+            return;
+        }
+
+        // * Using moment, the difference between the current date and the securityCooldown (trade) is calculated in minutes.
+        const tradeDate = tradeDocument.securityCooldown.toDate();
+        const currentDate = moment();
+        const diffMinutes = currentDate.diff(moment(tradeDate), 'minutes');
+
+        if (diffMinutes < 1) {
+            const cooldownDuration = 1;
+            const futureTime = new Date(tradeDate.getTime() + cooldownDuration * 60000);
+            const futureTimestamp = Math.round(futureTime.getTime() / 1000);
+
+            await interaction.editReply(`<a:error:1229592805710762128>  This trade has been created recently. You can accept it <t:${futureTimestamp}:R>.  <a:bit_clock:1240110707295387718>`);
+            return;
+        }
+
+        const buttonsRow = displayButtons();
+
+        const reply = await interaction.editReply({
+            content: `<a:stop:1243398806402240582>  Are you sure you want to accept the trade request **\`${tradeSnapshot.id}\`**?`,
+            components: [buttonsRow],
+        });
+
+        const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.recipient;
+        const time = 1000 * 30;
+
+        const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
+
+        let deletedMessage = false;
+        let transactionState = true;
+
+        // * The return statements are used to get out of the collector event.
+        collector.on('collect', async (button) => {
+            if (button.customId === 'confirm') {
+                deletedMessage = true;
+
+                try {
+                    await database.runTransaction(async (transaction) => {
+                        const newTradeSnapshot = await transaction.get(tradeReference);
+
+                        // ! If the trade request has already been cancelled/declined during the transaction, returns an error message.
+                        if (!newTradeSnapshot.exists) {
+                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been cancelled/declined.', ephemeral: true });
+                            await interaction.deleteReply();
+    
+                            return;
+                        }
+
+                        // ! If the trade request has already been confirmed during the transaction, returns an error message.
+                        if (tradeSnapshot.data().tradeConfirmation !== newTradeSnapshot.data().tradeConfirmation) {
+                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been made.', ephemeral: true });
+                            await interaction.deleteReply();
+    
+                            return;
+                        }
+
+                        const foundCardIssuer = await findCard(tradeDocument.issuer, tradeDocument.issuerCard, tradeDocument.issuerHolographic, transaction);
+
+                        // ! If the issuer no longer has the card needed to proceed with the trade, return an error message and the trade request is automatically cancelled.
+                        if (!foundCardIssuer.wasFound) {
+                            await transaction.delete(tradeReference);
+
+                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. The user no longer have the card needed to proceed with the trade. The trade request was automatically cancelled.', ephemeral: true });
+                            await interaction.deleteReply();
+
+                            return;
+                        }
+
+                        const foundCardRecipient = await findCard(tradeDocument.recipient, tradeDocument.recipientCard, tradeDocument.recipientHolographic, transaction);
+
+                        // ! If the recipient no longer has the card needed to proceed with the trade, return an error message and the trade request is automatically cancelled.
+                        if (!foundCardRecipient.wasFound) {
+                            await transaction.delete(tradeReference);
+
+                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. You no longer have the card needed to proceed with the trade. The trade request was automatically cancelled.', ephemeral: true });
+                            await interaction.deleteReply();
+
+                            return;
+                        }
+
+                        /**
+                         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                         * * The command passes all validations and the operation is performed. *
+                         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                         */
+
+                        await sendCard(foundCardIssuer.obtentionReference, tradeDocument.recipient, tradeDocument.issuerCard, tradeDocument.issuerHolographic, transaction);
+                        await sendCard(foundCardRecipient.obtentionReference, tradeDocument.issuer, tradeDocument.recipientCard, tradeDocument.recipientHolographic, transaction);
+
+                        // * The trade is confirmed by updating some fields.
+                        await transaction.update(tradeReference, {
+                            tradeConfirmation: true,
+                            tradeDate: new Date(),
+                        });
+                    });
+                } catch (error) {
+                    console.error(error);
+
+                    transactionState = false;
+
+                    await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to accept the request. Please try again.', ephemeral: true });
+                }
+
+                if (transactionState) {
+                    try {
+                        await database.runTransaction(async (transaction) => {
+                            // * This function is used for each user involved in the trade to clean up (delete) the pending trades that are no longer possible to complete,
+                            // * if they no longer have the necessary cards.
+                            await cleaningPendingTrades(tradeDocument.issuer, tradeDocument.issuerCard, tradeDocument.issuerHolographic, transaction);
+                            await cleaningPendingTrades(tradeDocument.recipient, tradeDocument.recipientCard, tradeDocument.recipientHolographic, transaction);
+
+                            await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** <<  was successfully completed!`, ephemeral: true });
+                            await interaction.deleteReply();
+                        });
+                    } catch (error) {
+                        console.error(error);
+
+                        await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to accept the request. Please try again.', ephemeral: true });
+                    }
+                }
+            }
+
+            if (button.customId === 'cancel') {
+                deletedMessage = true;
+    
+                await interaction.deleteReply();
+            }
+        });
+
+        collector.on('end', async () => {
+            // * Only the message is deleted through here if the user doesn't reply in the indicated time.
+            if (!deletedMessage) {
+                await interaction.deleteReply();
+            }
+        });
     },
 };
 
+// * This function displays the 'confirm' and 'cancel' buttons.
 function displayButtons() {
     const confirmButton = new ButtonBuilder()
         .setCustomId('confirm')
@@ -188,6 +208,7 @@ function displayButtons() {
     return row;
 }
 
+// * This function searches for the card through the user's collection.
 async function findCard(userId, cardReference, holographic, transaction) {
     const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
     const obtentionQuery = obtentionReference.where('card', '==', cardReference)
@@ -204,6 +225,7 @@ async function findCard(userId, cardReference, holographic, transaction) {
     }
 }
 
+// * This function 'sends' the card to the other user and deletes its own.
 async function sendCard(issuerObtentionReference, recipientId, cardReference, holographic, transaction) {
     // * The card is sent to the recipient.
     const obtainingEntry = database.collection('user').doc(recipientId).collection('obtaining').doc();
@@ -217,6 +239,7 @@ async function sendCard(issuerObtentionReference, recipientId, cardReference, ho
     await transaction.delete(issuerObtentionReference);
 }
 
+// * This function cleans up the pending trades that are no longer possible to complete, cause the user no longer has the necessary card for it.
 async function cleaningPendingTrades(userId, cardReference, holographic, transaction) {
     // * The card is searched in the user's collection.
     const foundCard = await findCard(userId, cardReference, holographic, transaction);

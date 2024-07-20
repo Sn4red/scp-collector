@@ -71,6 +71,7 @@ module.exports = {
     },
 };
 
+// * This function draws all the user's card and returns it as an attachment.
 async function displayCard(document, userId, interaction) {
     // * User data.
     const issueDate = document.issueDate;

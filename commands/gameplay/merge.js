@@ -1,18 +1,4 @@
-// TODO: el comando se demora en actualizar. Se hara la prueba el dia de manana para validar que todo el cambio del nombre del comando se encuentra listo.
-// TODO: falta mejorar el manejo de errores en los demas comandos, como se hizo en este.
-// TODO: borrar de esta lista cuando se haya completado.
-// * capture
-// * card
-// * accepttrade
-// * canceltrade
-// * declinetrade
-// * disabletrades
-// * enabletrades
-// * receivedtrades
-// * senttrades
-// * trade
-// * viewtrade
-
+// TODO: se hara una prueba completa sobre todos los comandos para asegurar que todo este sin errores.
 // TODO: falta agregar mensajes en consola cuando hay errores en catch (este y en otros comandos).
 
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
@@ -100,6 +86,12 @@ module.exports = {
                     if (classesValidation.errorState) {
                         throw new Error(classesValidation.errorMessage);
                     }
+
+                    /**
+                     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                     * * The command passes all validations and the operation is performed. *
+                     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                     */
 
                     // * In this section, the cards are being categorized by their class.
                     const foundCards = [foundCard1, foundCard2, foundCard3, foundCard4, foundCard5];

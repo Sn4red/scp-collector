@@ -10,8 +10,8 @@ module.exports = {
         .setDescription('Cancels a specific trade request you have sent.')
         .addStringOption(option =>
             option.setName('trade')
-            .setDescription('Trade request ID to cancel.')
-            .setRequired(true)),
+                .setDescription('Trade request ID to cancel.')
+                .setRequired(true)),
     async execute(interaction) {
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
@@ -21,94 +21,110 @@ module.exports = {
         const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
-        if (userSnapshot.exists) {
-            const tradeId = interaction.options.getString('trade');
-
-            const tradeReference = database.collection('trade').doc(tradeId);
-            const tradeSnapshot = await tradeReference.get();
-
-            if (tradeSnapshot.exists) {
-                const tradeDocument = tradeSnapshot.data();
-
-                if (tradeDocument.issuer === userId) {
-                    if (!tradeDocument.tradeConfirmation) {
-                        const buttonsRow = displayButtons();
-
-                        const reply = await interaction.editReply({
-                            content: `<a:stop:1243398806402240582>  Are you sure you want to cancel the trade request **\`${tradeSnapshot.id}\`**?`,
-                            components: [buttonsRow],
-                        });
-
-                        const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.issuer;
-                        const time = 1000 * 30;
-
-                        const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
-
-                        let deletedMessage = false;
-
-                        // * The return statements are used to get out of the collector event.
-                        collector.on('collect', async (button) => {
-                            if (button.customId === 'confirm') {
-                                deletedMessage = true;
-
-                                try {
-                                    await database.runTransaction(async (transaction) => {
-                                        const newTradeSnapshot = await transaction.get(tradeReference);
-
-                                        if (!newTradeSnapshot.exists) {
-                                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been cancelled/declined.', ephemeral: true });
-                                            await interaction.deleteReply();
-
-                                            return;
-                                        }
-
-                                        if (tradeSnapshot.data().tradeConfirmation !== newTradeSnapshot.data().tradeConfirmation) {
-                                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been made.', ephemeral: true });
-                                            await interaction.deleteReply();
-
-                                            return;
-                                        }
-
-                                        await transaction.delete(tradeReference);
-
-                                        await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << successfully cancelled. <a:trash:1247734945552531628>`, ephemeral: true });
-                                        await interaction.deleteReply();
-                                    });
-                                } catch (error) {
-                                    console.error(error);
-
-                                    await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to cancel the request. Please try again.', ephemeral: true });
-                                }
-                            }
-
-                            if (button.customId === 'cancel') {
-                                deletedMessage = true;
-
-                                await interaction.deleteReply();
-                            }
-                        });
-
-                        collector.on('end', async () => {
-                            // * Only the message is deleted through here if the user doesn't reply in the indicated time.
-                            if (!deletedMessage) {
-                                await interaction.deleteReply();
-                            }
-                        });
-                    } else {
-                        await interaction.editReply('<a:error:1229592805710762128>  Error. The trade has already been made.');
-                    }
-                } else {
-                    await interaction.editReply('<a:error:1229592805710762128>  Error. You cannot cancel this trade because you are not the owner.');
-                }
-            } else {
-                await interaction.editReply('<a:error:1229592805710762128>  There is no trade with that ID!');
-            }
-        } else {
+        // ! If the user is not registered, returns an error message.
+        if (!userSnapshot.exists) {
             await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            return;
         }
+        
+        const tradeId = interaction.options.getString('trade');
+
+        const tradeReference = database.collection('trade').doc(tradeId);
+        const tradeSnapshot = await tradeReference.get();
+
+        // ! If the trade ID provided does not exist, returns an error message.
+        if (!tradeSnapshot.exists) {
+            await interaction.editReply('<a:error:1229592805710762128>  There is no trade with that ID!');
+            return;
+        }
+
+        const tradeDocument = tradeSnapshot.data();
+
+        // ! If the user didn't create the trade request, returns an error message.
+        if (tradeDocument.issuer !== userId) {
+            await interaction.editReply('<a:error:1229592805710762128>  Error. You cannot cancel this trade because you are not the owner.');
+            return;
+        }
+
+        // ! If the trade request has already been confirmed, returns an error message.
+        if (tradeDocument.tradeConfirmation) {
+            await interaction.editReply('<a:error:1229592805710762128>  Error. The trade has already been made.');
+        }
+
+        const buttonsRow = displayButtons();
+
+        const reply = await interaction.editReply({
+            content: `<a:stop:1243398806402240582>  Are you sure you want to cancel the trade request **\`${tradeSnapshot.id}\`**?`,
+            components: [buttonsRow],
+        });
+
+        const collectorFilter = (userInteraction) => userInteraction.user.id === tradeDocument.issuer;
+        const time = 1000 * 30;
+
+        const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
+
+        let deletedMessage = false;
+
+        // * The return statements are used to get out of the collector event.
+        collector.on('collect', async (button) => {
+            if (button.customId === 'confirm') {
+                deletedMessage = true;
+
+                try {
+                    await database.runTransaction(async (transaction) => {
+                        const newTradeSnapshot = await transaction.get(tradeReference);
+
+                        // ! If the trade request has already been cancelled/declined during the transaction, returns an error message.
+                        if (!newTradeSnapshot.exists) {
+                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been cancelled/declined.', ephemeral: true });
+                            await interaction.deleteReply();
+
+                            return;
+                        }
+
+                        // ! If the trade request has already been confirmed during the transaction, returns an error message.
+                        if (tradeSnapshot.data().tradeConfirmation !== newTradeSnapshot.data().tradeConfirmation) {
+                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been made.', ephemeral: true });
+                            await interaction.deleteReply();
+
+                            return;
+                        }
+
+                        /**
+                         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                         * * The command passes all validations and the operation is performed. *
+                         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                         */
+
+                        await transaction.delete(tradeReference);
+
+                        await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << successfully cancelled. <a:trash:1247734945552531628>`, ephemeral: true });
+                        await interaction.deleteReply();
+                    });
+                } catch (error) {
+                    console.error(error);
+
+                    await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to cancel the request. Please try again.', ephemeral: true });
+                }
+            }
+
+            if (button.customId === 'cancel') {
+                deletedMessage = true;
+
+                await interaction.deleteReply();
+            }
+        });
+
+        collector.on('end', async () => {
+            // * Only the message is deleted through here if the user doesn't reply in the indicated time.
+            if (!deletedMessage) {
+                await interaction.deleteReply();
+            }
+        });
     },
 };
 
+// * This function displays the 'confirm' and 'cancel' buttons.
 function displayButtons() {
     const confirmButton = new ButtonBuilder()
         .setCustomId('confirm')

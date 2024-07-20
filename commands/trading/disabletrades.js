@@ -17,23 +17,30 @@ module.exports = {
         const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
-        if (userSnapshot.exists) {
-            const document = userSnapshot.data();
-
-            // * If the user already disabled the trade offers, the command won't update the document.
-            if (!document.acceptTradeOffers) {
-                await interaction.editReply('<a:error:1229592805710762128>  You already disabled trade offers!');
-
-                return;
-            }
-
-            await userReference.update({
-                acceptTradeOffers: false,
-            });
-
-            await interaction.editReply('<a:check:1235800336317419580>  You won\'t receive trade offers from now on.');
-        } else {
+        // ! If the user is not registered, returns an error message.
+        if (!userSnapshot.exists) {
             await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            return;
         }
+
+        const document = userSnapshot.data();
+
+        // ! If the user already disabled the trade offers, the command won't update the document.
+        if (!document.acceptTradeOffers) {
+            await interaction.editReply('<a:error:1229592805710762128>  You already disabled trade offers!');
+            return;
+        }
+
+        /**
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         * * The command passes all validations and the operation is performed. *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         */
+
+        await userReference.update({
+            acceptTradeOffers: false,
+        });
+
+        await interaction.editReply('<a:check:1235800336317419580>  You won\'t receive trade offers from now on.');
     },
 };

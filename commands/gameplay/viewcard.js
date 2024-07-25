@@ -72,7 +72,7 @@ module.exports = {
         
         const cardData = foundCard.cardData;
 
-        const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
+        const imagePath = path.join(__dirname, `../../images/scp/${fixedCardId}.jpg`);
         const image = new AttachmentBuilder(imagePath);
 
         let holographicEmoji = null;

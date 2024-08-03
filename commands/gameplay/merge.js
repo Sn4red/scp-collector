@@ -1,4 +1,5 @@
 // TODO: se hara una prueba completa sobre todos los comandos para asegurar que todo este sin errores.
+// TODO: asegurarse que los botones de confirm y cancel funcionen correctamente (en todos los comandos que usen botones).
 // TODO: falta agregar mensajes en consola cuando hay errores en catch (este y en otros comandos).
 
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');

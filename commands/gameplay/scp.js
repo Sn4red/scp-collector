@@ -25,11 +25,13 @@ module.exports = {
             
         const user = userSnapshot.data();
 
+        // * Aggregation query to the database counting the number of obtained SCPs.
         const obtainingReference = database.collection('user').doc(userId).collection('obtaining');
-        const obtainingSnapshot = await obtainingReference.get();
+        let obtainingSnapshot = await obtainingReference.count().get();
+        const SCPCount = obtainingSnapshot.data().count;
 
         // ! If the user has no SCPs, returns an error message.
-        if (obtainingSnapshot.empty) {
+        if (SCPCount === 0) {
             await interaction.editReply('<a:error:1229592805710762128>  You don\'t have any SCPs captured!');
             return;
         }
@@ -39,6 +41,9 @@ module.exports = {
          * * The command passes all validations and the operation is performed. *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          */
+
+        // * The variable is being reutilized to store all the user's SCPs.
+        obtainingSnapshot = await obtainingReference.get();
                 
         const sortedCards = await cardsSorting(obtainingSnapshot);
 

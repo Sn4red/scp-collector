@@ -11,7 +11,7 @@ module.exports = {
         .setDescription('Accepts the request, and the trade is done.')
         .addStringOption(option =>
             option.setName('trade')
-            .setDescription('Trade request ID to cancel.')
+            .setDescription('Trade request ID to accept.')
             .setRequired(true)),
     async execute(interaction) {
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
@@ -28,7 +28,15 @@ module.exports = {
             return;
         }
 
+        // * Some extra validation is performed here, according to the Firestore's documents ID requirements.
         const tradeId = interaction.options.getString('trade');
+        const tradeIdValidation = /^(?!\.\.?$)(?!.*__.*__)([^/]{1,1500})$/.test(tradeId);
+
+        // ! If the field has wrong data, returns an error message.
+        if (!tradeIdValidation) {
+            await interaction.editReply('<a:error:1229592805710762128>  Error. Please, provide a valid trade ID.');
+            return;
+        }
 
         const tradeReference = database.collection('trade').doc(tradeId);
         const tradeSnapshot = await tradeReference.get();

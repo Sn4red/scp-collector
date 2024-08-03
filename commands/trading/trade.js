@@ -20,6 +20,17 @@ module.exports = {
             return;
         }
 
+        // * Aggregation query to the database counting the number of obtained SCPs.
+        const obtainingReference = database.collection('user').doc(userId).collection('obtaining');
+        const obtainingSnapshot = await obtainingReference.count().get();
+        const SCPCount = obtainingSnapshot.data().count;
+
+        // ! If the user has no SCPs, returns an error message.
+        if (SCPCount === 0) {
+            await interaction.reply('<a:error:1229592805710762128>  You don\'t have any SCPs to trade!');
+            return;
+        }
+
         const modal = displayModal(userId);
         
         await interaction.showModal(modal);
@@ -48,7 +59,7 @@ module.exports = {
              const specialConditionValidations = validateSpecialConditions(userId, fieldsValidation.recipientValue, fieldsValidation.fixedIssuerCardValue, fieldsValidation.fixedIssuerHolographicValue, fieldsValidation.fixedRecipientCardValue, fieldsValidation.fixedRecipientHolographicValue);
 
              // ! If the user is trying to create a trade request with himself or trading the same card, returns an error message.
-            if (!specialConditionValidations.errorState) {
+            if (specialConditionValidations.errorState) {
                 modalInteraction.editReply(specialConditionValidations.errorMessage);
                 return;
             }
@@ -57,13 +68,6 @@ module.exports = {
 
             try {
                 await database.runTransaction(async (transaction) => {
-                    const foundCardIssuer = await findCard(userId, fieldsValidation.fixedIssuerCardValue, fieldsValidation.fixedIssuerHolographicValue, transaction);
-                
-                    // ! If the issuer doesn't have the card, returns an error message.
-                    if (!foundCardIssuer.wasFound) {
-                        throw new Error('It seems that you don\'t have the card you are offering.');
-                    }
-
                     const recipientUserReference = database.collection('user').doc(recipientValue);
                     const recipientUserSnapshot = await recipientUserReference.get();
 
@@ -77,6 +81,13 @@ module.exports = {
                     // ! If the recipient has disabled trade requests, returns an error message.
                     if (recipientDocument.acceptTradeOffers === false) {
                         throw new Error('The user you are trying to trade with has disabled trade requests.');
+                    }
+
+                    const foundCardIssuer = await findCard(userId, fieldsValidation.fixedIssuerCardValue, fieldsValidation.fixedIssuerHolographicValue, transaction);
+                
+                    // ! If the issuer doesn't have the card, returns an error message.
+                    if (!foundCardIssuer.wasFound) {
+                        throw new Error('It seems that you don\'t have the card you are offering.');
                     }
 
                     const foundCardRecipient = await findCard(recipientValue, fieldsValidation.fixedRecipientCardValue, fieldsValidation.fixedRecipientHolographicValue, transaction);

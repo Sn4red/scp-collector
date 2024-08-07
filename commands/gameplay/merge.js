@@ -63,16 +63,33 @@ module.exports = {
             }
 
             try {
+                let foundCard1 = null;
+                let foundCard2 = null;
+                let foundCard3 = null;
+                let foundCard4 = null;
+                let foundCard5 = null;
+
+                let cardId = null;   
+                let classCard = null;
+                let file = null;
+                let name = null;
+
+                let image = null;
+
+                let holographicEmojiLeft = null;
+                let holographicEmojiRight = null;
+                let embedColor = null;
+
                 await database.runTransaction(async (transaction) => {
                     // * This array will store the document's ID of the cards found in the user's collection. If 2 queries find the same card, it will not be repeated.
                     // * The new values of the array are being pushed inside the findCard function.
                     const cards = ['decoy'];
 
-                    const foundCard1 = await findCard(userId, fieldsValidation.fixedCard1Value, cards, transaction);
-                    const foundCard2 = await findCard(userId, fieldsValidation.fixedCard2Value, foundCard1.cards, transaction);
-                    const foundCard3 = await findCard(userId, fieldsValidation.fixedCard3Value, foundCard2.cards, transaction);
-                    const foundCard4 = await findCard(userId, fieldsValidation.fixedCard4Value, foundCard3.cards, transaction);
-                    const foundCard5 = await findCard(userId, fieldsValidation.fixedCard5Value, foundCard4.cards, transaction);
+                    foundCard1 = await findCard(userId, fieldsValidation.fixedCard1Value, cards, transaction);
+                    foundCard2 = await findCard(userId, fieldsValidation.fixedCard2Value, foundCard1.cards, transaction);
+                    foundCard3 = await findCard(userId, fieldsValidation.fixedCard3Value, foundCard2.cards, transaction);
+                    foundCard4 = await findCard(userId, fieldsValidation.fixedCard4Value, foundCard3.cards, transaction);
+                    foundCard5 = await findCard(userId, fieldsValidation.fixedCard5Value, foundCard4.cards, transaction);
 
                     const existingValidation = validateExistence(foundCard1, fieldsValidation.fixedCard1Value, foundCard2, fieldsValidation.fixedCard2Value, foundCard3, fieldsValidation.fixedCard3Value, foundCard4, fieldsValidation.fixedCard4Value, foundCard5, fieldsValidation.fixedCard5Value);
 
@@ -156,10 +173,10 @@ module.exports = {
                     const selectedCardDocument = cardDocument.data();
 
                     // * Card data.
-                    const cardId = cardDocument.id;   
-                    const classCard = resultingClass;
-                    const file = selectedCardDocument.file;
-                    const name = selectedCardDocument.name;
+                    cardId = cardDocument.id;   
+                    classCard = resultingClass;
+                    file = selectedCardDocument.file;
+                    name = selectedCardDocument.name;
 
                     const holograhicValue = holographicProbability();
 
@@ -177,11 +194,7 @@ module.exports = {
                     });
 
                     const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
-                    const image = new AttachmentBuilder(imagePath);
-
-                    let holographicEmojiLeft = null;
-                    let holographicEmojiRight = null;
-                    let embedColor = null;
+                    image = new AttachmentBuilder(imagePath);
 
                     switch (holograhicValue) {
                         case 'Emerald':
@@ -209,53 +222,53 @@ module.exports = {
 
                             break;
                     }
-
-                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** <a:merge:1262543042364051529>');
-
-                    setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** <a:merge:1262543042364051529>');
-                    }, 1000);
-
-                    setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** <a:merge:1262543042364051529>');
-                    }, 2000);
-
-                    setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** <a:merge:1262543042364051529>');
-                    }, 3000);
-
-                    setTimeout(async () => {
-                        await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** **.** <a:check:1235800336317419580>');
-                    }, 4000);
-
-                    setTimeout(async () => {
-                        const cardEmbed = new EmbedBuilder()
-                            .setColor(embedColor)
-                            .setTitle(`${holographicEmojiLeft}  Item #: \`${cardId}\` // \`${name}\``)
-                            .addFields(
-                                { name: '<:invader:1228919814555177021>  Class', value: `\`${classCard}\``, inline: true },
-                                { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },
-                            )
-                            .setImage(`attachment://${cardId}.jpg`)
-                            .setTimestamp();
-
-                        await modalInteraction.editReply({
-                            embeds: [cardEmbed],
-                            files: [image],
-                        });
-                    }, 5000);
-
-                    setTimeout(async () => {
-                        await modalInteraction.followUp({ content: '<:summary:1262544727786651688>  Merge Summary:\n' +
-                                                                    `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard1Value}\`<:close_bracket:1262546397840801912>// ${foundCard1.collection}\n` +
-                                                                    `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard2Value}\`<:close_bracket:1262546397840801912>// ${foundCard2.collection}\n` +
-                                                                    `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard3Value}\`<:close_bracket:1262546397840801912>// ${foundCard3.collection}\n` +
-                                                                    `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard4Value}\`<:close_bracket:1262546397840801912>// ${foundCard4.collection}\n` +
-                                                                    `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard5Value}\`<:close_bracket:1262546397840801912>// ${foundCard5.collection}\n` +
-                                                                    `${holographicEmojiLeft}<:parenthesis_left:1262547567795900497>**\`${cardId}\`**<:parenthesis_right:1262547494202769470>${holographicEmojiRight}// **${classCard}**`,
-                                                            ephemeral: true });
-                    }, 6000);
                 });
+
+                await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** <a:merge:1262543042364051529>');
+
+                setTimeout(async () => {
+                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** <a:merge:1262543042364051529>');
+                }, 1000);
+
+                setTimeout(async () => {
+                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** <a:merge:1262543042364051529>');
+                }, 2000);
+
+                setTimeout(async () => {
+                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** <a:merge:1262543042364051529>');
+                }, 3000);
+
+                setTimeout(async () => {
+                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** **.** <a:check:1235800336317419580>');
+                }, 4000);
+
+                setTimeout(async () => {
+                    const cardEmbed = new EmbedBuilder()
+                        .setColor(embedColor)
+                        .setTitle(`${holographicEmojiLeft}  Item #: \`${cardId}\` // \`${name}\``)
+                        .addFields(
+                            { name: '<:invader:1228919814555177021>  Class', value: `\`${classCard}\``, inline: true },
+                            { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },
+                        )
+                        .setImage(`attachment://${cardId}.jpg`)
+                        .setTimestamp();
+
+                    await modalInteraction.editReply({
+                        embeds: [cardEmbed],
+                        files: [image],
+                    });
+                }, 5000);
+
+                setTimeout(async () => {
+                    await modalInteraction.followUp({ content: '<:summary:1262544727786651688>  Merge Summary:\n' +
+                                                                `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard1Value}\`<:close_bracket:1262546397840801912>// ${foundCard1.collection}\n` +
+                                                                `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard2Value}\`<:close_bracket:1262546397840801912>// ${foundCard2.collection}\n` +
+                                                                `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard3Value}\`<:close_bracket:1262546397840801912>// ${foundCard3.collection}\n` +
+                                                                `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard4Value}\`<:close_bracket:1262546397840801912>// ${foundCard4.collection}\n` +
+                                                                `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard5Value}\`<:close_bracket:1262546397840801912>// ${foundCard5.collection}\n` +
+                                                                `${holographicEmojiLeft}<:parenthesis_left:1262547567795900497>**\`${cardId}\`**<:parenthesis_right:1262547494202769470>${holographicEmojiRight}// **${classCard}**`,
+                                                        ephemeral: true });
+                }, 6000);
             } catch (error) {
                 modalInteraction.editReply(`<a:error:1229592805710762128>  Card Merge cancelled! ${error.message}`);
             }

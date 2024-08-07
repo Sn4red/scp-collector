@@ -111,10 +111,10 @@ module.exports = {
                          */
 
                         await transaction.delete(tradeReference);
-
-                        await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << was declined. <a:trash:1247734945552531628>`, ephemeral: true });
-                        await interaction.deleteReply();
                     });
+
+                    await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << was declined. <a:trash:1247734945552531628>`, ephemeral: true });
+                    await interaction.deleteReply();
                 } catch (error) {
                     console.error(error);
 

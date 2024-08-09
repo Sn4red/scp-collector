@@ -88,9 +88,9 @@ module.exports = {
         const collector = reply.createMessageComponentCollector({ componentType: ComponentType.Button, filter: collectorFilter, time: time });
 
         let deletedMessage = false;
-        let transactionState = true;
 
-        // * The return statements are used to get out of the collector event.
+        // * return statements are used to stop the execution, but they just exit the transaction flow, not the collector event.
+        // * That's why each if statement changes the value of transactionState to false, so the second transaction is not executed.
         collector.on('collect', async (button) => {
             if (button.customId === 'confirm') {
                 deletedMessage = true;
@@ -145,8 +145,10 @@ module.exports = {
                          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
                          */
 
-                        await sendCard(foundCardIssuer.obtentionReference, tradeDocument.recipient, tradeDocument.issuerCard, tradeDocument.issuerHolographic, transaction);
-                        await sendCard(foundCardRecipient.obtentionReference, tradeDocument.issuer, tradeDocument.recipientCard, tradeDocument.recipientHolographic, transaction);
+                        await cleaningPendingTrades(tradeDocument.issuer, tradeDocument.recipient, tradeDocument.issuerCard, tradeDocument.recipientCard, tradeDocument.issuerHolographic, tradeDocument.recipientHolographic, foundCardIssuer.obtainingCount, foundCardRecipient.obtainingCount, tradeId, transaction);
+
+                        await sendCard(foundCardIssuer.obtainingReference, tradeDocument.recipient, tradeDocument.issuerCard, tradeDocument.issuerHolographic, transaction);
+                        await sendCard(foundCardRecipient.obtainingReference, tradeDocument.issuer, tradeDocument.recipientCard, tradeDocument.recipientHolographic, transaction);
 
                         // * The trade is confirmed by updating some fields.
                         await transaction.update(tradeReference, {
@@ -154,30 +156,13 @@ module.exports = {
                             tradeDate: new Date(),
                         });
                     });
+
+                    await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** <<  was successfully completed!`, ephemeral: true });
+                    await interaction.deleteReply();
                 } catch (error) {
                     console.error(error);
 
-                    transactionState = false;
-
                     await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to accept the request. Please try again.', ephemeral: true });
-                }
-
-                if (transactionState) {
-                    try {
-                        await database.runTransaction(async (transaction) => {
-                            // * This function is used for each user involved in the trade to clean up (delete) the pending trades that are no longer possible to complete,
-                            // * if they no longer have the necessary cards.
-                            await cleaningPendingTrades(tradeDocument.issuer, tradeDocument.issuerCard, tradeDocument.issuerHolographic, transaction);
-                            await cleaningPendingTrades(tradeDocument.recipient, tradeDocument.recipientCard, tradeDocument.recipientHolographic, transaction);
-
-                            await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** <<  was successfully completed!`, ephemeral: true });
-                            await interaction.deleteReply();
-                        });
-                    } catch (error) {
-                        console.error(error);
-
-                        await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to accept the request. Please try again.', ephemeral: true });
-                    }
                 }
             }
 
@@ -218,15 +203,23 @@ function displayButtons() {
 
 // * This function searches for the card through the user's collection.
 async function findCard(userId, cardReference, holographic, transaction) {
-    const obtentionReference = database.collection('user').doc(userId).collection('obtaining');
-    const obtentionQuery = obtentionReference.where('card', '==', cardReference)
-                                                .where('holographic', '==', holographic).limit(1);
-    const obtentionSnapshot = await transaction.get(obtentionQuery);
+    const obtainingReference = database.collection('user').doc(userId).collection('obtaining');
+    let obtainingQuery = obtainingReference.where('card', '==', cardReference)
+                                            .where('holographic', '==', holographic).limit(1);
+    const obtainingSnapshot = await transaction.get(obtainingQuery);
 
-    if (!obtentionSnapshot.empty) {
+    // * This query is to know how many repeated cards the user has, so in case there is only one, the function 'cleaningPendingTrades'
+    // * is executed. 
+    obtainingQuery = obtainingReference.where('card', '==', cardReference)
+                                        .where('holographic', '==', holographic);
+    const obtainingCountSnapshot = await transaction.get(obtainingQuery.count());
+    const SCPCount = obtainingCountSnapshot.data().count;
+
+    if (!obtainingSnapshot.empty) {
         return {
             wasFound: true,
-            obtentionReference: obtentionSnapshot.docs[0].ref,
+            obtainingReference: obtainingSnapshot.docs[0].ref,
+            obtainingCount: SCPCount,
         };
     } else {
         return { wasFound: false };
@@ -234,7 +227,7 @@ async function findCard(userId, cardReference, holographic, transaction) {
 }
 
 // * This function 'sends' the card to the other user and deletes its own.
-async function sendCard(issuerObtentionReference, recipientId, cardReference, holographic, transaction) {
+async function sendCard(issuerObtainingReference, recipientId, cardReference, holographic, transaction) {
     // * The card is sent to the recipient.
     const obtainingEntry = database.collection('user').doc(recipientId).collection('obtaining').doc();
 
@@ -244,40 +237,89 @@ async function sendCard(issuerObtentionReference, recipientId, cardReference, ho
     });
 
     // * The card is deleted from the issuer.
-    await transaction.delete(issuerObtentionReference);
+    await transaction.delete(issuerObtainingReference);
 }
 
 // * This function cleans up the pending trades that are no longer possible to complete, cause the user no longer has the necessary card for it.
-async function cleaningPendingTrades(userId, cardReference, holographic, transaction) {
-    // * The card is searched in the user's collection.
-    const foundCard = await findCard(userId, cardReference, holographic, transaction);
-
-    // * If found, nothing happens.
-    if (foundCard.wasFound) {
-        return;
-    }
-
-    // * If the card is not found, the pending trades that the user is involved in are searched and deleted.
+async function cleaningPendingTrades(issuerId, recipientId, issuerCardReference, recipientCardReference, issuerHolographic, recipientHolographic, issuerObtainingCount, recipientObtainingCount, tradeId, transaction) {
     const pendingTradesReference = database.collection('trade');
 
-    const issuerPendingTradesQuery = pendingTradesReference.where('issuer', '==', userId)
-                                                            .where('issuerCard', '==', cardReference)
-                                                            .where('issuerHolographic', '==', holographic)
-                                                            .where('tradeConfirmation', '==', false);
+    let issuerIssuerPendingTradesSnapshot = null;
+    let issuerRecipientPendingTradesSnapshot = null;
 
-    const recipientPendingTradesQuery = pendingTradesReference.where('recipient', '==', userId)
-                                                                .where('recipientCard', '==', cardReference)
-                                                                .where('recipientHolographic', '==', holographic)
+    let recipientIssuerPendingTradesSnapshot = null;
+    let recipientRecipientPendingTradesSnapshot = null;
+
+    // * If the user has only one card, the pending trades which involve that card and the user are searched.
+    if (issuerObtainingCount === 1) {
+        const issuerPendingTradesQuery = pendingTradesReference.where('issuer', '==', issuerId)
+                                                                .where('issuerCard', '==', issuerCardReference)
+                                                                .where('issuerHolographic', '==', issuerHolographic)
+                                                                .where('tradeConfirmation', '==', false);
+        
+        const recipientPendingTradesQuery = pendingTradesReference.where('recipient', '==', issuerId)
+                                                                .where('recipientCard', '==', issuerCardReference)
+                                                                .where('recipientHolographic', '==', issuerHolographic)
                                                                 .where('tradeConfirmation', '==', false);
 
-    const issuerPendingTradesSnapshot = await transaction.get(issuerPendingTradesQuery);
-    const recipientPendingTradesSnapshot = await transaction.get(recipientPendingTradesQuery);
+        issuerIssuerPendingTradesSnapshot = await transaction.get(issuerPendingTradesQuery);
+        issuerRecipientPendingTradesSnapshot = await transaction.get(recipientPendingTradesQuery);
+    }
 
-    issuerPendingTradesSnapshot.forEach(async (trade) => {
-        await transaction.delete(trade.ref);
-    });
+    if (recipientObtainingCount === 1) {
+        const issuerPendingTradesQuery = pendingTradesReference.where('issuer', '==', recipientId)
+                                                                .where('issuerCard', '==', recipientCardReference)
+                                                                .where('issuerHolographic', '==', recipientHolographic)
+                                                                .where('tradeConfirmation', '==', false);
 
-    recipientPendingTradesSnapshot.forEach(async (trade) => {
-        await transaction.delete(trade.ref);
-    });
+        const recipientPendingTradesQuery = pendingTradesReference.where('recipient', '==', recipientId)
+                                                                    .where('recipientCard', '==', recipientCardReference)
+                                                                    .where('recipientHolographic', '==', recipientHolographic)
+                                                                    .where('tradeConfirmation', '==', false);
+
+        recipientIssuerPendingTradesSnapshot = await transaction.get(issuerPendingTradesQuery);
+        recipientRecipientPendingTradesSnapshot = await transaction.get(recipientPendingTradesQuery);
+    }
+    
+    // * If found, the pending trades are deleted.
+    // * The nested ifs are used to avoid deleting our trade document.
+    if (issuerIssuerPendingTradesSnapshot) {
+        issuerIssuerPendingTradesSnapshot.forEach(async (trade) => {
+            if (trade.id === tradeId) {
+                return;
+            }
+
+            await transaction.delete(trade.ref);
+        });
+    }
+
+    if (issuerRecipientPendingTradesSnapshot) {
+        issuerRecipientPendingTradesSnapshot.forEach(async (trade) => {
+            if (trade.id === tradeId) {
+                return;
+            }
+
+            await transaction.delete(trade.ref);
+        });
+    }
+    
+    if (recipientIssuerPendingTradesSnapshot) {
+        recipientIssuerPendingTradesSnapshot.forEach(async (trade) => {
+            if (trade.id === tradeId) {
+                return;
+            }
+
+            await transaction.delete(trade.ref);
+        });
+    }
+
+    if (recipientRecipientPendingTradesSnapshot) {
+        recipientRecipientPendingTradesSnapshot.forEach(async (trade) => {
+            if (trade.id === tradeId) {
+                return;
+            }
+
+            await transaction.delete(trade.ref);
+        });
+    }
 }

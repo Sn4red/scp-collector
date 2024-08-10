@@ -1,4 +1,3 @@
-// TODO: asegurarse que los botones de confirm y cancel funcionen correctamente (en todos los comandos que usen botones).
 // TODO: falta agregar mensajes en consola cuando hay errores en catch (este y en otros comandos).
 
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');

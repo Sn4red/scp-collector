@@ -7,7 +7,7 @@ const { startCronJobs } = require('./utils/cronJobs');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions] });
 
-// Command handling
+// * Command handling.
 client.commands = new Collection();
 client.cooldowns = new Collection();
 
@@ -32,7 +32,7 @@ for (const folder of commandFolders) {
 	}
 }
 
-// Manejo de Eventos
+// * Event handling.
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 

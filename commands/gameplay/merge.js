@@ -1,6 +1,3 @@
-// TODO: falta agregar mensajes en consola cuando hay errores en catch (este y en otros comandos).
-// TODO: investigar si necesario usar await cuando se usan mensajes de salida o edicion a Discord.
-
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('node:path');

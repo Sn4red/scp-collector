@@ -81,8 +81,6 @@ module.exports = {
             // * Class obtained through probability.
             const obtainedClass = classProbability(userDocument.premium);
 
-            let transactionCardState = true;
-
             let cardId = null;
             let classCard = null;
             let file = null;
@@ -95,13 +93,11 @@ module.exports = {
             let promotionSystem = null;
     
             try {
-                // * First transaction is performed, related to getting the card and registering it
-                // * in the user's obtaining subcollection.
-                // * The following are covered:
-                // * - Number of documents in the collection randomly selected.
-                // * - Card selection based on the randon number.
-                // * - Inserting the obtaining into the user's subcollection.
                 await database.runTransaction(async (transaction) => {
+                    // * Retrieves the user data from the database. This is used below to validate if the user is premium or not.
+                    userSnapshot = await transaction.get(userReference);
+                    userDocument = userSnapshot.data();
+
                     // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
                     const cardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
                     const cardSnapshot = await transaction.get(cardReference.count());
@@ -116,7 +112,7 @@ module.exports = {
                     const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
                     const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
                     const selectedCardSnapshot = await selectedCardQuery.get();
-
+                    
                     const cardDocument = selectedCardSnapshot.docs[0];
                     const selectedCardDocument = cardDocument.data();
 
@@ -138,22 +134,7 @@ module.exports = {
                         card: database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase()).doc(cardId),
                         holographic: holographicValue,
                     });
-                });
-            } catch (error) {
-                transactionCardState = false;
-            }
 
-            // ! If the first transaction fails, returns an error message.
-            if (!transactionCardState) {
-                await interaction.editReply('<a:error:1229592805710762128>  An error occurred while capturing the SCP. Please try again.');
-                return;
-            }
-
-            let transactionUserState = true;
-
-            try {
-                // * Second transaction is performed, related to the user's rank and level promotion.
-                await database.runTransaction(async (transaction) => {
                     // * To ensure all images have the same size,
                     // * they are resized to 300x200 pixels.
                     // * The definition of the embed is performed here because it is needed
@@ -166,79 +147,73 @@ module.exports = {
                         .setImage(`attachment://${cardId}.jpg`)
                         .setTimestamp();
 
-                    userSnapshot = await transaction.get(userReference);
-                    userDocument = userSnapshot.data();
-
                     // * The rank and level promotion is performed here, along with the increase of daily limits.
                     promotionSystem = await promotionProcess(classCard, holographicValue, userDocument, userReference, cardEmbed, transaction);
                 });
-            } catch (error) {
-                transactionUserState = false;
-            }
 
-            // ! If the second transaction fails, returns an error message.
-            if (!transactionUserState) {
-                await interaction.editReply('<a:error:1229592805710762128>  An error occurred while capturing the SCP. Please try again.');
-                return;
-            }
+                const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
+                const image = new AttachmentBuilder(imagePath);
 
-            const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
-            const image = new AttachmentBuilder(imagePath);
-                    
-            if (userDocument.premium) {
-                promotionSystem.cardEmbed.setDescription(`**+${premiumXP[classCard]} XP**`);
-
-                switch (holographicValue) {
-                    case 'Diamond':
-                        promotionSystem.cardEmbed.setColor(0x00bfff);
-
-                        promotionSystem.cardEmbed.addFields(
-                            { name: '<a:diamond:1228924014479671439>  Diamond', value: '+100 XP', inline: true },
-                        );
-
-                        break;
-                    case 'Golden':
-                        promotionSystem.cardEmbed.setColor(0xffd700);
-
-                        promotionSystem.cardEmbed.addFields(
-                            { name: '<a:golden:1228925086690443345>  Golden', value: '+70 XP', inline: true },
-                        );
-
-                        break;
-                    case 'Emerald':
-                        promotionSystem.cardEmbed.setColor(0x00b65c);
-
-                        promotionSystem.cardEmbed.addFields(
-                            { name: '<a:emerald:1228923470239367238>  Emerald', value: '+40 XP', inline: true },
-                        );
-
-                        break;
-                    default:
-                        promotionSystem.cardEmbed.setColor(0x010101);
-                }
-            } else {
-                promotionSystem.cardEmbed.setDescription(`**+${normalXP[classCard]} XP**`);
-                promotionSystem.cardEmbed.setColor(0x010101);
-
-                holographicValue = 'Normal';
-            }
-
-            promotionSystem.cardEmbed.addFields(
-                { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },
-            );
-
-            await interaction.editReply({
-                embeds: [promotionSystem.cardEmbed],
-                files: [image],
-            });
+                if (userDocument.premium) {
+                    promotionSystem.cardEmbed.setDescription(`**+${premiumXP[classCard]} XP**`);
     
-            switch (promotionSystem.promotionType) {
-                case 'level':
-                    await interaction.followUp(`<a:mixed_stars:1229605947895189534>  Nice, ${promotionSystem.userDocument.nickname}! You are now level **${promotionSystem.userDocument.level}**. <a:mixed_stars:1229605947895189534>`);
-                    break;
-                case 'rank':
-                    await interaction.followUp(`<a:mixed_stars:1229605947895189534>  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**. <a:mixed_stars:1229605947895189534>`);
-                    break;
+                    switch (holographicValue) {
+                        case 'Diamond':
+                            promotionSystem.cardEmbed.setColor(0x00bfff);
+    
+                            promotionSystem.cardEmbed.addFields(
+                                { name: '<a:diamond:1228924014479671439>  Diamond', value: '+100 XP', inline: true },
+                            );
+    
+                            break;
+                        case 'Golden':
+                            promotionSystem.cardEmbed.setColor(0xffd700);
+    
+                            promotionSystem.cardEmbed.addFields(
+                                { name: '<a:golden:1228925086690443345>  Golden', value: '+70 XP', inline: true },
+                            );
+    
+                            break;
+                        case 'Emerald':
+                            promotionSystem.cardEmbed.setColor(0x00b65c);
+    
+                            promotionSystem.cardEmbed.addFields(
+                                { name: '<a:emerald:1228923470239367238>  Emerald', value: '+40 XP', inline: true },
+                            );
+    
+                            break;
+                        default:
+                            promotionSystem.cardEmbed.setColor(0x010101);
+                    }
+                } else {
+                    promotionSystem.cardEmbed.setDescription(`**+${normalXP[classCard]} XP**`);
+                    promotionSystem.cardEmbed.setColor(0x010101);
+    
+                    holographicValue = 'Normal';
+                }
+    
+                promotionSystem.cardEmbed.addFields(
+                    { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },
+                );
+    
+                await interaction.editReply({
+                    embeds: [promotionSystem.cardEmbed],
+                    files: [image],
+                });
+        
+                switch (promotionSystem.promotionType) {
+                    case 'level':
+                        await interaction.followUp(`<a:mixed_stars:1229605947895189534>  Nice, ${promotionSystem.userDocument.nickname}! You are now level **${promotionSystem.userDocument.level}**. <a:mixed_stars:1229605947895189534>`);
+                        break;
+                    case 'rank':
+                        await interaction.followUp(`<a:mixed_stars:1229605947895189534>  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**. <a:mixed_stars:1229605947895189534>`);
+                        break;
+                }
+            } catch (error) {
+                console.log(`${new Date()} >>> *** ERROR: capture.js *** by ${userId} (${interaction.user.username})`);
+                console.error(error);
+
+                await interaction.editReply('<a:error:1229592805710762128>  An error occurred while capturing the SCP. Please try again.');
             }
         }
     },

@@ -66,6 +66,11 @@ module.exports = {
 
             let tradeEntry = null;
 
+            const errorMessage1 = 'The user you are trying to trade with is either not registered or not found.';
+            const errorMessage2 = 'The user you are trying to trade with has disabled trade requests.';
+            const errorMessage3 = 'It seems that you don\'t have the card you are offering.';
+            const errorMessage4 = 'It seems that the user doesn\'t have the card you want.';
+
             try {
                 await database.runTransaction(async (transaction) => {
                     const recipientUserReference = database.collection('user').doc(recipientValue);
@@ -73,28 +78,28 @@ module.exports = {
 
                     // ! If the recipient is not registered or not found, returns an error message.
                     if (!recipientUserSnapshot.exists) {
-                        throw new Error('The user you are trying to trade with is either not registered or not found.');
+                        throw new Error(errorMessage1);
                     }
 
                     const recipientDocument = recipientUserSnapshot.data();
 
                     // ! If the recipient has disabled trade requests, returns an error message.
                     if (recipientDocument.acceptTradeOffers === false) {
-                        throw new Error('The user you are trying to trade with has disabled trade requests.');
+                        throw new Error(errorMessage2);
                     }
 
                     const foundCardIssuer = await findCard(userId, fieldsValidation.fixedIssuerCardValue, fieldsValidation.fixedIssuerHolographicValue, transaction);
                 
                     // ! If the issuer doesn't have the card, returns an error message.
                     if (!foundCardIssuer.wasFound) {
-                        throw new Error('It seems that you don\'t have the card you are offering.');
+                        throw new Error(errorMessage3);
                     }
 
                     const foundCardRecipient = await findCard(recipientValue, fieldsValidation.fixedRecipientCardValue, fieldsValidation.fixedRecipientHolographicValue, transaction);
 
                     // ! If the recipient doesn't have the card, returns an error message.
                     if (!foundCardRecipient.wasFound) {
-                        throw new Error('It seems that the user doesn\'t have the card you want.');
+                        throw new Error(errorMessage4);
                     }
 
                     /**
@@ -120,7 +125,18 @@ module.exports = {
 
                 modalInteraction.editReply(`<a:check:1235800336317419580>  Trade request sent with ID **\`${tradeEntry.id}\`**. You can use the same ID to cancel the request.`);
             } catch (error) {
-                modalInteraction.editReply(`<a:error:1229592805710762128>  Request cancelled! ${error.message}`);
+                if (error.message.includes(errorMessage1) ||
+                    error.message.includes(errorMessage2) ||
+                    error.message.includes(errorMessage3) ||
+                    error.message.includes(errorMessage4)) {
+
+                    modalInteraction.editReply(`<a:error:1229592805710762128>  Request cancelled! ${error.message}`);
+                } else {
+                    console.log(`${new Date()} >>> *** ERROR: trade.js *** by ${userId} (${interaction.user.username})`);
+                    console.error(error);
+
+                    modalInteraction.editReply('<a:error:1229592805710762128>  An error has occurred while trying to create the trade request. Please try again.');
+                }
             }
         }).catch((error) => {
             console.log(error.message);

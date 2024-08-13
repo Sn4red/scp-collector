@@ -1,4 +1,5 @@
 // TODO: falta agregar mensajes en consola cuando hay errores en catch (este y en otros comandos).
+// TODO: investigar si necesario usar await cuando se usan mensajes de salida o edicion a Discord.
 
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
@@ -268,7 +269,16 @@ module.exports = {
                                                         ephemeral: true });
                 }, 6000);
             } catch (error) {
-                modalInteraction.editReply(`<a:error:1229592805710762128>  Card Merge cancelled! ${error.message}`);
+                if (error.message.includes('The following cards were not found in your collection:') ||
+                    error.message.includes('The following cards are Thaumiel or Apollyon:')) {
+
+                    modalInteraction.editReply(`<a:error:1229592805710762128>  Card Merge cancelled! ${error.message}`);
+                } else {
+                    console.log(`${new Date()} >>> *** ERROR: merge.js *** by ${userId} (${interaction.user.username})`);
+                    console.error(error);
+
+                    modalInteraction.editReply('<a:error:1229592805710762128>  An error has occurred while trying to do the merge. Please try again.');
+                }
             }
         }).catch((error) => {
             console.log(error.message);

@@ -111,6 +111,7 @@ module.exports = {
                     await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << successfully cancelled. <a:trash:1247734945552531628>`, ephemeral: true });
                     await interaction.deleteReply();
                 } catch (error) {
+                    console.log(`${new Date()} >>> *** ERROR: canceltrade.js *** by ${userId} (${interaction.user.username})`);
                     console.error(error);
 
                     await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to cancel the request. Please try again.', ephemeral: true });

@@ -269,18 +269,18 @@ module.exports = {
                 if (error.message.includes('The following cards were not found in your collection:') ||
                     error.message.includes('The following cards are Thaumiel or Apollyon:')) {
 
-                    modalInteraction.editReply(`<a:error:1229592805710762128>  Card Merge cancelled! ${error.message}`);
+                    await modalInteraction.editReply(`<a:error:1229592805710762128>  Card Merge cancelled! ${error.message}`);
                 } else {
                     console.log(`${new Date()} >>> *** ERROR: merge.js *** by ${userId} (${interaction.user.username})`);
                     console.error(error);
 
-                    modalInteraction.editReply('<a:error:1229592805710762128>  An error has occurred while trying to do the merge. Please try again.');
+                    await modalInteraction.editReply('<a:error:1229592805710762128>  An error has occurred while trying to do the merge. Please try again.');
                 }
             }
-        }).catch((error) => {
+        }).catch(async (error) => {
             console.log(error.message);
 
-            interaction.followUp({ content: '<a:error:1229592805710762128>  Card Merge cancelled due to inactivity.', ephemeral: true });
+            await interaction.followUp({ content: '<a:error:1229592805710762128>  Card Merge cancelled due to inactivity.', ephemeral: true });
         });
     },
 };

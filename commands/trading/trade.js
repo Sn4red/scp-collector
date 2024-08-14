@@ -52,7 +52,7 @@ module.exports = {
 
             // ! If the fields are not valid, returns an error message.
             if (fieldsValidation.errorState) {
-                modalInteraction.editReply(fieldsValidation.errorMessage);
+                await modalInteraction.editReply(fieldsValidation.errorMessage);
                 return;
             }
 
@@ -60,7 +60,7 @@ module.exports = {
 
              // ! If the user is trying to create a trade request with himself or trading the same card, returns an error message.
             if (specialConditionValidations.errorState) {
-                modalInteraction.editReply(specialConditionValidations.errorMessage);
+                await modalInteraction.editReply(specialConditionValidations.errorMessage);
                 return;
             }
 
@@ -123,25 +123,25 @@ module.exports = {
                     });
                 });
 
-                modalInteraction.editReply(`<a:check:1235800336317419580>  Trade request sent with ID **\`${tradeEntry.id}\`**. You can use the same ID to cancel the request.`);
+                await modalInteraction.editReply(`<a:check:1235800336317419580>  Trade request sent with ID **\`${tradeEntry.id}\`**. You can use the same ID to cancel the request.`);
             } catch (error) {
                 if (error.message.includes(errorMessage1) ||
                     error.message.includes(errorMessage2) ||
                     error.message.includes(errorMessage3) ||
                     error.message.includes(errorMessage4)) {
 
-                    modalInteraction.editReply(`<a:error:1229592805710762128>  Request cancelled! ${error.message}`);
+                    await modalInteraction.editReply(`<a:error:1229592805710762128>  Request cancelled! ${error.message}`);
                 } else {
                     console.log(`${new Date()} >>> *** ERROR: trade.js *** by ${userId} (${interaction.user.username})`);
                     console.error(error);
 
-                    modalInteraction.editReply('<a:error:1229592805710762128>  An error has occurred while trying to create the trade request. Please try again.');
+                    await modalInteraction.editReply('<a:error:1229592805710762128>  An error has occurred while trying to create the trade request. Please try again.');
                 }
             }
-        }).catch((error) => {
+        }).catch(async (error) => {
             console.log(error.message);
 
-            interaction.followUp({ content: '<a:error:1229592805710762128>  Request cancelled due to inactivity.', ephemeral: true });
+            await interaction.followUp({ content: '<a:error:1229592805710762128>  Request cancelled due to inactivity.', ephemeral: true });
         });
     },
 };

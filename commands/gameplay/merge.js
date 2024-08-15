@@ -4,6 +4,15 @@ const path = require('node:path');
 
 const database = firebase.firestore();
 
+// * The points obtained based on the SCP class.
+const points = {
+    'Safe': 10,
+    'Euclid': 20,
+    'Keter': 30,
+    'Thaumiel': 50,
+    'Apollyon': 100,
+};
+
 module.exports = {
     cooldown: 60 * 2,
     data: new SlashCommandBuilder()
@@ -12,11 +21,11 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
 
-        const issuerUserReference = database.collection('user').doc(userId);
-        const issuerUserSnapshot = await issuerUserReference.get();
+        const userReference = database.collection('user').doc(userId);
+        const userSnapshot = await userReference.get();
 
         // ! If the user is not registered, returns an error message.
-        if (!issuerUserSnapshot.exists) {
+        if (!userSnapshot.exists) {
             await interaction.reply({ content: '<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.', ephemeral: true });
             return;
         }
@@ -187,6 +196,10 @@ module.exports = {
                     await transaction.set(tradeEntry, {
                         card: database.collection('card').doc(classCard).collection(classCard.toLowerCase()).doc(cardId),
                         holographic: holograhicValue,
+                    });
+
+                    await transaction.update(userReference, {
+                        points: firebase.firestore.FieldValue.increment(points[classCard]),
                     });
 
                     const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);

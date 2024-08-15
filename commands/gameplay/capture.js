@@ -44,6 +44,15 @@ const ranks = [
     'O5 Council Member',
 ];
 
+// * The points obtained based on the SCP class.
+const points = {
+    'Safe': 10,
+    'Euclid': 20,
+    'Keter': 30,
+    'Thaumiel': 50,
+    'Apollyon': 100,
+};
+
 module.exports = {
     cooldown: 2,
     data: new SlashCommandBuilder()
@@ -355,6 +364,7 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
             level: userDocument.level,
             xp: fullXP,
             dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
+            points: firebase.firestore.FieldValue.increment(points[classCard]),
         });
     }
 
@@ -367,6 +377,7 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
             level: userDocument.level,
             xp: fullXP,
             dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
+            points: firebase.firestore.FieldValue.increment(points[classCard]),
         });
     }
 
@@ -376,6 +387,7 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
             level: userDocument.level,
             xp: fullXP,
             dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
+            points: firebase.firestore.FieldValue.increment(points[classCard]),
         });
     }
 

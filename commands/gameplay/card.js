@@ -55,6 +55,7 @@ module.exports = {
                 issueDate: year + '/' + month + '/' + day,
                 level: 1,
                 nickname: interaction.user.username,
+                points: 0,
                 premium: false,
                 rank: 'Class D',
                 xp: 0,

@@ -25,6 +25,7 @@ module.exports = {
                                             '/`history` - Provides details on the theme of the bot for more context and a brief history of what the SCP Foundation is.\n' +
                                             '/`faq` - Frequently Asked Questions about bot functionality.\n' +
                                             '/`merges` - Explains about how merge works.\n' +
+                                            '/`points` - Explains about points system.\n' +
                                             '**/`vip` - VIP Benefits Details. Get additional features by becoming a donor!** <a:thunder:1230360956056375317><a:thunder:1230360956056375317><a:thunder:1230360956056375317>' },
                 { name: '<a:dice:1228555582655561810>   Gameplay', value: '`/card` - Displays your personal card and progress details. This is the first command you should use to start playing.\n' +
                                             '/`capture` - Capture an SCP and add it to your collection. You may obtain duplicates that can be used for trading with someone else. ' +

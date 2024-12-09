@@ -101,9 +101,27 @@ module.exports = {
                 break;
         }
 
+        // * This section ensures that the card name with the title does not exceed the maximum character limit, which is 256.
+        // * It is being considered that the title (withouth the card name) has 50 characters (more than necessary),
+        // * so the card name can have 206 as maximum.
+        let fixedCardName = cardData.name;
+        
+        if (fixedCardName.length > 206) {
+            fixedCardName = fixedCardName.slice(0, 207);
+
+            // * If the last character is not a space, it will be removed until it finds one,
+            // * to avoid cutting a word in half.
+            while (fixedCardName[fixedCardName.length - 1] !== ' ') {
+                fixedCardName = fixedCardName.slice(0, -1);
+            }
+
+            // * The original card name is replaced by the new one with an ellipsis.
+            fixedCardName = fixedCardName.slice(0, -1) + '...';
+        }
+
         const cardEmbed = new EmbedBuilder()
             .setColor(embedColor)
-            .setTitle(`${holographicEmoji}  Item #: \`${fixedCardId}\` // \`${cardData.name}\``)
+            .setTitle(`${holographicEmoji}  Item #: \`${fixedCardId}\` // \`${fixedCardName}\``)
             .addFields(
                 { name: '<:invader:1228919814555177021>  Class', value: `\`${foundCard.class}\``, inline: true },
                 { name: '<:files:1228920361723236412>  File', value: `**[View Document](${cardData.file})**`, inline: true },

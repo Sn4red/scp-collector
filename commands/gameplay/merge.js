@@ -251,10 +251,28 @@ module.exports = {
                     await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** **.** <a:check:1235800336317419580>');
                 }, 4000);
 
+                // * This section ensures that the card name with the title does not exceed the maximum character limit, which is 256.
+                // * It is being considered that the title (withouth the card name) has 50 characters (more than necessary),
+                // * so the card name can have 206 as maximum.
+                let fixedCardName = name;
+
+                if (fixedCardName.length > 206) {
+                    fixedCardName = fixedCardName.slice(0, 207);
+
+                    // * If the last character is not a space, it will be removed until it finds one,
+                    // * to avoid cutting a word in half.
+                    while (fixedCardName[fixedCardName.length - 1] !== ' ') {
+                        fixedCardName = fixedCardName.slice(0, -1);
+                    }
+
+                    // * The original card name is replaced by the new one with an ellipsis.
+                    fixedCardName = fixedCardName.slice(0, -1) + '...';
+                }
+
                 setTimeout(async () => {
                     const cardEmbed = new EmbedBuilder()
                         .setColor(embedColor)
-                        .setTitle(`${holographicEmojiLeft}  Item #: \`${cardId}\` // \`${name}\``)
+                        .setTitle(`${holographicEmojiLeft}  Item #: \`${cardId}\` // \`${fixedCardName}\``)
                         .addFields(
                             { name: '<:invader:1228919814555177021>  Class', value: `\`${classCard}\``, inline: true },
                             { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },

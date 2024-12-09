@@ -94,7 +94,7 @@ async function displayCard(document, userId, interaction) {
     const context = canvas.getContext('2d');
     
     // * Loads the background image onto the canvas and uses its dimensions to stretch it. 
-    const background = await Canvas.loadImage('./images/card/background-card.jpg');
+    const background = await Canvas.loadImage('./images/card/background.png');
     context.drawImage(background, 0, 0, canvas.width, canvas.height);
     
     // * Card border.

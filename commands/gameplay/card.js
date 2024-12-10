@@ -264,7 +264,7 @@ async function displayCard(document, userId, interaction) {
     context.drawImage(logo, 280, 120, 70, 70);
     context.drawImage(qr, 365, 5, 80, 80);
     
-    return new AttachmentBuilder(await canvas.encode('png'), { name: 'profile-image.png' });
+    return new AttachmentBuilder(await canvas.encode('png'), { name: `card-${nickname}.png` });
 }
 
 // * This function is to convert the emoji URL into an image, to be used in the canvas.

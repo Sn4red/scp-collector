@@ -1,3 +1,6 @@
+// TODO: 12-14-2024: validar el domingo 12-15-2024 si el cron job para actualizar el market funciona correctamente,
+// TODO: estableciendo la fecha para el próximo domingo a la medianoche.
+
 // TODO 12-13-2024: el cron job para actualizar el market ya está completado.
 // TODO: Falta modificar la function getMarketCards para que no repita cartas en el market.
 // TODO: Ya se sabe cuál será la modificación, pero todavía no se va a implementar porque,
@@ -242,6 +245,9 @@ function holographicProbability() {
 async function updateMarketCards(cardReferences, obtainedHolographics) {
     const marketReference = database.collection('market').doc('market');
 
+    // * This calculates the date of the following Sunday at midnight.
+    const nextSundayMidnight = moment().day(7).startOf('day').add(1, 'days').utcOffset('-05:00').toDate();
+
     await marketReference.update({
         card1: cardReferences[0],
         card2: cardReferences[1],
@@ -253,6 +259,7 @@ async function updateMarketCards(cardReferences, obtainedHolographics) {
         holographic3: obtainedHolographics[2],
         holographic4: obtainedHolographics[3],
         holographic5: obtainedHolographics[4],
+        deadline: nextSundayMidnight,
     });
 }
 

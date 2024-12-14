@@ -1,6 +1,4 @@
-/**
- * * TODO: Considerar mejorar el sello de Premium para la carta del usuario. Darle un toque brillante.
- */
+// TODO: Considerar mejorar el sello de Premium para la carta del usuario. Darle un toque brillante.
 
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
@@ -59,6 +57,11 @@ module.exports = {
                 premium: false,
                 rank: 'Class D',
                 xp: 0,
+                card1Purchased: false,
+                card2Purchased: false,
+                card3Purchased: false,
+                card4Purchased: false,
+                card5Purchased: false,
             };
 
             await database.collection('user').doc(interaction.user.id).set(newUser);

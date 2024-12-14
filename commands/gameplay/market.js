@@ -1,8 +1,9 @@
-// TODO: Falta implementar las X sobre las cartas cuando el usuario ya las haya comprado.
+// TODO: Finalmente, falta agregar al cron job para actualizar los campos de validación de cada usuario.
 
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
 const firebase = require('../../utils/firebase');
+const moment = require('moment');
 
 const database = firebase.firestore();
 
@@ -22,7 +23,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.reply({ content: '<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.', ephemeral: true });
+            await interaction.editReply({ content: '<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.', ephemeral: true });
             return;
         }
 
@@ -31,7 +32,7 @@ module.exports = {
 
         // ! If the market is not available, returns an error message.
         if (!marketSnapshot.exists) {
-            await interaction.reply({ content: '<a:error:1229592805710762128>  The market is not available at the moment. Please, try again later.', ephemeral: true });
+            await interaction.editReply({ content: '<a:error:1229592805710762128>  The market is not available at the moment. Please, try again later.', ephemeral: true });
             return;
         }
 
@@ -43,6 +44,7 @@ module.exports = {
 
         const userDocument = userSnapshot.data();
         const marketDocument = marketSnapshot.data();
+        const deadline = moment.unix(marketDocument.deadline._seconds).utcOffset('-05:00').format('YYYY/MM/DD hh:mm a [UTC-5]');
 
         const marketDocuments = [
             marketDocument.card1,
@@ -90,16 +92,14 @@ module.exports = {
         ];
 
         // * Uses the AttachmentBuilder class to process the file and be attached in the reply.
-        const attachment = await displayMarket(userDocument.points, cardHolographics, cardIds, cardClasses, cardNames);
+        const attachment = await displayMarket(userDocument, cardHolographics, cardIds, cardClasses, cardNames, deadline);
 
         await interaction.editReply({ files: [attachment] });
     },
 };
 
-// TODO 12-13-2024: Falta ver sobre el proceso para comprar una carta.
-
 // * This function draws all the user's card and returns it as an attachment.
-async function displayMarket(userPoints, cardHolographics, cardIds, cardClasses, cardNames) {
+async function displayMarket(userDocument, cardHolographics, cardIds, cardClasses, cardNames, deadline) {
     // * Creates a canvas of 571x527 pixels and obtain its context.
     // * The context will be used to modify the canvas.
     const canvas = Canvas.createCanvas(571, 527);
@@ -123,7 +123,7 @@ async function displayMarket(userPoints, cardHolographics, cardIds, cardClasses,
     context.font = 'bold 20px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.textAlign = 'center';
-    context.fillText(`POINTS: ${userPoints}`, canvas.width / 2, 40);
+    context.fillText(`POINTS: ${userDocument.points}`, canvas.width / 2, 40);
 
     // * Card textures.
     const cardPositions = [
@@ -165,6 +165,61 @@ async function displayMarket(userPoints, cardHolographics, cardIds, cardClasses,
         { x: 207, y: 413 },
         { x: 367, y: 413 },
     ];
+
+    const firstXPositions = {
+        'firstLineMoveToX': 57,
+        'firstLineMoveToY': 83,
+        'firstLineLineToX': 196,
+        'firstLineLineToY': 249,
+        'secondLineMoveToX': 196,
+        'secondLineMoveToY': 83,
+        'secondLineLineToX': 57,
+        'secondLineLineToY': 249,
+    };
+
+    const secondXPositions = {
+        'firstLineMoveToX': 217,
+        'firstLineMoveToY': 83,
+        'firstLineLineToX': 356,
+        'firstLineLineToY': 249,
+        'secondLineMoveToX': 356,
+        'secondLineMoveToY': 83,
+        'secondLineLineToX': 217,
+        'secondLineLineToY': 249,
+    };
+
+    const thirdXPositions = {
+        'firstLineMoveToX': 377,
+        'firstLineMoveToY': 83,
+        'firstLineLineToX': 516,
+        'firstLineLineToY': 249,
+        'secondLineMoveToX': 516,
+        'secondLineMoveToY': 83,
+        'secondLineLineToX': 377,
+        'secondLineLineToY': 249,
+    };
+
+    const fourthXPositions = {
+        'firstLineMoveToX': 137,
+        'firstLineMoveToY': 271,
+        'firstLineLineToX': 276,
+        'firstLineLineToY': 437,
+        'secondLineMoveToX': 276,
+        'secondLineMoveToY': 271,
+        'secondLineLineToX': 137,
+        'secondLineLineToY': 437,
+    };
+
+    const fifthXPositions = {
+        'firstLineMoveToX': 297,
+        'firstLineMoveToY': 271,
+        'firstLineLineToX': 436,
+        'firstLineLineToY': 437,
+        'secondLineMoveToX': 436,
+        'secondLineMoveToY': 271,
+        'secondLineLineToX': 297,
+        'secondLineLineToY': 437,
+    };
 
     for (let i = 0; i < cardIds.length; i++) {
         const cardId = cardIds[i];
@@ -237,6 +292,70 @@ async function displayMarket(userPoints, cardHolographics, cardIds, cardClasses,
         }
     }
 
+    context.lineWidth = 5;
+    context.lineCap = 'round';
+    context.strokeStyle = 'rgba(255, 0, 0, 0.6';
+
+    if (userDocument.card1Purchased) {
+        context.beginPath();
+        context.moveTo(firstXPositions.firstLineMoveToX, firstXPositions.firstLineMoveToY);
+        context.lineTo(firstXPositions.firstLineLineToX, firstXPositions.firstLineLineToY);
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(firstXPositions.secondLineMoveToX, firstXPositions.secondLineMoveToY);
+        context.lineTo(firstXPositions.secondLineLineToX, firstXPositions.secondLineLineToY);
+        context.stroke();
+    }
+
+    if (userDocument.card2Purchased) {
+        context.beginPath();
+        context.moveTo(secondXPositions.firstLineMoveToX, secondXPositions.firstLineMoveToY);
+        context.lineTo(secondXPositions.firstLineLineToX, secondXPositions.firstLineLineToY);
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(secondXPositions.secondLineMoveToX, secondXPositions.secondLineMoveToY);
+        context.lineTo(secondXPositions.secondLineLineToX, secondXPositions.secondLineLineToY);
+        context.stroke();
+    }
+
+    if (userDocument.card3Purchased) {
+        context.beginPath();
+        context.moveTo(thirdXPositions.firstLineMoveToX, thirdXPositions.firstLineMoveToY);
+        context.lineTo(thirdXPositions.firstLineLineToX, thirdXPositions.firstLineLineToY);
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(thirdXPositions.secondLineMoveToX, thirdXPositions.secondLineMoveToY);
+        context.lineTo(thirdXPositions.secondLineLineToX, thirdXPositions.secondLineLineToY);
+        context.stroke();
+    }
+
+    if (userDocument.card4Purchased) {
+        context.beginPath();
+        context.moveTo(fourthXPositions.firstLineMoveToX, fourthXPositions.firstLineMoveToY);
+        context.lineTo(fourthXPositions.firstLineLineToX, fourthXPositions.firstLineLineToY);
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(fourthXPositions.secondLineMoveToX, fourthXPositions.secondLineMoveToY);
+        context.lineTo(fourthXPositions.secondLineLineToX, fourthXPositions.secondLineLineToY);
+        context.stroke();
+    }
+
+    if (userDocument.card5Purchased) {
+        context.beginPath();
+        context.moveTo(fifthXPositions.firstLineMoveToX, fifthXPositions.firstLineMoveToY);
+        context.lineTo(fifthXPositions.firstLineLineToX, fifthXPositions.firstLineLineToY);
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(fifthXPositions.secondLineMoveToX, fifthXPositions.secondLineMoveToY);
+        context.lineTo(fifthXPositions.secondLineLineToX, fifthXPositions.secondLineLineToY);
+        context.stroke();
+    }
+
     // * Gray Label.
     context.fillStyle = 'rgba(87, 87, 87, 0.5)';
     context.fillRect(6, 460, 559, 40);
@@ -245,7 +364,7 @@ async function displayMarket(userPoints, cardHolographics, cardIds, cardClasses,
     context.font = '16px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.textAlign = 'center';
-    context.fillText('ENDS ON 2024/08/18 12:00 am GMT-4', canvas.width / 2, 485);
+    context.fillText(`ENDS ON ${deadline}`, canvas.width / 2, 485);
 
     return new AttachmentBuilder(await canvas.encode('png'), { name: 'market.png' });
 }

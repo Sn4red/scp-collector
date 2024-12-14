@@ -143,7 +143,7 @@ function startCronJobs() {
     });
 
     // * The cron task executes the update function every Sunday at midnight.
-    cron.schedule('8 23 * * *', async () => {
+    cron.schedule('0 0 * * 0', async () => {
         console.log('*** Updating market ***');
         await updateMarket();
     });

@@ -210,7 +210,6 @@ async function cardsSorting(obtainingSnapshot) {
         }
 
         const cardReference = obtainingDocument.card;
-
         const cardSnapshot = cardReference.get();
 
         promises.push(cardSnapshot);

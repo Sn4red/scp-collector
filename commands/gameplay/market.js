@@ -1,5 +1,3 @@
-// TODO: Finalmente, falta agregar al cron job para actualizar los campos de validación de cada usuario.
-
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
 const firebase = require('../../utils/firebase');

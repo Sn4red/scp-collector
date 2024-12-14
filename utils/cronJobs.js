@@ -1,6 +1,9 @@
 // TODO: 12-14-2024: validar el domingo 12-15-2024 si el cron job para actualizar el market funciona correctamente,
 // TODO: estableciendo la fecha para el próximo domingo a la medianoche.
 
+// TODO: En la misma ejecución, se validará si el cron job para reiniciar los campos relacionados con el market de los usuarios
+// TODO: funciona correctamente.
+
 // TODO 12-13-2024: el cron job para actualizar el market ya está completado.
 // TODO: Falta modificar la function getMarketCards para que no repita cartas en el market.
 // TODO: Ya se sabe cuál será la modificación, pero todavía no se va a implementar porque,
@@ -43,6 +46,7 @@
 // }
 
 const firebase = require('./firebase');
+const { Filter } = require('firebase-admin/firestore');
 const moment = require('moment');
 const cron = require('node-cron');
 
@@ -131,6 +135,39 @@ async function updateMarket() {
     console.log(`${new Date()} >>> *** Market was updated. ***`);
 }
 
+// * This function resets the market-related fields of the users every Sunday at midnight.
+async function resetUserMarketFields() {
+    let numberUsers = 0;
+
+    const userReference = database.collection('user');
+    const userQuery = userReference.where(
+        Filter.or(
+            Filter.where('card1Purchased', '==', true),
+            Filter.where('card2Purchased', '==', true),
+            Filter.where('card3Purchased', '==', true),
+            Filter.where('card4Purchased', '==', true),
+            Filter.where('card5Purchased', '==', true),
+        ),
+    );
+    const userSnapshot = await userQuery.get();
+
+    userSnapshot.forEach(async (user) => {
+        if (user.exists) {
+            numberUsers++;
+
+            await user.ref.update({
+                card1Purchased: false,
+                card2Purchased: false,
+                card3Purchased: false,
+                card4Purchased: false,
+                card5Purchased: false,
+            });
+        }
+    });
+
+    console.log(`${new Date()} >>> *** ${numberUsers} User(s) with market-related fields have been resetted. ***`);
+}
+
 // * This function starts all the cron jobs.
 function startCronJobs() {
     // * The cron task executes the reset function at midnight.
@@ -145,10 +182,14 @@ function startCronJobs() {
         await deleteOldTradeRequests();
     });
 
-    // * The cron task executes the update function every Sunday at midnight.
+    // * The cron task executes the update market function and the
+    // * reset user market-related fields function every Sunday at midnight.
     cron.schedule('0 0 * * 0', async () => {
         console.log('*** Updating market ***');
         await updateMarket();
+
+        console.log('*** Resetting user market-related fields ***');
+        await resetUserMarketFields();
     });
 }
 

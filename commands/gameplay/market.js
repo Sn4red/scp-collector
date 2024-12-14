@@ -52,33 +52,7 @@ module.exports = {
             marketDocument.card5,
         ];
 
-        console.time('Execution Time');
         const promises = [];
-
-        // const card1Reference = marketDocument.card1;
-        // const card1Snapshot = await card1Reference.get();
-        // const pathSegment1 = card1Snapshot.ref.path.split('/');
-        // const className1 = pathSegment1[1];
-
-        // const card2Reference = marketDocument.card2;
-        // const card2Snapshot = await card2Reference.get();
-        // const pathSegment2 = card2Snapshot.ref.path.split('/');
-        // const className2 = pathSegment2[1];
-
-        // const card3Reference = marketDocument.card3;
-        // const card3Snapshot = await card3Reference.get();
-        // const pathSegment3 = card3Snapshot.ref.path.split('/');
-        // const className3 = pathSegment3[1];
-
-        // const card4Reference = marketDocument.card4;
-        // const card4Snapshot = await card4Reference.get();
-        // const pathSegment4 = card4Snapshot.ref.path.split('/');
-        // const className4 = pathSegment4[1];
-
-        // const card5Reference = marketDocument.card5;
-        // const card5Snapshot = await card5Reference.get();
-        // const pathSegment5 = card5Snapshot.ref.path.split('/');
-        // const className5 = pathSegment5[1];
 
         for (const document of marketDocuments) {
             const cardReference = document;
@@ -114,32 +88,6 @@ module.exports = {
             marketDocument.holographic4,
             marketDocument.holographic5,
         ];
-
-        console.timeEnd('Execution Time');
-
-        // const cardIds = [
-        //     card1Snapshot.id,
-        //     card2Snapshot.id,
-        //     card3Snapshot.id,
-        //     card4Snapshot.id,
-        //     card5Snapshot.id,
-        // ];
-
-        // const cardClasses = [
-        //     className1,
-        //     className2,
-        //     className3,
-        //     className4,
-        //     className5,
-        // ];
-
-        // const cardNames = [
-        //     card1Snapshot.data().name,
-        //     card2Snapshot.data().name,
-        //     card3Snapshot.data().name,
-        //     card4Snapshot.data().name,
-        //     card5Snapshot.data().name,
-        // ];
 
         // * Uses the AttachmentBuilder class to process the file and be attached in the reply.
         const attachment = await displayMarket(userDocument.points, cardHolographics, cardIds, cardClasses, cardNames);

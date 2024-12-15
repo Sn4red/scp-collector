@@ -124,18 +124,18 @@ async function updateMarket() {
     }
 
     // * According to the given classes, the cards are obtained.
-    const cardReferences = await getMarketCards(obtainedClasses);
+    const cardResults = await getMarketCards(obtainedClasses);
 
     // * Holographic values obtained through probability.
     const obtainedHolographics = holographicProbability();
 
-    // * The market is updated with the obtained cards references and holographics values.
-    await updateMarketCards(cardReferences, obtainedHolographics);
+    // * The market is updated with the obtained cards references, holographics values and card IDs.
+    await updateMarketCards(cardResults.cardReferences, obtainedHolographics, cardResults.cardIds);
 
     console.log(`${new Date()} >>> *** Market was updated. ***`);
 }
 
-// * This function resets the market-related fields of the users every Sunday at midnight.
+// * This function resets the market-related fields of the users every week.
 async function resetUserMarketFields() {
     let numberUsers = 0;
 
@@ -183,8 +183,8 @@ function startCronJobs() {
     });
 
     // * The cron task executes the update market function and the
-    // * reset user market-related fields function every Sunday at midnight.
-    cron.schedule('0 0 * * 0', async () => {
+    // * reset user market-related fields function every Sunday at midnight (12:05).
+    cron.schedule('5 0 * * 0', async () => {
         console.log('*** Updating market ***');
         await updateMarket();
 
@@ -228,6 +228,7 @@ function classProbability() {
 // * This function retrieves 5 random cards and returns them as an array.
 async function getMarketCards(obtainedClasses) {
     const cardReferences = [];
+    const cardIds = [];
 
     for (const obtainedClass of obtainedClasses) {
         // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
@@ -248,9 +249,10 @@ async function getMarketCards(obtainedClasses) {
         const cardDocument = selectedCardSnapshot.docs[0];
 
         cardReferences.push(cardDocument.ref);
+        cardIds.push(cardDocument.id);
     }
 
-    return cardReferences;
+    return { cardReferences, cardIds };
 }
 
 // * This function defines the probability of getting holographic cards.
@@ -283,12 +285,13 @@ function holographicProbability() {
 }
 
 // * This function updates the market with the new cards and holographics.
-async function updateMarketCards(cardReferences, obtainedHolographics) {
+async function updateMarketCards(cardReferences, obtainedHolographics, cardIds) {
     const marketReference = database.collection('market').doc('market');
 
-    // * This calculates the date of the following Sunday at midnight.
-    const nextSundayMidnight = moment().day(7).startOf('day').add(1, 'days').utcOffset('-05:00').toDate();
+    // * This calculates the date of the following Sunday at midnight (12:05).
+    const nextSundayMidnight = moment().day(7).startOf('day').add(1, 'days').utcOffset('-05:00').set({ minute: 5 }).toDate();
 
+    // * The cards ID are also inserted for a faster process when a user buys a card.
     await marketReference.update({
         card1: cardReferences[0],
         card2: cardReferences[1],
@@ -301,6 +304,11 @@ async function updateMarketCards(cardReferences, obtainedHolographics) {
         holographic4: obtainedHolographics[3],
         holographic5: obtainedHolographics[4],
         deadline: nextSundayMidnight,
+        card1Id: cardIds[0],
+        card2Id: cardIds[1],
+        card3Id: cardIds[2],
+        card4Id: cardIds[3],
+        card5Id: cardIds[4],
     });
 }
 

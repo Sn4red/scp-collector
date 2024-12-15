@@ -34,7 +34,8 @@ module.exports = {
                                             '/`viewcard` `<SCP ID>` - Privately displays one of your owned cards.\n' +
                                             '/`scp` - Lists the SCPs you currently have, including duplicates.\n' +
                                             '/`merge` - Merges 5 cards to turn it into a higher class card.\n' +
-                                            '/`market` - A weekly market where you can purchase up to 5 cards using your points.' },
+                                            '/`market` - A weekly market where you can purchase up to 5 cards using your points.\n' +
+                                            '/`buy` `<SCP ID>` - Buys a card that is currently in the market, using your points.' },
                 { name: '<a:box:1230371194302234644>   Trading System', value: '/`trade` - Creates a trade request to a user, specifying the user, the SCP they have, and the one you are willing to trade. ' +
                                                     'When the other user accepts your request, the trade will be executed automatically. **Before accepting, there is a 1-minute cooldown ' +
                                                     'in case a request was sent by mistake.**\n' +

@@ -74,10 +74,13 @@ module.exports = {
 
         let deletedMessage = false;
 
-        // * The return statements are used to get out of the collector event.
+        // * All errors inside the transaction are handled with user-defined exceptions, along with its corresponding error message.
         collector.on('collect', async (button) => {
             if (button.customId === 'confirm') {
                 deletedMessage = true;
+
+                const errorMessage1 = '<a:error:1229592805710762128>  Error. It seems that the trade has already been cancelled/declined.';
+                const errorMessage2 = '<a:error:1229592805710762128>  Error. It seems that the trade has already been made.';
 
                 try {
                     await database.runTransaction(async (transaction) => {
@@ -85,18 +88,12 @@ module.exports = {
 
                         // ! If the trade request has already been cancelled/declined during the transaction, returns an error message.
                         if (!newTradeSnapshot.exists) {
-                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been cancelled/declined.', ephemeral: true });
-                            await interaction.deleteReply();
-
-                            return;
+                            throw new Error(errorMessage1);
                         }
 
                         // ! If the trade request has already been confirmed during the transaction, returns an error message.
                         if (tradeSnapshot.data().tradeConfirmation !== newTradeSnapshot.data().tradeConfirmation) {
-                            await interaction.followUp({ content: '<a:error:1229592805710762128>  Error. It seems that the trade has already been made.', ephemeral: true });
-                            await interaction.deleteReply();
-
-                            return;
+                            throw new Error(errorMessage2);
                         }
 
                         /**
@@ -111,10 +108,15 @@ module.exports = {
                     await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << successfully cancelled. <a:trash:1247734945552531628>`, ephemeral: true });
                     await interaction.deleteReply();
                 } catch (error) {
-                    console.log(`${new Date()} >>> *** ERROR: canceltrade.js *** by ${userId} (${interaction.user.username})`);
-                    console.error(error);
+                    if (error.message.includes(errorMessage1) || error.message.includes(errorMessage2)) {
+                        await interaction.followUp({ content: error.message, ephemeral: true });
+                        await interaction.deleteReply();
+                    } else {
+                        console.log(`${new Date()} >>> *** ERROR: canceltrade.js *** by ${userId} (${interaction.user.username})`);
+                        console.error(error);
 
-                    await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to cancel the request. Please try again.', ephemeral: true });
+                        await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to cancel the request. Please try again.', ephemeral: true });
+                    }
                 }
             }
 

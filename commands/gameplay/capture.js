@@ -1,3 +1,5 @@
+// TODO 12-17-2024: aplicar el límite de caracteres para el nombre de la carta en el embed, para evitar errores.
+
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('node:path');

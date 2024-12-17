@@ -1,6 +1,9 @@
 // TODO 12-16-2024: ya no funciona usar returns dentro de los collectors, hay que usar la propuesta del Copilot, de usar throws
 // TODO: para redirigir el flujo del programa.
 // TODO: HAY QUE HACER LO MISMO CON LOS DEMÁS COMANDOS QUE USEN EL MISMO PATRÓN.
+// TODO: buy | declinetrade
+
+// TODO 12-17-2024: aplicar el límite de caracteres para el nombre de la carta en el embed, para evitar errores.
 
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const path = require('node:path');

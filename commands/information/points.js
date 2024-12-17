@@ -24,15 +24,15 @@ module.exports = {
                             'Thaumiel -> <a:point:1273453430190375043> 50\n' +
                             'Apollyon -> <a:point:1273453430190375043> 100\n\n' +
                             'You can spend your points in the **market**. Each week, 5 cards are available for purchase. You can view them by using /`market`. Also the price depends on the type of class:\n\n' +
-                            'Safe -> <a:point:1273453430190375043> 100\n' +
-                            'Euclid -> <a:point:1273453430190375043> 200\n' +
-                            'Keter -> <a:point:1273453430190375043> 300\n' +
-                            'Thaumiel -> <a:point:1273453430190375043> 500\n' +
-                            'Apollyon -> <a:point:1273453430190375043> 1000\n\n' +
+                            'Safe -> <a:point:1273453430190375043> 1000\n' +
+                            'Euclid -> <a:point:1273453430190375043> 2000\n' +
+                            'Keter -> <a:point:1273453430190375043> 3000\n' +
+                            'Thaumiel -> <a:point:1273453430190375043> 5000\n' +
+                            'Apollyon -> <a:point:1273453430190375043> 10000\n\n' +
                             'Adittionaly, the price is incremented if the card has a holographic feature:\n\n' +
-                            '<a:emerald:1228923470239367238>   Emerald -> <a:point:1273453430190375043> +20\n' +
-                            '<a:golden:1228925086690443345>    Golden -> <a:point:1273453430190375043> +30\n' +
-                            '<a:diamond:1228924014479671439>   Diamond -> <a:point:1273453430190375043> +50\n')
+                            '<a:emerald:1228923470239367238>   Emerald -> <a:point:1273453430190375043> +200\n' +
+                            '<a:golden:1228925086690443345>    Golden -> <a:point:1273453430190375043> +300\n' +
+                            '<a:diamond:1228924014479671439>   Diamond -> <a:point:1273453430190375043> +500\n')
             .setThumbnail('attachment://points-thumbnail.gif')
             .setTimestamp()
             .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'attachment://points-iconFooter.gif' });

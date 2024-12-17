@@ -1,4 +1,4 @@
-// TODO: 12-14-2024: validar el domingo 12-15-2024 si el cron job para actualizar el market funciona correctamente,
+// TODO: 12-14-2024: validar el domingo 12-22-2024 si el cron job para actualizar el market funciona correctamente,
 // TODO: estableciendo la fecha para el próximo domingo a la medianoche.
 
 // TODO: En la misma ejecución, se validará si el cron job para reiniciar los campos relacionados con el market de los usuarios

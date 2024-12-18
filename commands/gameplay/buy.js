@@ -382,18 +382,15 @@ async function updateUser(userReference, points, cardId, marketDocument, transac
 }
 
 // * This function ensures that the card name with the title does not exceed the maximum character limit, which is 256.
-// * It is being considered that the title (without the card name) has 50 characters (more than necessary),
-// * so the card name can have 206 as maximum.
+// * To make sure that no errors occur, the function will limit the card name by 179 characters as maximum.
 function limitCardName(cardName) {
     let fixedCardName = cardName;
 
-    console.log(fixedCardName.length);
-
-    if (fixedCardName.length <= 206) {
+    if (fixedCardName.length <= 179) {
         return fixedCardName;
     }
 
-    fixedCardName = fixedCardName.slice(0, 207);
+    fixedCardName = fixedCardName.slice(0, 180);
 
     // * If the last character is not a space, it will be removed until it finds one,
     // * to avoid cutting a word in half.
@@ -403,10 +400,6 @@ function limitCardName(cardName) {
 
     // * The original card name is replaced by the new one with an ellipsis.
     fixedCardName = fixedCardName.slice(0, -1) + '...';
-    
-    console.log('aun asi lo arreglo');
-
-    console.log(fixedCardName.length);
 
     return fixedCardName;
 }

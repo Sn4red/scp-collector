@@ -1,5 +1,3 @@
-// TODO 12-17-2024: aplicar el límite de caracteres para los nombres de las cartas en el embed, para evitar errores.
-
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
@@ -69,7 +67,9 @@ module.exports = {
             const goldenQuantity = sortedCards.goldenCards.get(element) || 0;
             const diamondQuantity = sortedCards.diamondCards.get(element) || 0;
 
-            cardsList += `<:white_dash:1228526885676388352>**\`(${quantity})\`** \`${element}\` // \`${card.name}\` - **\`${classCard}\`**    <:green_dot:1228521302864953394>**${emeraldQuantity}** <:yellow_dot:1228522038097084488>**${goldenQuantity}** <:blue_dot:1228521760580833421>**${diamondQuantity}** \n`;
+            const cardName = limitCardName(card.name);
+
+            cardsList += `<:white_dash:1228526885676388352>**\`(${quantity})\`** \`${element}\` // \`${cardName}\` - **\`${classCard}\`**    <:green_dot:1228521302864953394>**${emeraldQuantity}** <:yellow_dot:1228522038097084488>**${goldenQuantity}** <:blue_dot:1228521760580833421>**${diamondQuantity}** \n`;
 
             entriesPerPageLimit++;
                     
@@ -234,4 +234,27 @@ async function cardsSorting(obtainingSnapshot) {
     });
 
     return { cardsCount, cards, cardsClass, emeraldCards, goldenCards, diamondCards };
+}
+
+// * This function ensures that the name of the cards all together don't exceed the maximum character limit of the embed description, which is 4096.
+// * To make sure that no errors occur, and for a better visual, the function will limit the card name by 80 characters as maximum.
+function limitCardName(cardName) {
+    let fixedCardName = cardName;
+
+    if (fixedCardName.length <= 80) {
+        return fixedCardName;
+    }
+
+    fixedCardName = fixedCardName.slice(0, 81);
+
+    // * If the last character is not a space, it will be removed until it finds one,
+    // * to avoid cutting a word in half.
+    while (fixedCardName[fixedCardName.length - 1] !== ' ') {
+        fixedCardName = fixedCardName.slice(0, -1);
+    }
+
+    // * The original card name is replaced by the new one with an ellipsis.
+    fixedCardName = fixedCardName.slice(0, -1) + '...';
+
+    return fixedCardName;
 }

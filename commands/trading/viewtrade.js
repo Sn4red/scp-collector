@@ -1,5 +1,3 @@
-// TODO 12-17-2024: aplicar el límite de caracteres para los nombres de las cartas en el embed, para evitar errores.
-
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
@@ -58,14 +56,17 @@ module.exports = {
 
         const tradeObject = await formattingValues(tradeDocument);
 
+        const issuerCardName = limitCardName(tradeObject.issuerCardName);
+        const recipientCardName = limitCardName(tradeObject.recipientCardName);
+
         const tradeEmbed = new EmbedBuilder()
             .setColor(0x010101)
             .setTitle(`<:page:1228553113804476537>  Trade #: \`${tradeSnapshot.id}\``)
             .addFields(
                 { name: '<:user:1240099663541960795>  Issuer', value: `\`${tradeObject.issuerNickname}\` (\`${tradeObject.issuerId}\`)` },
-                { name: `${tradeObject.issuerHolographicEmoji}  Card`, value: `\`${tradeObject.issuerCardId}\` // \`${tradeObject.issuerCardName}\`` },
+                { name: `${tradeObject.issuerHolographicEmoji}  Card`, value: `\`${tradeObject.issuerCardId}\` // \`${issuerCardName}\`` },
                 { name: '<:user:1240099663541960795>  Recipient', value: `\`${tradeObject.recipientNickname}\` (\`${tradeObject.recipientId}\`)` },
-                { name: `${tradeObject.recipientHolographicEmoji}  Card`, value: `\`${tradeObject.recipientCardId}\` // \`${tradeObject.recipientCardName}\`` },
+                { name: `${tradeObject.recipientHolographicEmoji}  Card`, value: `\`${tradeObject.recipientCardId}\` // \`${recipientCardName}\`` },
                 { name: '<a:bit_clock:1240110707295387718>  Creation Date', value: `\`${tradeObject.creationDate}\`` },
                 { name: '<a:pin:1230368962496434338>  Status', value: `**\`${tradeObject.tradeStatus}\`**  ${tradeObject.statusEmoji}` },
             )
@@ -131,4 +132,27 @@ async function formattingValues(tradeDocument) {
     }
 
     return { issuerNickname, issuerId, issuerCardId, issuerCardName, issuerHolographicEmoji, recipientNickname, recipientId, recipientCardId, recipientCardName, recipientHolographicEmoji, creationDate, tradeStatus, statusEmoji, tradeDate };
+}
+
+// * This function ensures that the card name with all the value field does not exceed the maximum character limit, which is 1024.
+// * To make sure that no errors occur, and for a better visual, the card name will be cutted more than it should be (until 100).
+function limitCardName(cardName) {
+    let fixedCardName = cardName;
+
+    if (fixedCardName.length <= 100) {
+        return fixedCardName;
+    }
+
+    fixedCardName = fixedCardName.slice(0, 101);
+
+    // * If the last character is not a space, it will be removed until it finds one,
+    // * to avoid cutting a word in half.
+    while (fixedCardName[fixedCardName.length - 1] !== ' ') {
+        fixedCardName = fixedCardName.slice(0, -1);
+    }
+
+    // * The original card name is replaced by the new one with an ellipsis.
+    fixedCardName = fixedCardName.slice(0, -1) + '...';
+
+    return fixedCardName;
 }

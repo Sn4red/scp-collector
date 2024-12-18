@@ -1,5 +1,3 @@
-// TODO 12-17-2024: aplicar la funcion del limite a los demas comandos que necesiten.
-
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const path = require('node:path');
 const firebase = require('../../utils/firebase');
@@ -117,7 +115,7 @@ module.exports = {
                         await updateUser(userReference, points, fixedCardId, foundCardInMarket.marketDocument, transaction);
                     });
 
-                    const cardName = limitCardName('or, KTE-6561-Black, or, dolphinslugchugger and scarhaver\'s GAW-1 proposal, or, 8008132, or, Our Friend Who Lives By The Lake, or, The Lake, or, A Very Important Question, or, The Reason We Did Something New This Time, or, Go Big or Go Home');
+                    const cardName = limitCardName(cardData.name);
 
                     const imagePath = path.join(__dirname, `../../images/scp/${fixedCardId}.jpg`);
                     const image = new AttachmentBuilder(imagePath);

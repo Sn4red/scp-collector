@@ -1,9 +1,4 @@
-// TODO 12-16-2024: ya no funciona usar returns dentro de los collectors, hay que usar la propuesta del Copilot, de usar throws
-// TODO: para redirigir el flujo del programa.
-// TODO: HAY QUE HACER LO MISMO CON LOS DEMÁS COMANDOS QUE USEN EL MISMO PATRÓN.
-// TODO: buy | declinetrade
-
-// TODO 12-17-2024: aplicar el límite de caracteres para el nombre de la carta en el embed, para evitar errores.
+// TODO 12-17-2024: aplicar la funcion del limite a los demas comandos que necesiten.
 
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const path = require('node:path');
@@ -68,13 +63,17 @@ module.exports = {
         const cardData = foundCardInformation.cardData;
         const cardClass = foundCardInformation.cardClass;
         const cardHolographic = foundCardInformation.cardHolographic;
-        const holographicEmoji = getHolographicEmoji(cardHolographic);
         const points = getCardPoints(cardClass, cardHolographic);
+        
+        const holographicFeature = getHolographicFeature(cardHolographic);
+        const holographicEmojiText = holographicFeature.holographicEmojiText;
+        const holographicEmojiEmbed = holographicFeature.holographicEmojiEmbed;
+        const embedColor = holographicFeature.embedColor;
 
         const buttonsRow = displayButtons();
 
         const reply = await interaction.editReply({
-            content: `<a:stop:1243398806402240582>  Are you sure you want to buy ${holographicEmoji} \`${fixedCardId}\` (${cardClass}) for <a:point:1273453430190375043> **${points}**?`,
+            content: `<a:stop:1243398806402240582>  Are you sure you want to buy ${holographicEmojiText} \`${fixedCardId}\` (${cardClass}) for <a:point:1273453430190375043> **${points}**?`,
             components: [buttonsRow],
         });
 
@@ -90,6 +89,8 @@ module.exports = {
             if (button.customId === 'confirm') {
                 deletedMessage = true;
 
+                const errorMessage = '<a:error:1229592805710762128>  You don\'t have enough points to buy this card!';
+
                 try {
                     await database.runTransaction(async (transaction) => {
                         userSnapshot = await transaction.get(userReference);
@@ -97,10 +98,7 @@ module.exports = {
 
                         // ! If the user doesn't have enough points, returns an error message.
                         if (userDocument.points < points) {
-                            await interaction.followUp({ content: '<a:error:1229592805710762128>  You don\'t have enough points to buy this card!', ephemeral: true });
-                            await interaction.deleteReply();
-
-                            return;
+                            throw new Error(errorMessage);
                         }
 
                          /**
@@ -119,13 +117,14 @@ module.exports = {
                         await updateUser(userReference, points, fixedCardId, foundCardInMarket.marketDocument, transaction);
                     });
 
-                    console.log('igual paso por aca carajo');
+                    const cardName = limitCardName('or, KTE-6561-Black, or, dolphinslugchugger and scarhaver\'s GAW-1 proposal, or, 8008132, or, Our Friend Who Lives By The Lake, or, The Lake, or, A Very Important Question, or, The Reason We Did Something New This Time, or, Go Big or Go Home');
 
                     const imagePath = path.join(__dirname, `../../images/scp/${fixedCardId}.jpg`);
                     const image = new AttachmentBuilder(imagePath);
 
                     const cardEmbed = new EmbedBuilder()
-                        .setTitle(`${holographicEmoji} Item #: \`${fixedCardId}\` // \`${cardData.name}\``)
+                        .setColor(embedColor)
+                        .setTitle(`${holographicEmojiEmbed} Item #: \`${fixedCardId}\` // \`${cardName}\``)
                         .addFields(
                             { name: '<:invader:1228919814555177021>  Class', value: `\`${cardClass}\``, inline: true },
                             { name: '<:files:1228920361723236412>  File', value: `**[View Document](${cardData.file})**`, inline: true },
@@ -141,10 +140,15 @@ module.exports = {
 
                     await interaction.deleteReply();
                 } catch (error) {
-                    console.log(`${new Date()} >>> *** ERROR: buy.js *** by ${userId} (${interaction.user.username})`);
-                    console.error(error);
+                    if (error.message.includes(errorMessage)) {
+                        await interaction.followUp({ content: error.message, ephemeral: true });
+                        await interaction.deleteReply();
+                    } else {
+                        console.log(`${new Date()} >>> *** ERROR: buy.js *** by ${userId} (${interaction.user.username})`);
+                        console.error(error);
 
-                    await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to buy a card. Please try again.', ephemeral: true });
+                        await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to buy a card. Please try again.', ephemeral: true });
+                    }
                 }
             }
 
@@ -253,18 +257,40 @@ async function findCardInformation(cardId, marketDocument, userDocument) {
     return { cardReference: cardSnapshot.ref, cardData: cardData, cardClass: cardClass, cardHolographic: cardHolographic, isAlreadyPurchased: isAlreadyPurchased };
 }
 
-// * This function returns the holographic emoji based on the holographic type.
-function getHolographicEmoji(cardHolographic) {
+// * This function returns the holographic emoji and embed color for the card, based on the holographic type.
+function getHolographicFeature(cardHolographic) {
+    let holographicEmojiText = null;
+    let holographicEmojiEmbed = null;
+    let embedColor = null;
+    
     switch (cardHolographic) {
         case 'Emerald':
-            return '<a:emerald:1228923470239367238>';
+            holographicEmojiText = '<a:emerald:1228923470239367238>';
+            holographicEmojiEmbed = '<a:emerald:1228923470239367238>';
+            embedColor = 0x00b65c;
+
+            break;
         case 'Golden':
-            return '<a:golden:1228925086690443345>';
+            holographicEmojiText = '<a:golden:1228925086690443345>';
+            holographicEmojiEmbed = '<a:golden:1228925086690443345>';
+            embedColor = 0xffd700;
+
+            break;
         case 'Diamond':
-            return '<a:diamond:1228924014479671439>';
+            holographicEmojiText = '<a:diamond:1228924014479671439>';
+            holographicEmojiEmbed = '<a:diamond:1228924014479671439>';
+            embedColor = 0x00bfff;
+
+            break;
         default:
-            return '';
+            holographicEmojiText = '';
+            holographicEmojiEmbed = ' ';
+            embedColor = 0x010101;
+
+            break;
     }
+
+    return { holographicEmojiText: holographicEmojiText, holographicEmojiEmbed: holographicEmojiEmbed, embedColor: embedColor };
 }
 
 // * This function calculates the cost of the card based on the class and holographic (if any).
@@ -355,4 +381,34 @@ async function updateUser(userReference, points, cardId, marketDocument, transac
     }
 
     await transaction.update(userReference, changeObject);
+}
+
+// * This function ensures that the card name with the title does not exceed the maximum character limit, which is 256.
+// * It is being considered that the title (without the card name) has 50 characters (more than necessary),
+// * so the card name can have 206 as maximum.
+function limitCardName(cardName) {
+    let fixedCardName = cardName;
+
+    console.log(fixedCardName.length);
+
+    if (fixedCardName.length <= 206) {
+        return fixedCardName;
+    }
+
+    fixedCardName = fixedCardName.slice(0, 207);
+
+    // * If the last character is not a space, it will be removed until it finds one,
+    // * to avoid cutting a word in half.
+    while (fixedCardName[fixedCardName.length - 1] !== ' ') {
+        fixedCardName = fixedCardName.slice(0, -1);
+    }
+
+    // * The original card name is replaced by the new one with an ellipsis.
+    fixedCardName = fixedCardName.slice(0, -1) + '...';
+    
+    console.log('aun asi lo arreglo');
+
+    console.log(fixedCardName.length);
+
+    return fixedCardName;
 }

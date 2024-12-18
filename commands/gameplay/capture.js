@@ -1,5 +1,3 @@
-// TODO 12-17-2024: aplicar el límite de caracteres para el nombre de la carta en el embed, para evitar errores.
-
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
@@ -146,12 +144,14 @@ module.exports = {
                         holographic: holographicValue,
                     });
 
+                    const cardName = limitCardName(name);
+
                     // * To ensure all images have the same size,
                     // * they are resized to 300x200 pixels.
                     // * The definition of the embed is performed here because it is needed
                     // * by the promotionProcess function.
                     cardEmbed = new EmbedBuilder()
-                        .setTitle(`<a:dice:1228555582655561810>  Item #: \`${cardId}\` // \`${name}\``)
+                        .setTitle(`<a:dice:1228555582655561810>  Item #: \`${cardId}\` // \`${cardName}\``)
                         .addFields(
                             { name: '<:invader:1228919814555177021>  Class', value: `\`${classCard}\``, inline: true },
                         )
@@ -290,6 +290,29 @@ function holographicProbability() {
     } else {
         return 'Normal';
     }
+}
+
+// * This function ensures that the card name with the title does not exceed the maximum character limit, which is 256.
+// * To make sure that no errors occur, the function will limit the card name by 179 characters as maximum.
+function limitCardName(cardName) {
+    let fixedCardName = cardName;
+
+    if (fixedCardName.length <= 179) {
+        return fixedCardName;
+    }
+
+    fixedCardName = fixedCardName.slice(0, 180);
+
+    // * If the last character is not a space, it will be removed until it finds one,
+    // * to avoid cutting a word in half.
+    while (fixedCardName[fixedCardName.length - 1] !== ' ') {
+        fixedCardName = fixedCardName.slice(0, -1);
+    }
+
+    // * The original card name is replaced by the new one with an ellipsis.
+    fixedCardName = fixedCardName.slice(0, -1) + '...';
+
+    return fixedCardName;
 }
 
 // * This function performs the promotion process based on the user's type, level and rank.

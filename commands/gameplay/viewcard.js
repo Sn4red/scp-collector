@@ -102,7 +102,7 @@ module.exports = {
         }
 
         // * This section ensures that the card name with the title does not exceed the maximum character limit, which is 256.
-        // * It is being considered that the title (withouth the card name) has 50 characters (more than necessary),
+        // * It is being considered that the title (without the card name) has 50 characters (more than necessary),
         // * so the card name can have 206 as maximum.
         let fixedCardName = cardData.name;
         

@@ -1,5 +1,3 @@
-// TODO 12-19-2024: usarlo en Discord para confirmar que se vea bien.
-
 const path = require('node:path');
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 

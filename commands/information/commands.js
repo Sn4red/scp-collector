@@ -49,7 +49,7 @@ module.exports = {
                                                     '/`enabletrades` - Use it if you want to receive trade offers (**enabled by default**).' },
             )
             .setTimestamp()
-            .setFooter({ text: 'To submit suggestions or report errors: <Google Form> (reward given for finding errors)', iconURL: 'attachment://commands-iconFooter.jpg' });
+            .setFooter({ text: 'To submit suggestions or errors: https://bit.ly/SCPCollector', iconURL: 'attachment://commands-iconFooter.jpg' });
 
         await interaction.reply({ embeds: [embed], files: [thumbnail, iconFooter] });
     },

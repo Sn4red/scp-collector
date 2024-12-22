@@ -4,8 +4,8 @@ const path = require('node:path');
 
 const database = firebase.firestore();
 
-// * The points obtained based on the SCP class.
-const points = {
+// * The crystals obtained based on the SCP class.
+const crystals = {
     'Safe': 10,
     'Euclid': 20,
     'Keter': 30,
@@ -199,7 +199,7 @@ module.exports = {
                     });
 
                     await transaction.update(userReference, {
-                        points: firebase.firestore.FieldValue.increment(points[classCard]),
+                        crystals: firebase.firestore.FieldValue.increment(crystals[classCard]),
                     });
 
                     const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);

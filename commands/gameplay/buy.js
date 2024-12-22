@@ -9,7 +9,7 @@ module.exports = {
     cooldown: 20,
     data: new SlashCommandBuilder()
         .setName('buy')
-        .setDescription('Buys a card that is currently in the market, using your points.')
+        .setDescription('Buys a card that is currently in the market, using your crystals.')
         .addStringOption(option =>
             option.setName('card')
                 .setDescription('Card ID to buy.')
@@ -61,7 +61,7 @@ module.exports = {
         const cardData = foundCardInformation.cardData;
         const cardClass = foundCardInformation.cardClass;
         const cardHolographic = foundCardInformation.cardHolographic;
-        const points = getCardPoints(cardClass, cardHolographic);
+        const crystals = getCardCrystals(cardClass, cardHolographic);
         
         const holographicFeature = getHolographicFeature(cardHolographic);
         const holographicEmojiText = holographicFeature.holographicEmojiText;
@@ -71,7 +71,7 @@ module.exports = {
         const buttonsRow = displayButtons();
 
         const reply = await interaction.editReply({
-            content: `<a:stop:1243398806402240582>  Are you sure you want to buy ${holographicEmojiText} \`${fixedCardId}\` (${cardClass}) for <a:point:1273453430190375043> **${points}**?`,
+            content: `<a:stop:1243398806402240582>  Are you sure you want to buy ${holographicEmojiText} \`${fixedCardId}\` (${cardClass}) for <a:crystal:1273453430190375043> **${crystals}**?`,
             components: [buttonsRow],
         });
 
@@ -87,15 +87,15 @@ module.exports = {
             if (button.customId === 'confirm') {
                 deletedMessage = true;
 
-                const errorMessage = '<a:error:1229592805710762128>  You don\'t have enough points to buy this card!';
+                const errorMessage = '<a:error:1229592805710762128>  You don\'t have enough crystals to buy this card!';
 
                 try {
                     await database.runTransaction(async (transaction) => {
                         userSnapshot = await transaction.get(userReference);
                         userDocument = userSnapshot.data();
 
-                        // ! If the user doesn't have enough points, returns an error message.
-                        if (userDocument.points < points) {
+                        // ! If the user doesn't have enough crystals, returns an error message.
+                        if (userDocument.crystals < crystals) {
                             throw new Error(errorMessage);
                         }
 
@@ -112,7 +112,7 @@ module.exports = {
                             holographic: cardHolographic,
                         });
 
-                        await updateUser(userReference, points, fixedCardId, foundCardInMarket.marketDocument, transaction);
+                        await updateUser(userReference, crystals, fixedCardId, foundCardInMarket.marketDocument, transaction);
                     });
 
                     const cardName = limitCardName(cardData.name);
@@ -292,40 +292,40 @@ function getHolographicFeature(cardHolographic) {
 }
 
 // * This function calculates the cost of the card based on the class and holographic (if any).
-function getCardPoints(cardClass, cardHolographic) {
-    let points = 0;
+function getCardCrystals(cardClass, cardHolographic) {
+    let crystals = 0;
 
     switch (cardClass) {
         case 'Safe':
-            points = 1000;
+            crystals = 1000;
             break;
         case 'Euclid':
-            points = 2000;
+            crystals = 2000;
             break;
         case 'Keter':
-            points = 3000;
+            crystals = 3000;
             break;
         case 'Thaumiel':
-            points = 5000;
+            crystals = 5000;
             break;
         case 'Apollyon':
-            points = 10000;
+            crystals = 10000;
             break;
     }
 
     switch (cardHolographic) {
         case 'Emerald':
-            points += 200;
+            crystals += 200;
             break;
         case 'Golden':
-            points += 300;
+            crystals += 300;
             break;
         case 'Diamond':
-            points += 500;
+            crystals += 500;
             break;
     }
 
-    return points;
+    return crystals;
 }
 
 // * This function displays the 'confirm' and 'cancel' buttons.
@@ -347,32 +347,32 @@ function displayButtons() {
     return row;
 }
 
-async function updateUser(userReference, points, cardId, marketDocument, transaction) {
+async function updateUser(userReference, crystals, cardId, marketDocument, transaction) {
     const changeObject = {};
 
     switch (cardId) {
         case marketDocument.card1Id:
-            changeObject.points = firebase.firestore.FieldValue.increment(-points);
+            changeObject.crystals = firebase.firestore.FieldValue.increment(-crystals);
             changeObject.card1Purchased = true;
 
             break;
         case marketDocument.card2Id:
-            changeObject.points = firebase.firestore.FieldValue.increment(-points);
+            changeObject.crystals = firebase.firestore.FieldValue.increment(-crystals);
             changeObject.card2Purchased = true;
 
             break;
         case marketDocument.card3Id:
-            changeObject.points = firebase.firestore.FieldValue.increment(-points);
+            changeObject.crystals = firebase.firestore.FieldValue.increment(-crystals);
             changeObject.card3Purchased = true;
 
             break;
         case marketDocument.card4Id:
-            changeObject.points = firebase.firestore.FieldValue.increment(-points);
+            changeObject.crystals = firebase.firestore.FieldValue.increment(-crystals);
             changeObject.card4Purchased = true;
                     
             break;
         case marketDocument.card5Id:
-            changeObject.points = firebase.firestore.FieldValue.increment(-points);
+            changeObject.crystals = firebase.firestore.FieldValue.increment(-crystals);
             changeObject.card5Purchased = true;
                         
             break;

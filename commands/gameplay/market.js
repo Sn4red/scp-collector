@@ -9,7 +9,7 @@ module.exports = {
     cooldown: 60 * 5,
     data: new SlashCommandBuilder()
         .setName('market')
-        .setDescription('A weekly market where you can purchase up to 5 cards using your points.'),
+        .setDescription('A weekly market where you can purchase up to 5 cards using your crystals.'),
     async execute(interaction) {
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply({ ephemeral: true });
@@ -121,7 +121,7 @@ async function displayMarket(userDocument, cardHolographics, cardIds, cardClasse
     context.font = 'bold 20px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.textAlign = 'center';
-    context.fillText(`POINTS: ${userDocument.points}`, canvas.width / 2, 40);
+    context.fillText(`CRYSTALS: ${userDocument.crystals}`, canvas.width / 2, 40);
 
     // * Card textures.
     const cardPositions = [

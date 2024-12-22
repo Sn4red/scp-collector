@@ -44,8 +44,8 @@ const ranks = [
     'O5 Council Member',
 ];
 
-// * The points obtained based on the SCP class.
-const points = {
+// * The crystals obtained based on the SCP class.
+const crystals = {
     'Safe': 10,
     'Euclid': 20,
     'Keter': 30,
@@ -389,7 +389,7 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
             level: userDocument.level,
             xp: fullXP,
             dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
-            points: firebase.firestore.FieldValue.increment(points[classCard]),
+            crystals: firebase.firestore.FieldValue.increment(crystals[classCard]),
         });
     }
 
@@ -402,7 +402,7 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
             level: userDocument.level,
             xp: fullXP,
             dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
-            points: firebase.firestore.FieldValue.increment(points[classCard]),
+            crystals: firebase.firestore.FieldValue.increment(crystals[classCard]),
         });
     }
 
@@ -412,7 +412,7 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
             level: userDocument.level,
             xp: fullXP,
             dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
-            points: firebase.firestore.FieldValue.increment(points[classCard]),
+            crystals: firebase.firestore.FieldValue.increment(crystals[classCard]),
         });
     }
 

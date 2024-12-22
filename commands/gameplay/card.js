@@ -53,7 +53,7 @@ module.exports = {
                 issueDate: year + '/' + month + '/' + day,
                 level: 1,
                 nickname: interaction.user.username,
-                points: 0,
+                crystals: 0,
                 premium: false,
                 rank: 'Class D',
                 xp: 0,
@@ -84,6 +84,8 @@ async function displayCard(document, userId, interaction) {
     const level = document.level;
     const rank = document.rank;
     const xp = document.xp.toString();
+    const crystals = document.crystals.toString();
+    const premium = document.premium;
 
     // * Aggregation query to the database counting the number of obtained SCPs.
     const obtainingReference = database.collection('user').doc(id).collection('obtaining');
@@ -174,6 +176,14 @@ async function displayCard(document, userId, interaction) {
     context.fillStyle = '#FFFFFF';
     context.fillText('Captured SCPs:', 145, 132);
     context.fillText(SCPCount + '', 212, 132);
+
+    // * Crystals.
+    const crystalEmoji = await loadEmoji('https://cdn.discordapp.com/emojis/1273453430190375043');
+
+    context.font = 'bold 10px Roboto Condensed';
+    context.fillStyle = '#FFFFFF';
+    context.drawImage(crystalEmoji, 145, 140, 15, 15);
+    context.fillText(crystals, 163, 151);
     
     // * Classified label.
     context.font = '13px Roboto Condensed';
@@ -253,7 +263,7 @@ async function displayCard(document, userId, interaction) {
     // * Loading the logo.
     let logo = null;
 
-    if (document.premium === true) {
+    if (premium === true) {
         logo = await Canvas.loadImage('./images/card/scp-premium-logo-card.png');
     } else {
         logo = await Canvas.loadImage('./images/card/scp-normal-logo-card.png');

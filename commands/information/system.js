@@ -7,6 +7,9 @@ module.exports = {
         .setName('system')
         .setDescription('Explains how ranks, levels, and XP work.'),
     async execute(interaction) {
+        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+        await interaction.deferReply();
+
         const thumbnailPath = path.join(__dirname, '../../images/embed/system-thumbnail.jpg');
         const iconFooterPath = path.join(__dirname, '../../images/embed/system-iconFooter.gif');
 
@@ -32,6 +35,6 @@ module.exports = {
             .setTimestamp()
             .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'attachment://system-iconFooter.gif' });
 
-        await interaction.reply({ embeds: [embed], files: [thumbnail, iconFooter] });
+        await interaction.editReply({ embeds: [embed], files: [thumbnail, iconFooter] });
     },
 };

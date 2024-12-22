@@ -7,6 +7,9 @@ module.exports = {
         .setName('merges')
         .setDescription('Explains about how merge works.'),
     async execute(interaction) {
+        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+        await interaction.deferReply();
+
         const thumbnailPath = path.join(__dirname, '../../images/embed/merges-thumbnail.gif');
         const iconFooterPath = path.join(__dirname, '../../images/embed/merges-iconFooter.gif');
 
@@ -37,6 +40,6 @@ module.exports = {
             .setTimestamp()
             .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'attachment://merges-iconFooter.gif' });
 
-        await interaction.reply({ embeds: [embed], files: [thumbnail, iconFooter] });
+        await interaction.editReply({ embeds: [embed], files: [thumbnail, iconFooter] });
     },
 };

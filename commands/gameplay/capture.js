@@ -44,13 +44,22 @@ const ranks = [
     'O5 Council Member',
 ];
 
-// * The crystals obtained based on the SCP class.
-const crystals = {
+// * The crystals obtained based on the SCP class by a normal user.
+const normalCrystals = {
     'Safe': 10,
     'Euclid': 20,
     'Keter': 30,
     'Thaumiel': 50,
     'Apollyon': 100,
+};
+
+// * The crystals obtained based on the SCP class by a premium user.
+const premiumCrystals = {
+    'Safe': 20,
+    'Euclid': 40,
+    'Keter': 60,
+    'Thaumiel': 100,
+    'Apollyon': 200,
 };
 
 module.exports = {
@@ -166,7 +175,7 @@ module.exports = {
                 const image = new AttachmentBuilder(imagePath);
 
                 if (userDocument.premium) {
-                    promotionSystem.cardEmbed.setDescription(`**+${premiumXP[classCard]} XP**`);
+                    promotionSystem.cardEmbed.setDescription(`|   **+${premiumXP[classCard]} XP** // **+${premiumCrystals[classCard]}** <a:crystal:1273453430190375043>  |`);
     
                     switch (holographicValue) {
                         case 'Diamond':
@@ -197,7 +206,7 @@ module.exports = {
                             promotionSystem.cardEmbed.setColor(0x010101);
                     }
                 } else {
-                    promotionSystem.cardEmbed.setDescription(`**+${normalXP[classCard]} XP**`);
+                    promotionSystem.cardEmbed.setDescription(`|   **+${normalXP[classCard]} XP** // **+${normalCrystals[classCard]}** <a:crystal:1273453430190375043>  |`);
                     promotionSystem.cardEmbed.setColor(0x010101);
     
                     holographicValue = 'Normal';
@@ -316,13 +325,17 @@ function limitCardName(cardName) {
 }
 
 // * This function performs the promotion process based on the user's type, level and rank.
+// * Also, it adds the amount of crystals based on the SCP class and user type.
 async function promotionProcess(classCard, holographicValue, userDocument, userReference, cardEmbed, transaction) {
     let earnedXP = null;
+    let crystals = null;
 
     if (userDocument.premium) {
-        earnedXP = premiumXP[classCard];     
+        earnedXP = premiumXP[classCard];
+        crystals = premiumCrystals[classCard]; 
     } else {
         earnedXP = normalXP[classCard];
+        crystals = normalCrystals[classCard];
     }
 
     let maxXP = userXP[userDocument.rank];
@@ -389,7 +402,7 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
             level: userDocument.level,
             xp: fullXP,
             dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
-            crystals: firebase.firestore.FieldValue.increment(crystals[classCard]),
+            crystals: firebase.firestore.FieldValue.increment(crystals),
         });
     }
 
@@ -402,7 +415,7 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
             level: userDocument.level,
             xp: fullXP,
             dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
-            crystals: firebase.firestore.FieldValue.increment(crystals[classCard]),
+            crystals: firebase.firestore.FieldValue.increment(crystals),
         });
     }
 
@@ -412,7 +425,7 @@ async function promotionProcess(classCard, holographicValue, userDocument, userR
             level: userDocument.level,
             xp: fullXP,
             dailyAttemptsRemaining: firebase.firestore.FieldValue.increment(-1),
-            crystals: firebase.firestore.FieldValue.increment(crystals[classCard]),
+            crystals: firebase.firestore.FieldValue.increment(crystals),
         });
     }
 

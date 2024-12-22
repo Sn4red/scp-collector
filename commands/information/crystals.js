@@ -4,7 +4,7 @@ const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discor
 module.exports = {
     cooldown: 60 * 30,
     data: new SlashCommandBuilder()
-        .setName('points')
+        .setName('crystals')
         .setDescription('Explains about the crystal system.'),
     async execute(interaction) {
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.

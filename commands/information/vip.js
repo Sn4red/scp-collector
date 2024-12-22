@@ -24,10 +24,12 @@ module.exports = {
                             'and make sure to link your Patreon account with Discord so you can enjoy all the benefits: [patreon.com/Sn4red](https://www.patreon.com/Sn4red/)\n\n' +
                             'Below are the exclusive benefits:\n\n' +
                             '- 10 shots daily instead of 5.\n' +
-                            '- Double XP for capturing SCP cards.\n' +
+                            '- Double XP when capturing SCP cards.\n' +
+                            '- Double crystals when capturing and merging SCP cards.\n' +
                             '- Better chances of obtaining rare class cards.\n' +
                             '- Opportunity to obtain holographic cards (Use /`classes` for more information).\n' +
-                            '- A golden seal on your ID card.')
+                            '- A golden seal on your ID card.\n\n' +
+                            'Note that as more features are added with future updates, the benefits may change.')
             .setThumbnail('attachment://vip-thumbnail.gif')
             .setTimestamp()
             .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'attachment://vip-iconFooter.gif' });

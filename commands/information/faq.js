@@ -26,7 +26,7 @@ module.exports = {
                 { name: 'Is my progress local to each server?', value: 'Your progress with the bot is global. Actions you take in one server may be reflected in another. ' +
                         'For example, if you obtain cards from one server, you should be able to view them from a different one.' },
                 { name: 'How many SCP cards are there at the moment?', value: 'The **Series I** (002-999) is currently being covered. More will be added over time.' },
-                { name: 'Can extra benefits be obtained?', value: 'You can donate at the following link to see the details of benefits: <Patreon>' },
+                { name: 'Can extra benefits be obtained?', value: 'You can donate at the following link to see the details of benefits: [patreon.com/Sn4red](https://www.patreon.com/Sn4red/)' },
             )
             .setTimestamp()
             .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'attachment://faq-iconFooter.gif' });

@@ -4,13 +4,22 @@ const path = require('node:path');
 
 const database = firebase.firestore();
 
-// * The crystals obtained based on the SCP class.
-const crystals = {
+// * The crystals obtained based on the SCP class by a normal user.
+const normalCrystals = {
     'Safe': 10,
     'Euclid': 20,
     'Keter': 30,
     'Thaumiel': 50,
     'Apollyon': 100,
+};
+
+// * The crystals obtained based on the SCP class by a premium user.
+const premiumCrystals = {
+    'Safe': 20,
+    'Euclid': 40,
+    'Keter': 60,
+    'Thaumiel': 100,
+    'Apollyon': 200,
 };
 
 module.exports = {
@@ -29,6 +38,11 @@ module.exports = {
             await interaction.reply({ content: '<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.', ephemeral: true });
             return;
         }
+
+        // * This is performed to get the premium status and give the correct
+        // * number of crystals accordingly.
+        const userDocument = userSnapshot.data();
+        const isPremium = userDocument.premium;
 
         // * Aggregation query to the database counting the number of obtained SCPs.
         const obtainingReference = database.collection('user').doc(userId).collection('obtaining');
@@ -198,8 +212,16 @@ module.exports = {
                         holographic: holograhicValue,
                     });
 
+                    let crystals = null;
+
+                    if (isPremium) {
+                        crystals = premiumCrystals[classCard];
+                    } else {
+                        crystals = normalCrystals[classCard];
+                    }
+
                     await transaction.update(userReference, {
-                        crystals: firebase.firestore.FieldValue.increment(crystals[classCard]),
+                        crystals: firebase.firestore.FieldValue.increment(crystals),
                     });
 
                     const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);

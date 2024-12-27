@@ -26,6 +26,7 @@ module.exports = {
                             '- 10 shots daily instead of 5.\n' +
                             '- Double XP when capturing SCP cards.\n' +
                             '- Double crystals when capturing and merging SCP cards.\n' +
+                            '- 1000 crystals at the end of each month.\n' +
                             '- Better chances of obtaining rare class cards.\n' +
                             '- Opportunity to obtain holographic cards (Use /`classes` for more information).\n' +
                             '- A golden seal on your ID card.\n\n' +

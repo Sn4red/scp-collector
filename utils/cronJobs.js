@@ -1,8 +1,11 @@
-// TODO: 12-14-2024: validar el domingo 12-22-2024 si el cron job para actualizar el market funciona correctamente,
+// TODO: 12-14-2024: validar el domingo 12-29-2024 si el cron job para actualizar el market funciona correctamente,
 // TODO: estableciendo la fecha para el próximo domingo a la medianoche.
 
 // TODO: En la misma ejecución, se validará si el cron job para reiniciar los campos relacionados con el market de los usuarios
 // TODO: funciona correctamente.
+
+// TODO 12-26-2024: validar los días 28 al 31 de diciembre cómo se ejecuta el cron job para dar 1000 cristales a los usuarios Premium.
+// TODO: Su ejecución debería funcionar solamente el día 31 de este mes.
 
 // TODO 12-13-2024: el cron job para actualizar el market ya está completado.
 // TODO: Falta modificar la function getMarketCards para que no repita cartas en el market.
@@ -44,6 +47,8 @@
 
 //     return cardReferences; // Devolver las referencias de los documentos
 // }
+
+// TODO 12-26-2024: analizar si se puede usar transacciones para todos los cron jobs.
 
 const firebase = require('./firebase');
 const { Filter } = require('firebase-admin/firestore');
@@ -168,6 +173,27 @@ async function resetUserMarketFields() {
     console.log(`${new Date()} >>> *** ${numberUsers} User(s) with market-related fields have been resetted. ***`);
 }
 
+// * This function gives 1000 crystals to Premium users at the end of the month.
+async function giveCrystalsEndOfMonth() {
+    let numberUsers = 0;
+
+    const userReference = database.collection('user');
+    const userQuery = userReference.where('premium', '==', true);
+    const userSnapshot = await userQuery.get();
+
+    userSnapshot.forEach(async (user) => {
+        if (user.exists) {
+            numberUsers++;
+
+            await user.ref.update({
+                crystals: firebase.firestore.FieldValue.increment(1000),
+            });
+        }
+    });
+
+    console.log(`${new Date()} >>> *** 1000 crystals were given to ${numberUsers} Premium user(s). ***`);
+}
+
 // * This function starts all the cron jobs.
 function startCronJobs() {
     // * The cron task executes the reset function at midnight.
@@ -190,6 +216,19 @@ function startCronJobs() {
 
         console.log('*** Resetting user market-related fields ***');
         await resetUserMarketFields();
+    });
+
+    // * The cron task executes the give crystals function at the end of the month
+    // * at midnight (12:20).
+    cron.schedule('20 0 28-31 * *', async () => {
+        const now = moment();
+        const endOfMonth = now.clone().endOf('month');
+
+        // * If the current date is the last day of the month, the function is executed.
+        if (now.isSame(endOfMonth, 'day')) {
+            console.log('*** Giving 1000 crystals to Premium users ***');
+            await giveCrystalsEndOfMonth();
+        }
     });
 }
 

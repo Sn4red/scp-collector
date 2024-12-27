@@ -315,7 +315,8 @@ module.exports = {
                 }
             }
         }).catch(async (error) => {
-            console.log(error.message);
+            console.log(`${new Date()} >>> *** WARNING: merge.js *** by ${userId} (${interaction.user.username})`);
+            console.error(error);
 
             await interaction.followUp({ content: '<a:error:1229592805710762128>  Card Merge cancelled due to inactivity.', ephemeral: true });
         });

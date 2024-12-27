@@ -23,13 +23,15 @@ module.exports = {
         const hadVipRoleBefore = oldRoles.has(vipRoleId);
         const hasVipRoleNow = newRoles.has(vipRoleId);
 
-        // * If the bot is restarted, and it triggers when a user's role is removed, it won't execute the second if
+        // * If the bot is restarted, and it triggers when a user's role is removed, it won't execute the third if
         // * as expected. This is because the bot doesn't have the previous data to compare with the new data,
         // * returning 'oldRoles' as false.
-        // * This if will behave like the second one.
+        // * This if will behave like the third one.
         if (!hadVipRoleBefore && !hasVipRoleNow) {
             try {
                 managePremiumStatus(false, newMember);
+                
+                console.log(`${new Date()} >>> *** ${newMember.user.id} (${newMember.user.username}) downgraded. The user has no more VIP! ***`);
             } catch (error) {
                 console.log(`${new Date()} >>> *** ERROR: buy.js *** by ${newMember.user.id} (${newMember.user.username})`);
                 console.error(error);
@@ -39,6 +41,8 @@ module.exports = {
         if (!hadVipRoleBefore && hasVipRoleNow) {
             try {
                 managePremiumStatus(true, newMember);
+
+                console.log(`${new Date()} >>> *** ${newMember.user.id} (${newMember.user.username}) upgraded. The user has VIP! ***`);
             } catch (error) {
                 console.log(`${new Date()} >>> *** ERROR: buy.js *** by ${newMember.user.id} (${newMember.user.username})`);
                 console.error(error);
@@ -48,6 +52,8 @@ module.exports = {
         if (hadVipRoleBefore && !hasVipRoleNow) {
             try {
                 managePremiumStatus(false, newMember);
+
+                console.log(`${new Date()} >>> *** ${newMember.user.id} (${newMember.user.username}) downgraded. The user has no more VIP! ***`);
             } catch (error) {
                 console.log(`${new Date()} >>> *** ERROR: buy.js *** by ${newMember.user.id} (${newMember.user.username})`);
                 console.error(error);

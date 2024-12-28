@@ -50,6 +50,8 @@
 
 // TODO 12-26-2024: analizar si se puede usar transacciones para todos los cron jobs.
 
+// TODO 12-28-2024: falta modificar el tercer cron job referente al market (que usa 2 funciones principales).
+
 const firebase = require('./firebase');
 const { Filter } = require('firebase-admin/firestore');
 const moment = require('moment');
@@ -62,43 +64,70 @@ const database = firebase.firestore();
 async function resetDailyLimit() {
     let numberPremium = 0;
     let numberNonPremium = 0;
+    let numberPremiumErrors = 0;
+    let numberNonPremiumErrors = 0;
 
     const premiumUserReference = database.collection('user');
     const premiumUserQuery = premiumUserReference.where('premium', '==', true)
                                                     .where('dailyAttemptsRemaining', '<', 10);
-    const premiumUserSnapshot = await premiumUserQuery.get();
-
-    premiumUserSnapshot.forEach(async (user) => {
-        if (user.exists) {
-            numberPremium++;
-
-            await user.ref.update({
-                dailyAttemptsRemaining: 10, 
-            });
-        }
-    });
 
     const normalUserReference = database.collection('user');
     const normalUserQuery = normalUserReference.where('premium', '==', false)
                                                 .where('dailyAttemptsRemaining', '<', 5);
-    const normalUserSnapshot = await normalUserQuery.get();
 
-    normalUserSnapshot.forEach(async (user) => {
-        if (user.exists) {
-            numberNonPremium++;
+    try {
+        const [premiumUserSnapshot, normalUserSnapshot] = await Promise.all([
+            premiumUserQuery.get(),
+            normalUserQuery.get(),
+        ]);
 
-            await user.ref.update({
-                dailyAttemptsRemaining: 5, 
-            });
+        for (const user of premiumUserSnapshot.docs) {
+            try {
+                await database.runTransaction(async (transaction) => {
+                    transaction.update(user.ref, {
+                        dailyAttemptsRemaining: 10, 
+                    });
+                });
+            } catch (error) {
+                numberPremium--;
+                numberPremiumErrors++;
+
+                console.log(`${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit *** by ${user.id} (${user.data().nickname})`);
+                console.error(error);
+            }
         }
-    });
 
-    console.log(`${new Date()} >>> *** The daily attempts of ${numberPremium} Premium user(s) and ${numberNonPremium} non Premium user(s) have been restarted. ***`);
+        for (const user of normalUserSnapshot.docs) {
+            try {
+                await database.runTransaction(async (transaction) => {
+                    transaction.update(user.ref, {
+                        dailyAttemptsRemaining: 5, 
+                    });
+                });
+            } catch (error) {
+                numberNonPremium--;
+                numberNonPremiumErrors++;
+
+                console.log(`${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit *** by ${user.id} (${user.data().nickname})`);
+                console.error(error);
+            }
+        }
+
+        numberPremium += premiumUserSnapshot.size;
+        numberNonPremium += normalUserSnapshot.size;
+
+        console.log(`${new Date()} >>> *** The daily attempts of ${numberPremium} Premium user(s) and ${numberNonPremium} non Premium user(s) have been restarted. ***`);
+        console.log(`*** Errors with Premium users: ${numberPremiumErrors} | Errors with Non Premium users: ${numberNonPremiumErrors} ***`);
+    } catch (error) {
+        console.log(`${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit ***`);
+        console.error(error);
+    }
 }
 
 // * This function deletes trade requests documents that are 1 month old, whereas the trade has been completed or not.
 async function deleteOldTradeRequests() {
     let numberTrades = 0;
+    let numberTradesErrors = 0;
 
     // * This rests the actual date to 1 month ago.
     const oneMonthAgo = moment().subtract(1, 'months').toDate();
@@ -106,17 +135,32 @@ async function deleteOldTradeRequests() {
     const tradeReference = database.collection('trade');
     // * Then is used to query the trade requests that are at least 1 month old.
     const tradeQuery = tradeReference.where('securityCooldown', '<=', oneMonthAgo);
-    const tradeSnapshot = await tradeQuery.get();
 
-    tradeSnapshot.forEach(async (trade) => {
-        if (trade.exists) {
-            numberTrades++;
+    try {
+        const tradeSnapshot = await tradeQuery.get();
 
-            await trade.ref.delete();
+        for (const trade of tradeSnapshot.docs) {
+            try {
+                await database.runTransaction(async (transaction) => {
+                    transaction.delete(trade.ref);
+                });
+            } catch (error) {
+                numberTrades--;
+                numberTradesErrors++;
+
+                console.log(`${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit *** by ${trade.id}`);
+                console.error(error);
+            }
         }
-    });
 
-    console.log(`${new Date()} >>> *** ${numberTrades} trade request(s) that were 1 month old have been deleted. ***`);
+        numberTrades += tradeSnapshot.size;
+
+        console.log(`${new Date()} >>> *** ${numberTrades} trade request(s) that were 1 month old have been deleted. ***`);
+        console.log(`*** Errors with trades: ${numberTradesErrors} ***`);
+    } catch (error) {
+        console.log(`${new Date()} >>> *** ERROR: Cron Job - deleteOldTradeRequests ***`);
+        console.error(error);
+    }
 }
 
 // * This function updates the market every week.
@@ -176,22 +220,38 @@ async function resetUserMarketFields() {
 // * This function gives 1000 crystals to Premium users at the end of the month.
 async function giveCrystalsEndOfMonth() {
     let numberUsers = 0;
+    let numberUsersErrors = 0;
 
     const userReference = database.collection('user');
     const userQuery = userReference.where('premium', '==', true);
-    const userSnapshot = await userQuery.get();
 
-    userSnapshot.forEach(async (user) => {
-        if (user.exists) {
-            numberUsers++;
+    try {
+        const userSnapshot = await userQuery.get();
 
-            await user.ref.update({
-                crystals: firebase.firestore.FieldValue.increment(1000),
-            });
+        for (const user of userSnapshot.docs) {
+            try {
+                await database.runTransaction(async (transaction) => {
+                    transaction.update(user.ref, {
+                        crystals: firebase.firestore.FieldValue.increment(1000),
+                    });
+                });
+            } catch (error) {
+                numberUsers--;
+                numberUsersErrors++;
+
+                console.log(`${new Date()} >>> *** ERROR: Cron Job - giveCrystalsEndOfMonth *** by ${user.id} (${user.data().nickname})`);
+                console.error(error);
+            }
         }
-    });
 
-    console.log(`${new Date()} >>> *** 1000 crystals were given to ${numberUsers} Premium user(s). ***`);
+        numberUsers += userSnapshot.size;
+
+        console.log(`${new Date()} >>> *** 1000 crystals were given to ${numberUsers} Premium user(s). ***`);
+        console.log(`*** Errors with Premium users: ${numberUsersErrors} ***`);
+    } catch (error) {
+        console.log(`${new Date()} >>> *** ERROR: Cron Job - giveCrystalsEndOfMonth ***`);
+        console.error(error);
+    }
 }
 
 // * This function starts all the cron jobs.

@@ -48,10 +48,6 @@
 //     return cardReferences; // Devolver las referencias de los documentos
 // }
 
-// TODO 12-26-2024: analizar si se puede usar transacciones para todos los cron jobs.
-
-// TODO 12-28-2024: falta modificar el tercer cron job referente al market (que usa 2 funciones principales).
-
 const firebase = require('./firebase');
 const { Filter } = require('firebase-admin/firestore');
 const moment = require('moment');
@@ -84,7 +80,7 @@ async function resetDailyLimit() {
         for (const user of premiumUserSnapshot.docs) {
             try {
                 await database.runTransaction(async (transaction) => {
-                    transaction.update(user.ref, {
+                    await transaction.update(user.ref, {
                         dailyAttemptsRemaining: 10, 
                     });
                 });
@@ -100,7 +96,7 @@ async function resetDailyLimit() {
         for (const user of normalUserSnapshot.docs) {
             try {
                 await database.runTransaction(async (transaction) => {
-                    transaction.update(user.ref, {
+                    await transaction.update(user.ref, {
                         dailyAttemptsRemaining: 5, 
                     });
                 });
@@ -142,7 +138,7 @@ async function deleteOldTradeRequests() {
         for (const trade of tradeSnapshot.docs) {
             try {
                 await database.runTransaction(async (transaction) => {
-                    transaction.delete(trade.ref);
+                    await transaction.delete(trade.ref);
                 });
             } catch (error) {
                 numberTrades--;
@@ -171,22 +167,30 @@ async function updateMarket() {
     for (let i = 0; i < 5; i++) {
         obtainedClasses.push(classProbability());
     }
+    
+    try {
+        await database.runTransaction(async (transaction) => {
+            // * According to the given classes, the cards are obtained.
+            const cardResults = await getMarketCards(obtainedClasses, transaction);
 
-    // * According to the given classes, the cards are obtained.
-    const cardResults = await getMarketCards(obtainedClasses);
+            // * Holographic values obtained through probability.
+            const obtainedHolographics = holographicProbability();
 
-    // * Holographic values obtained through probability.
-    const obtainedHolographics = holographicProbability();
+            // * The market is updated with the obtained cards references, holographics values and card IDs.
+            await updateMarketCards(cardResults.cardReferences, obtainedHolographics, cardResults.cardIds, transaction);
+        });
 
-    // * The market is updated with the obtained cards references, holographics values and card IDs.
-    await updateMarketCards(cardResults.cardReferences, obtainedHolographics, cardResults.cardIds);
-
-    console.log(`${new Date()} >>> *** Market was updated. ***`);
+        console.log(`${new Date()} >>> *** Market was updated. ***`);
+    } catch (error) {
+        console.log(`${new Date()} >>> *** ERROR: Cron Job - updateMarket ***`);
+        console.error(error);
+    }
 }
 
 // * This function resets the market-related fields of the users every week.
 async function resetUserMarketFields() {
     let numberUsers = 0;
+    let numberUsersErrors = 0;
 
     const userReference = database.collection('user');
     const userQuery = userReference.where(
@@ -198,23 +202,38 @@ async function resetUserMarketFields() {
             Filter.where('card5Purchased', '==', true),
         ),
     );
-    const userSnapshot = await userQuery.get();
 
-    userSnapshot.forEach(async (user) => {
-        if (user.exists) {
-            numberUsers++;
+    try {
+        const userSnapshot = await userQuery.get();
 
-            await user.ref.update({
-                card1Purchased: false,
-                card2Purchased: false,
-                card3Purchased: false,
-                card4Purchased: false,
-                card5Purchased: false,
-            });
+        for (const user of userSnapshot.docs) {
+            try {
+                await database.runTransaction(async (transaction) => {
+                    await transaction.update(user.ref, {
+                        card1Purchased: false,
+                        card2Purchased: false,
+                        card3Purchased: false,
+                        card4Purchased: false,
+                        card5Purchased: false,
+                    });
+                });
+            } catch (error) {
+                numberUsers--;
+                numberUsersErrors++;
+
+                console.log(`${new Date()} >>> *** ERROR: Cron Job - resetUserMarketFields *** by ${user.id} (${user.data().nickname})`);
+                console.error(error);
+            }
         }
-    });
 
-    console.log(`${new Date()} >>> *** ${numberUsers} User(s) with market-related fields have been resetted. ***`);
+        numberUsers += userSnapshot.size;
+
+        console.log(`${new Date()} >>> *** ${numberUsers} User(s) with market-related fields have been resetted. ***`);
+        console.log(`*** Errors with users: ${numberUsersErrors} ***`);
+    } catch (error) {
+        console.log(`${new Date()} >>> *** ERROR: Cron Job - resetUserMarketFields ***`);
+        console.error(error);
+    }
 }
 
 // * This function gives 1000 crystals to Premium users at the end of the month.
@@ -231,7 +250,7 @@ async function giveCrystalsEndOfMonth() {
         for (const user of userSnapshot.docs) {
             try {
                 await database.runTransaction(async (transaction) => {
-                    transaction.update(user.ref, {
+                    await transaction.update(user.ref, {
                         crystals: firebase.firestore.FieldValue.increment(1000),
                     });
                 });
@@ -325,14 +344,14 @@ function classProbability() {
 }
 
 // * This function retrieves 5 random cards and returns them as an array.
-async function getMarketCards(obtainedClasses) {
+async function getMarketCards(obtainedClasses, transaction) {
     const cardReferences = [];
     const cardIds = [];
 
     for (const obtainedClass of obtainedClasses) {
         // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
         const cardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
-        const cardSnapshot = await cardReference.count().get();
+        const cardSnapshot = await transaction.get(cardReference.count());
 
         const classCount = cardSnapshot.data().count;
 
@@ -343,7 +362,7 @@ async function getMarketCards(obtainedClasses) {
         
         const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
         const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
-        const selectedCardSnapshot = await selectedCardQuery.get();
+        const selectedCardSnapshot = await transaction.get(selectedCardQuery);
 
         const cardDocument = selectedCardSnapshot.docs[0];
 
@@ -384,14 +403,14 @@ function holographicProbability() {
 }
 
 // * This function updates the market with the new cards and holographics.
-async function updateMarketCards(cardReferences, obtainedHolographics, cardIds) {
+async function updateMarketCards(cardReferences, obtainedHolographics, cardIds, transaction) {
     const marketReference = database.collection('market').doc('market');
 
     // * This calculates the date of the following Sunday at midnight (12:05).
     const nextSundayMidnight = moment().day(7).startOf('day').add(1, 'days').utcOffset('-05:00').set({ minute: 5 }).toDate();
 
     // * The cards ID are also inserted for a faster process when a user buys a card.
-    await marketReference.update({
+    await transaction.update(marketReference, {
         card1: cardReferences[0],
         card2: cardReferences[1],
         card3: cardReferences[2],

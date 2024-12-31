@@ -31,18 +31,13 @@ module.exports = {
         const userId = interaction.user.id;
 
         const userReference = database.collection('user').doc(userId);
-        const userSnapshot = await userReference.get();
+        let userSnapshot = await userReference.get();
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
             await interaction.reply({ content: '<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.', ephemeral: true });
             return;
         }
-
-        // * This is performed to get the premium status and give the correct
-        // * number of crystals accordingly.
-        const userDocument = userSnapshot.data();
-        const isPremium = userDocument.premium;
 
         // * Aggregation query to the database counting the number of obtained SCPs.
         const obtainingReference = database.collection('user').doc(userId).collection('obtaining');
@@ -100,6 +95,14 @@ module.exports = {
                 let embedColor = null;
 
                 await database.runTransaction(async (transaction) => {
+                    // * Retrieves the user data from the database. This is used below to validate if the user is premium or not.
+                    userSnapshot = await transaction.get(userReference);
+
+                    // * This is performed to get the premium status and give the correct
+                    // * number of crystals accordingly.
+                    const userDocument = userSnapshot.data();
+                    const isPremium = userDocument.premium;
+
                     // * This array will store the document's ID of the cards found in the user's collection. If 2 queries find the same card, it will not be repeated.
                     // * The new values of the array are being pushed inside the findCard function.
                     const cards = ['decoy'];

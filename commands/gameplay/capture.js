@@ -129,7 +129,7 @@ module.exports = {
                     
                     const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
                     const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
-                    const selectedCardSnapshot = await selectedCardQuery.get();
+                    const selectedCardSnapshot = await transaction.get(selectedCardQuery);
                     
                     const cardDocument = selectedCardSnapshot.docs[0];
                     const selectedCardDocument = cardDocument.data();

@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js');
+const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { startCronJobs } = require('./utils/cronJobs');
 
 const client = new Client({
@@ -10,10 +10,6 @@ const client = new Client({
 		GatewayIntentBits.Guilds,
 		GatewayIntentBits.GuildMessages,
 		GatewayIntentBits.GuildMessageReactions,
-		GatewayIntentBits.GuildMembers,
-	],
-	partials: [
-		Partials.GuildMember,
 	],
 });
 

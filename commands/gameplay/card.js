@@ -8,6 +8,9 @@ const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
 
+const guildId = process.env.GUILD_ID;
+const VIPRoleId = process.env.VIP_ROLE_ID;
+
 module.exports = {
     cooldown: 60 * 7,
     data: new SlashCommandBuilder()
@@ -16,6 +19,8 @@ module.exports = {
     async execute(interaction) {
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
+
+        const isPremium = await checkingUserPremiumStatus(interaction.user.id, interaction);
 
         // * Database query is performed.
         const userReference = database.collection('user').doc(interaction.user.id);
@@ -34,7 +39,7 @@ module.exports = {
             document.nickname = interaction.user.username;
 
             // * Uses the AttachmentBuilder class to process the file and be able to attach it in the reply.
-            const attachment = await displayCard(document, userSnapshot.id, interaction);
+            const attachment = await displayCard(document, userSnapshot.id, isPremium, interaction);
 
             await interaction.editReply({ files: [attachment] });
         } else {
@@ -54,7 +59,6 @@ module.exports = {
                 level: 1,
                 nickname: interaction.user.username,
                 crystals: 0,
-                premium: false,
                 rank: 'Class D',
                 xp: 0,
                 card1Purchased: false,
@@ -67,7 +71,7 @@ module.exports = {
             await database.collection('user').doc(interaction.user.id).set(newUser);
 
             // * Uses the AttachmentBuilder class to process the file and be attached in the reply.
-            const attachment = await displayCard(newUser, interaction.user.id, interaction);
+            const attachment = await displayCard(newUser, interaction.user.id, isPremium, interaction);
 
             await interaction.editReply({ files: [attachment] });
             await interaction.followUp('<a:waving_hand:1229639454302670869>  New user! You can now use commands to collect cards and more.');
@@ -75,8 +79,27 @@ module.exports = {
     },
 };
 
+// * This function validates through fetching if the user has the Patreon role. That means is Premium.
+// * Also, if the user is not in the server, it will return false.
+async function checkingUserPremiumStatus(userId, interaction) {
+    let isPremium = false;
+
+    try {
+        const guild = interaction.client.guilds.cache.get(guildId);
+        const member = await guild.members.fetch(userId);
+
+        const hasRole = member.roles.cache.has(VIPRoleId);
+
+        isPremium = hasRole ? true : false;
+    } catch (error) {
+        isPremium = false;
+    }
+
+    return isPremium;
+}
+
 // * This function draws all the user's card and returns it as an attachment.
-async function displayCard(document, userId, interaction) {
+async function displayCard(document, userId, isPremium, interaction) {
     // * User data.
     const issueDate = document.issueDate;
     const id = userId;
@@ -85,7 +108,7 @@ async function displayCard(document, userId, interaction) {
     const rank = document.rank;
     const xp = document.xp.toString();
     const crystals = document.crystals.toString();
-    const premium = document.premium;
+    const premium = isPremium;
 
     // * Aggregation query to the database counting the number of obtained SCPs.
     const obtainingReference = database.collection('user').doc(id).collection('obtaining');
@@ -263,7 +286,7 @@ async function displayCard(document, userId, interaction) {
     // * Loading the logo.
     let logo = null;
 
-    if (premium === true) {
+    if (premium) {
         logo = await Canvas.loadImage('./images/card/scp-premium-logo-card.png');
     } else {
         logo = await Canvas.loadImage('./images/card/scp-normal-logo-card.png');

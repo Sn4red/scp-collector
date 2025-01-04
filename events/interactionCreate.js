@@ -19,7 +19,7 @@ module.exports = {
             cooldowns.set(command.data.name, new Collection());
         }
 
-        // Cooldown
+        // Cooldown.
         const now = interaction.createdTimestamp;
         const timestamps = cooldowns.get(command.data.name);
         const defaultCooldownDuration = 3;

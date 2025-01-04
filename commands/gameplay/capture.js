@@ -4,6 +4,9 @@ const path = require('node:path');
 
 const database = firebase.firestore();
 
+const guildId = process.env.GUILD_ID;
+const VIPRoleId = process.env.VIP_ROLE_ID;
+
 // * The XP obtained based on the SCP class by a normal user.
 const normalXP = {
     'Safe': 5,
@@ -96,8 +99,10 @@ module.exports = {
         if (userDocument.dailyAttemptsRemaining === 0) {                
             await interaction.editReply('<a:red_siren:1229660105692155904>  You have reached the daily limit of SCP captures.');
         } else {
+            const isPremium = await checkingUserPremiumStatus(userId, interaction)
+            
             // * Class obtained through probability.
-            const obtainedClass = classProbability(userDocument.premium);
+            const obtainedClass = classProbability(isPremium);
 
             let cardId = null;
             let classCard = null;
@@ -141,7 +146,7 @@ module.exports = {
                     name = selectedCardDocument.name;
                     
                     // * Only premium users can obtain holographic cards.
-                    if (userDocument.premium) {
+                    if (isPremium) {
                         holographicValue = holographicProbability();
                     }
 
@@ -168,13 +173,13 @@ module.exports = {
                         .setTimestamp();
 
                     // * The rank and level promotion is performed here, along with the increase of daily limits.
-                    promotionSystem = await promotionProcess(classCard, holographicValue, userDocument, userReference, cardEmbed, transaction);
+                    promotionSystem = await promotionProcess(classCard, holographicValue, userDocument, isPremium, userReference, cardEmbed, transaction);
                 });
 
                 const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
                 const image = new AttachmentBuilder(imagePath);
 
-                if (userDocument.premium) {
+                if (isPremium) {
                     promotionSystem.cardEmbed.setDescription(`|   **+${premiumXP[classCard]} XP** // **+${premiumCrystals[classCard]}** <a:crystal:1273453430190375043>  |`);
     
                     switch (holographicValue) {
@@ -238,6 +243,25 @@ module.exports = {
         }
     },
 };
+
+// * This function validates through fetching if the user has the Patreon role. That means is Premium.
+// * Also, if the user is not in the server, it will return false.
+async function checkingUserPremiumStatus(userId, interaction) {
+    let isPremium = false;
+
+    try {
+        const guild = interaction.client.guilds.cache.get(guildId);
+        const member = await guild.members.fetch(userId);
+
+        const hasRole = member.roles.cache.has(VIPRoleId);
+
+        isPremium = hasRole ? true : false;
+    } catch (error) {
+        isPremium = false;
+    }
+
+    return isPremium;
+}
 
 // * This function defines the probability per class (rarity) in an array,
 // * and determines the class to choose based on cumulative probability.
@@ -326,11 +350,11 @@ function limitCardName(cardName) {
 
 // * This function performs the promotion process based on the user's type, level and rank.
 // * Also, it adds the amount of crystals based on the SCP class and user type.
-async function promotionProcess(classCard, holographicValue, userDocument, userReference, cardEmbed, transaction) {
+async function promotionProcess(classCard, holographicValue, userDocument, isPremium, userReference, cardEmbed, transaction) {
     let earnedXP = null;
     let crystals = null;
 
-    if (userDocument.premium) {
+    if (isPremium) {
         earnedXP = premiumXP[classCard];
         crystals = premiumCrystals[classCard]; 
     } else {

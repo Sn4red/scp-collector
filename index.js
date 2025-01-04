@@ -5,7 +5,7 @@ const path = require('node:path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { startCronJobs } = require('./utils/cronJobs');
 
-// * GuildMembers Intent is to fetch the members with their most recent data.
+// * GuildMembers Intent is to fetch the users with their most recent data.
 
 const client = new Client({
 	intents: [

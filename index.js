@@ -5,11 +5,14 @@ const path = require('node:path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { startCronJobs } = require('./utils/cronJobs');
 
+// * GuildMembers Intent is to fetch the members with their most recent data.
+
 const client = new Client({
 	intents: [
 		GatewayIntentBits.Guilds,
 		GatewayIntentBits.GuildMessages,
 		GatewayIntentBits.GuildMessageReactions,
+		GatewayIntentBits.GuildMembers,
 	],
 });
 
@@ -54,6 +57,6 @@ for (const file of eventFiles) {
 }
 
 // * This starts the cron jobs defined in the cronJobs file.
-startCronJobs();
+startCronJobs(client);
 
 client.login(process.env.DISCORD_TOKEN);

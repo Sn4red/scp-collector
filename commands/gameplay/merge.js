@@ -4,6 +4,9 @@ const path = require('node:path');
 
 const database = firebase.firestore();
 
+const guildId = process.env.GUILD_ID;
+const VIPRoleId = process.env.VIP_ROLE_ID;
+
 // * The crystals obtained based on the SCP class by a normal user.
 const normalCrystals = {
     'Safe': 10,
@@ -51,6 +54,8 @@ module.exports = {
             return;
         }
 
+        const isPremium = await checkingUserPremiumStatus(interaction.user.id, interaction);
+
         const modal = displayModal(userId);
 
         await interaction.showModal(modal);
@@ -95,14 +100,6 @@ module.exports = {
                 let embedColor = null;
 
                 await database.runTransaction(async (transaction) => {
-                    // * Retrieves the user data from the database. This is used below to validate if the user is premium or not.
-                    userSnapshot = await transaction.get(userReference);
-
-                    // * This is performed to get the premium status and give the correct
-                    // * number of crystals accordingly.
-                    const userDocument = userSnapshot.data();
-                    const isPremium = userDocument.premium;
-
                     // * This array will store the document's ID of the cards found in the user's collection. If 2 queries find the same card, it will not be repeated.
                     // * The new values of the array are being pushed inside the findCard function.
                     const cards = ['decoy'];
@@ -325,6 +322,23 @@ module.exports = {
         });
     },
 };
+
+async function checkingUserPremiumStatus(userId, interaction) {
+    let isPremium = false;
+
+    try {
+        const guild = interaction.client.guilds.cache.get(guildId);
+        const member = await guild.members.fetch(userId);
+
+        const hasRole = member.roles.cache.has(VIPRoleId);
+
+        isPremium = hasRole ? true : false;
+    } catch (error) {
+        isPremium = false;
+    }
+
+    return isPremium;
+}
 
 // * Function that builds the modal.
 function displayModal(userId) {

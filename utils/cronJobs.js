@@ -246,23 +246,40 @@ async function resetUserMarketFields() {
 }
 
 // * This function gives 1000 crystals to Premium users at the end of the month.
-async function giveCrystalsEndOfMonth() {
+async function giveCrystalsEndOfMonth(client) {
     let numberUsers = 0;
     let numberUsersErrors = 0;
 
     const userReference = database.collection('user');
-    const userQuery = userReference.where('premium', '==', true);
 
     try {
-        const userSnapshot = await userQuery.get();
+        const userSnapshot = await userReference.get();
+
+       const guild = client.guilds.cache.get(guildId);
 
         for (const user of userSnapshot.docs) {
+            let hasPremium = false;
+
             try {
-                await database.runTransaction(async (transaction) => {
-                    await transaction.update(user.ref, {
-                        crystals: firebase.firestore.FieldValue.increment(1000),
+                const member = await guild.members.fetch(user.id);
+                const hasRole = member.roles.cache.has(VIPRoleId);
+
+                hasPremium = hasRole ? true : false;
+            } catch (error) {
+                hasPremium = false;
+            }
+
+            try {
+                if (hasPremium) {
+                    numberUsers++;
+
+                    await database.runTransaction(async (transaction) => {
+
+                        await transaction.update(user.ref, {
+                            crystals: firebase.firestore.FieldValue.increment(1000),
+                        });
                     });
-                });
+                }
             } catch (error) {
                 numberUsers--;
                 numberUsersErrors++;
@@ -271,8 +288,6 @@ async function giveCrystalsEndOfMonth() {
                 console.error(error);
             }
         }
-
-        numberUsers += userSnapshot.size;
 
         console.log(`${new Date()} >>> *** 1000 crystals were given to ${numberUsers} Premium user(s). ***`);
         console.log(`*** Errors with Premium users: ${numberUsersErrors} ***`);
@@ -315,7 +330,7 @@ function startCronJobs(client) {
         // * If the current date is the last day of the month, the function is executed.
         if (now.isSame(endOfMonth, 'day')) {
             console.log('*** Giving 1000 crystals to Premium users ***');
-            await giveCrystalsEndOfMonth();
+            await giveCrystalsEndOfMonth(client);
         }
     });
 }

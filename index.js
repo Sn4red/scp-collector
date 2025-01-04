@@ -6,6 +6,7 @@ const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { startCronJobs } = require('./utils/cronJobs');
 
 // * GuildMembers Intent is to fetch the users with their most recent data.
+// * This also requires to enable Server Members Intent in the Discord Developer Portal.
 
 const client = new Client({
 	intents: [

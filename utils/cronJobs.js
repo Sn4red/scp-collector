@@ -55,64 +55,73 @@ const cron = require('node-cron');
 
 const database = firebase.firestore();
 
+const guildId = process.env.GUILD_ID;
+const VIPRoleId = process.env.VIP_ROLE_ID;
+
 // * This function resets the daily limit of attempts.
 // * Sets to 10 for Premium users, and 5 for non Premium.
-async function resetDailyLimit() {
+async function resetDailyLimit(client) {
     let numberPremium = 0;
     let numberNonPremium = 0;
     let numberPremiumErrors = 0;
     let numberNonPremiumErrors = 0;
 
-    const premiumUserReference = database.collection('user');
-    const premiumUserQuery = premiumUserReference.where('premium', '==', true)
-                                                    .where('dailyAttemptsRemaining', '<', 10);
-
-    const normalUserReference = database.collection('user');
-    const normalUserQuery = normalUserReference.where('premium', '==', false)
-                                                .where('dailyAttemptsRemaining', '<', 5);
-
+    const userReference = database.collection('user');
+    
     try {
-        const [premiumUserSnapshot, normalUserSnapshot] = await Promise.all([
-            premiumUserQuery.get(),
-            normalUserQuery.get(),
-        ]);
+        const userSnapshot = await userReference.get();
 
-        for (const user of premiumUserSnapshot.docs) {
+        const guild = client.guilds.cache.get(guildId);
+
+        for (const user of userSnapshot.docs) {
+            let dailyAttemptsRemaining = 0;
+
             try {
-                await database.runTransaction(async (transaction) => {
-                    await transaction.update(user.ref, {
-                        dailyAttemptsRemaining: 10, 
-                    });
-                });
+                const member = await guild.members.fetch(user.id);
+                const hasRole = member.roles.cache.has(VIPRoleId);
+
+                dailyAttemptsRemaining = hasRole ? 10 : 5;
             } catch (error) {
-                numberPremium--;
-                numberPremiumErrors++;
+                dailyAttemptsRemaining = 5;
+            }
+
+            try {
+                if (dailyAttemptsRemaining === 10) {
+                    if (user.data().dailyAttemptsRemaining < 10) {
+                        numberPremium++;
+                        
+                        await database.runTransaction(async (transaction) => {
+                            await transaction.update(user.ref, {
+                                dailyAttemptsRemaining: dailyAttemptsRemaining,
+                            });
+                        });
+                    }
+                } else {
+                    if (user.data().dailyAttemptsRemaining < 5) {
+                        numberNonPremium++;
+                        
+                        await database.runTransaction(async (transaction) => {
+                            await transaction.update(user.ref, {
+                                dailyAttemptsRemaining: dailyAttemptsRemaining,
+                            });
+                        });
+                    }
+                }
+            } catch (error) {
+                if (dailyAttemptsRemaining === 10) {
+                    numberPremium--;
+                    numberPremiumErrors++;
+                } else {
+                    numberNonPremium--;
+                    numberNonPremiumErrors++;
+                }
 
                 console.log(`${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit *** by ${user.id} (${user.data().nickname})`);
                 console.error(error);
             }
         }
 
-        for (const user of normalUserSnapshot.docs) {
-            try {
-                await database.runTransaction(async (transaction) => {
-                    await transaction.update(user.ref, {
-                        dailyAttemptsRemaining: 5, 
-                    });
-                });
-            } catch (error) {
-                numberNonPremium--;
-                numberNonPremiumErrors++;
-
-                console.log(`${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit *** by ${user.id} (${user.data().nickname})`);
-                console.error(error);
-            }
-        }
-
-        numberPremium += premiumUserSnapshot.size;
-        numberNonPremium += normalUserSnapshot.size;
-
-        console.log(`${new Date()} >>> *** The daily attempts of ${numberPremium} Premium user(s) and ${numberNonPremium} non Premium user(s) have been restarted. ***`);
+        console.log(`${new Date()} >>> *** The daily attempts of ${numberPremium} Premium user(s) and ${numberNonPremium} Non Premium user(s) have been restarted. ***`);
         console.log(`*** Errors with Premium users: ${numberPremiumErrors} | Errors with Non Premium users: ${numberNonPremiumErrors} ***`);
     } catch (error) {
         console.log(`${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit ***`);
@@ -274,11 +283,11 @@ async function giveCrystalsEndOfMonth() {
 }
 
 // * This function starts all the cron jobs.
-function startCronJobs() {
+function startCronJobs(client) {
     // * The cron task executes the reset function at midnight.
     cron.schedule('0 0 * * *', async () => {
         console.log('*** Resetting daily attempts limit ***');
-        await resetDailyLimit();
+        await resetDailyLimit(client);
     });
 
     // * The cron task executes the delete function at 23 hours.

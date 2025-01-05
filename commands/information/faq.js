@@ -27,6 +27,13 @@ module.exports = {
                         'For example, if you obtain cards from one server, you should be able to view them from a different one.' },
                 { name: 'How many SCP cards are there at the moment?', value: 'The **Series I** (002-999) is currently being covered. More will be added over time.' },
                 { name: 'Can extra benefits be obtained?', value: 'You can donate at the following link to see the details of benefits: [patreon.com/Sn4red](https://www.patreon.com/Sn4red/)' },
+                { name: 'I\'m already paying for the membership but I\'m not receiving my benefits.', value: 'Make sure to link your Patreon account with Discord **and also** be in the ' +
+                        '[Official Server](https://discord.gg/PrfWkJchZg), ' +
+                        'so the Patreon bot can give you the proper VIP role.' },
+                { name: 'I paid for the membership and joined the server, but later I left. I don\'t have my benefits anymore.', value: 'You must always be in the server to receive the benefits. ' +
+                        'If you leave, you can join again so the Patreon bot can give you the proper VIP role.'},
+                { name: 'I paid for the membership but I\'m banned from the server or I can\'t acccess.', value: 'Link your Patreon account with a different Discord account that has access to the official server.' },
+                { name: 'If you have more questions, please fill out this form so I can reach to you: https://bit.ly/SCPCollector', value: ' ' },
             )
             .setTimestamp()
             .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'attachment://faq-iconFooter.gif' });

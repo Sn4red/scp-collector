@@ -276,15 +276,22 @@ module.exports = {
                 const cardName = limitCardName(name);
 
                 setTimeout(async () => {
-                    const cardEmbed = new EmbedBuilder()
-                        .setColor(embedColor)
-                        .setTitle(`${holographicEmojiLeft}  Item #: \`${cardId}\` // \`${cardName}\``)
-                        .addFields(
-                            { name: '<:invader:1228919814555177021>  Class', value: `\`${classCard}\``, inline: true },
-                            { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },
-                        )
-                        .setImage(`attachment://${cardId}.jpg`)
-                        .setTimestamp();
+                    const cardEmbed = new EmbedBuilder();
+                    
+                    if (isPremium) {
+                        cardEmbed.setDescription(`|   **+${premiumCrystals[classCard]}** <a:crystal:1273453430190375043>  |`);
+                    } else {
+                        cardEmbed.setDescription(`|   **+${normalCrystals[classCard]}** <a:crystal:1273453430190375043>  |`);
+                    }
+
+                    cardEmbed.setColor(embedColor)
+                                .setTitle(`${holographicEmojiLeft}  Item #: \`${cardId}\` // \`${cardName}\``)
+                                .addFields(
+                                    { name: '<:invader:1228919814555177021>  Class', value: `\`${classCard}\``, inline: true },
+                                    { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },
+                                )
+                                .setImage(`attachment://${cardId}.jpg`)
+                                .setTimestamp();
 
                     await modalInteraction.editReply({
                         embeds: [cardEmbed],

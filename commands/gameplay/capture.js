@@ -267,19 +267,19 @@ async function checkingUserPremiumStatus(userId, interaction) {
 // * and determines the class to choose based on cumulative probability.
 function classProbability(isPremium) {
     const normalClasses = [
-        { name: 'Safe', probability: 43 },
+        { name: 'Safe', probability: 45 },
         { name: 'Euclid', probability: 30 },
         { name: 'Keter', probability: 21 },
-        { name: 'Thaumiel', probability: 4 },
-        { name: 'Apollyon', probability: 2 },
+        { name: 'Thaumiel', probability: 3 },
+        { name: 'Apollyon', probability: 1 },
     ];
 
     const premiumClasses = [
-        { name: 'Safe', probability: 32 },
-        { name: 'Euclid', probability: 28 },
-        { name: 'Keter', probability: 27 },
-        { name: 'Thaumiel', probability: 8 },
-        { name: 'Apollyon', probability: 5 },
+        { name: 'Safe', probability: 40 },
+        { name: 'Euclid', probability: 31 },
+        { name: 'Keter', probability: 22 },
+        { name: 'Thaumiel', probability: 4 },
+        { name: 'Apollyon', probability: 3 },
     ];
 
     const random = Math.random() * 100;

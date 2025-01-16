@@ -205,9 +205,9 @@ module.exports = {
                     await transaction.delete(foundCard4.obtentionReference);
                     await transaction.delete(foundCard5.obtentionReference);
 
-                    const tradeEntry = database.collection('user').doc(userId).collection('obtaining').doc();
+                    const obtainingEntry = database.collection('user').doc(userId).collection('obtaining').doc();
 
-                    await transaction.set(tradeEntry, {
+                    await transaction.set(obtainingEntry, {
                         card: database.collection('card').doc(classCard).collection(classCard.toLowerCase()).doc(cardId),
                         holographic: holograhicValue,
                     });

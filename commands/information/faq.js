@@ -25,14 +25,18 @@ module.exports = {
             .setFields(
                 { name: 'Is my progress local to each server?', value: 'Your progress with the bot is global. Actions you take in one server may be reflected in another. ' +
                         'For example, if you obtain cards from one server, you should be able to view them from a different one.' },
-                { name: 'How many SCP cards are there at the moment?', value: 'The **Series I** (002-999) is currently being covered. More will be added over time.' },
+                { name: 'How many SCP cards are there at the moment?', value: 'The **Series I** (002-999) is currently being covered. However, Apollyon-class cards come from later series, ' +
+                        'as there are no Apollyon-class SCPs in Series I. More cards from later series will be added over time and replaced (in case there is some changes in the official SCP Foundation website).' },
                 { name: 'Can extra benefits be obtained?', value: 'You can donate at the following link to see the details of benefits: [patreon.com/Sn4red](https://www.patreon.com/Sn4red/)' },
                 { name: 'I\'m already paying for the membership but I\'m not receiving my benefits.', value: 'Make sure to link your Patreon account with Discord **and also** be in the ' +
                         '[Official Server](https://discord.gg/PrfWkJchZg), ' +
                         'so the Patreon bot can give you the proper VIP role.' },
                 { name: 'I paid for the membership and joined the server, but later I left. I don\'t have my benefits anymore.', value: 'You must always be in the server to receive the benefits. ' +
                         'If you leave, you can join again so the Patreon bot can give you the proper VIP role.'},
-                { name: 'I paid for the membership but I\'m banned from the server or I can\'t acccess.', value: 'Link your Patreon account with a different Discord account that has access to the official server.' },
+                { name: 'I paid for the membership but I\'m banned from the server or I can\'t acccess.', value: 'You can keep using the bot without being in the official server, but you won\'t ' +
+                        'be able to use your benefits. The only way to reverse this is to link your Patreon account to a different Discord account to gain access to the server. This will allow you ' +
+                        'to receive your benefits, but unfortunately, you will lose your entire card collection, because the bot recognizes the accounts by the **Discord user ID**. For any appeal ' +
+                        'please contact me through the form.' },
                 { name: 'If you have more questions, please fill out this form so I can reach to you: https://bit.ly/SCPCollector', value: ' ' },
             )
             .setTimestamp()

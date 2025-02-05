@@ -7,47 +7,6 @@
 // TODO 12-26-2024: validar los días 28 al 31 de diciembre cómo se ejecuta el cron job para dar 1000 cristales a los usuarios Premium.
 // TODO: Su ejecución debería funcionar solamente el día 31 de este mes.
 
-// TODO 12-13-2024: el cron job para actualizar el market ya está completado.
-// TODO: Falta modificar la function getMarketCards para que no repita cartas en el market.
-// TODO: Ya se sabe cuál será la modificación, pero todavía no se va a implementar porque,
-// TODO: algunas clases (Thaumiel) sólo tienen una carta, entonces puede que el cambio lleve a errores.
-// TODO: cuando el bot esté completado y se hayan añadido más cartas, implementar lo siguiente:
-
-// async function getMarketCards(obtainedClasses) {
-//     const cardReferences = [];
-
-//     for (const obtainedClass of obtainedClasses) {
-//         let uniqueCardFound = false;
-
-//         while (!uniqueCardFound) {
-//             // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
-//             const cardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
-//             const cardSnapshot = await cardReference.get();
-
-//             const classCount = cardSnapshot.size; // Usar la propiedad size para obtener el número de documentos
-
-//             // * Using the Math object, a random number is obtained based on the number of cards,
-//             // * and a random card is selected matching the random number with the 'random' field in the document.
-//             // * We add 1 to the result in case it returns 0.
-//             const randomNumber = Math.floor(Math.random() * classCount) + 1;
-            
-//             const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
-//             const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
-//             const selectedCardSnapshot = await selectedCardQuery.get();
-
-//             const cardDocument = selectedCardSnapshot.docs[0];
-
-//             // Verificar si el documento ya está en el array
-//             if (!cardReferences.some(ref => ref.id === cardDocument.id)) {
-//                 cardReferences.push(cardDocument.ref);
-//                 uniqueCardFound = true; // Salir del bucle while
-//             }
-//         }
-//     }
-
-//     return cardReferences; // Devolver las referencias de los documentos
-// }
-
 const firebase = require('./firebase');
 const { Filter } = require('firebase-admin/firestore');
 const moment = require('moment');
@@ -372,26 +331,48 @@ async function getMarketCards(obtainedClasses, transaction) {
     const cardReferences = [];
     const cardIds = [];
 
+    obtainedClasses.length = 0;
+
+    obtainedClasses.push('Thaumiel');
+    obtainedClasses.push('Thaumiel');
+    obtainedClasses.push('Thaumiel');
+    obtainedClasses.push('Thaumiel');
+    obtainedClasses.push('Apollyon');
+
     for (const obtainedClass of obtainedClasses) {
-        // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
-        const cardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
-        const cardSnapshot = await transaction.get(cardReference.count());
+        let uniqueCardFound = false;
 
-        const classCount = cardSnapshot.data().count;
+        while (!uniqueCardFound) {
+            // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
+            const cardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
+            const cardSnapshot = await transaction.get(cardReference.count());
 
-        // * Using the Math object, a random number is obtained based on the number of cards,
-        // * and a random card is selected matching the random number with the 'random' field in the document.
-        // * We add 1 to the result in case it returns 0.
-        const randomNumber = Math.floor(Math.random() * classCount) + 1;
-        
-        const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
-        const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
-        const selectedCardSnapshot = await transaction.get(selectedCardQuery);
+            const classCount = cardSnapshot.data().count;
 
-        const cardDocument = selectedCardSnapshot.docs[0];
+            // * Using the Math object, a random number is obtained based on the number of cards,
+            // * and a random card is selected matching the random number with the 'random' field in the document.
+            // * We add 1 to the result in case it returns 0.
+            const randomNumber = Math.floor(Math.random() * classCount) + 1;
+            
+            const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
+            const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
+            const selectedCardSnapshot = await transaction.get(selectedCardQuery);
 
-        cardReferences.push(cardDocument.ref);
-        cardIds.push(cardDocument.id);
+            const cardDocument = selectedCardSnapshot.docs[0];
+
+            console.log(cardDocument.id);
+
+            //  * This verifies if the document is already in the array (repeated).
+            if (!cardReferences.some(ref => ref.id === cardDocument.id)) {
+                console.log('No es carta repetida.');
+
+                cardReferences.push(cardDocument.ref);
+                cardIds.push(cardDocument.id);
+
+                // * This ends the while loop and goes to the next class.
+                uniqueCardFound = true;
+            }
+        }
     }
 
     return { cardReferences, cardIds };

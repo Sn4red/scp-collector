@@ -87,7 +87,7 @@ module.exports = {
             if (button.customId === 'confirm') {
                 deletedMessage = true;
 
-                const errorMessage = '<a:error:1229592805710762128>  You don\'t have enough crystals to buy this card!';
+                const errorMessage = `<a:error:1229592805710762128>  You don\'t have enough crystals to buy this card! (you're short <a:crystal:1273453430190375043> **${crystals - userDocument.crystals}**)`;
 
                 try {
                     await database.runTransaction(async (transaction) => {

@@ -272,15 +272,7 @@ function startCronJobs(client) {
 
     // * The cron task executes the update market function and the
     // * reset user market-related fields function every Sunday at midnight (12:05).
-    // cron.schedule('5 0 * * 0', async () => {
-    //     console.log('*** Updating market ***');
-    //     await updateMarket();
-
-    //     console.log('*** Resetting user market-related fields ***');
-    //     await resetUserMarketFields();
-    // });
-
-    cron.schedule('4 22 * * *', async () => {
+    cron.schedule('5 0 * * 0', async () => {
         console.log('*** Updating market ***');
         await updateMarket();
 

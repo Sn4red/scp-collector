@@ -11,6 +11,7 @@ const firebase = require('./firebase');
 const { Filter } = require('firebase-admin/firestore');
 const moment = require('moment');
 const cron = require('node-cron');
+const premiumWhitelist = require('./premiumWhitelist');
 
 const database = firebase.firestore();
 
@@ -42,6 +43,11 @@ async function resetDailyLimit(client) {
                 dailyAttemptsRemaining = hasRole ? 10 : 5;
             } catch (error) {
                 dailyAttemptsRemaining = 5;
+            }
+
+            // * If the user it's in the premium whitelist, it will be considered as premium.
+            if (premiumWhitelist.includes(user.id)) {
+                dailyAttemptsRemaining = 10;
             }
 
             try {
@@ -226,6 +232,11 @@ async function giveCrystalsEndOfMonth(client) {
                 hasPremium = hasRole ? true : false;
             } catch (error) {
                 hasPremium = false;
+            }
+
+            // * If the user it's in the premium whitelist, it will be considered as premium.
+            if (premiumWhitelist.includes(user.id)) {
+                hasPremium = true;
             }
 
             try {

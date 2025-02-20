@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
+const premiumWhitelist = require('../../utils/premiumWhitelist');
 
 const database = firebase.firestore();
 
@@ -258,6 +259,11 @@ async function checkingUserPremiumStatus(userId, interaction) {
         isPremium = hasRole ? true : false;
     } catch (error) {
         isPremium = false;
+    }
+
+    // * If the user it's in the premium whitelist, it will be considered as premium.
+    if (premiumWhitelist.includes(userId)) {
+        isPremium = true;
     }
 
     return isPremium;

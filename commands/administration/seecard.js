@@ -12,17 +12,18 @@ module.exports = {
         .addStringOption(option =>
             option.setName('card')
                 .setDescription('Card ID to inquire about.')
-                .setRequired(true)),
+                .setRequired(true))
+        .setContexts(['Guild']),
     async execute(interaction) {
         const userId = interaction.user.id;
-        const adminId = '402580354936078336';
+        const adminId = process.env.DISCORD_ADMINISTRATOR_ID;
 
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
         // ! If the user is not the administrator, returns an error message.
         if (userId !== adminId) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not the administrator!');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not the administrator!`);
             return;
         }
 
@@ -33,7 +34,7 @@ module.exports = {
 
         // ! If the field has wrong data, returns an error message.
         if (!cardIdValidation) {
-            await interaction.editReply('<a:error:1229592805710762128>  Invalid card ID format. Please use the following format: `SCP-XXXX`.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  Invalid card ID format. Please use the following format: \`SCP-XXXX\`.`);
             return;
         }
         
@@ -41,7 +42,7 @@ module.exports = {
 
         // ! If the card is not found, returns an error message.
         if (!foundCard.wasFound) {
-            await interaction.editReply(`<a:magnifying:1232095150935642214>  Card \`${fixedCardId}\` not found!`);
+            await interaction.editReply(`${process.env.EMOJI_MAGNIFYING}  Card \`${fixedCardId}\` not found!`);
             return;
         }
         
@@ -63,8 +64,8 @@ module.exports = {
             .setColor(0x010101)
             .setTitle(`${holographicEmoji}  Item #: \`${fixedCardId}\` // \`${cardName}\``)
             .addFields(
-                { name: '<:invader:1228919814555177021>  Class', value: `\`${foundCard.class}\``, inline: true },
-                { name: '<:files:1228920361723236412>  File', value: `**[View Document](${cardData.file})**`, inline: true },
+                { name: `${process.env.EMOJI_INVADER}  Class`, value: `\`${foundCard.class}\``, inline: true },
+                { name: `${process.env.EMOJI_FILES}  File`, value: `**[View Document](${cardData.file})**`, inline: true },
             )
             .setImage(`attachment://${fixedCardId}.jpg`)
             .setTimestamp();

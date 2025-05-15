@@ -19,7 +19,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
             return;
         }
 
@@ -32,7 +32,7 @@ module.exports = {
 
         // ! If the user has no pending trade requests, returns an error message.
         if (pendingTradeSnapshot.empty) {
-            await interaction.editReply('<a:error:1229592805710762128>  No pending trade requests found.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  No pending trade requests found.`);
             return;
         }
 
@@ -74,7 +74,7 @@ module.exports = {
             const issuerDocument = issuerSnapshot.data();
             const issuerNickname = issuerDocument.nickname;
 
-            tradesList += `<:small_white_dash:1247247464172355695>**\`${pendingTradeSnapshot.docs[i / 2].id}\`** // \`${tradeDate}\` from \`${issuerNickname}\`\n`;
+            tradesList += `${process.env.EMOJI_SMALL_WHITE_DASH}**\`${pendingTradeSnapshot.docs[i / 2].id}\`** // \`${tradeDate}\` from \`${issuerNickname}\`\n`;
 
             entriesPerPageLimit++;
 
@@ -82,7 +82,7 @@ module.exports = {
             if (entriesPerPageLimit == 10) {
                 embeds.push(new EmbedBuilder()
                                 .setColor(0x010101)
-                                .setTitle(`<:page:1228553113804476537>  __**List of Pending Received Trades:**__ ${pendingTradeSnapshot.size}`)
+                                .setTitle(`${process.env.EMOJI_PAGE}  __**List of Pending Received Trades:**__ ${pendingTradeSnapshot.size}`)
                                 .setDescription(tradesList));
 
                 tradesList = '';
@@ -100,7 +100,7 @@ module.exports = {
 
                 embeds.push(new EmbedBuilder()
                                 .setColor(0x010101)
-                                .setTitle(`<:page:1228553113804476537>  __**List of Pending Received Trades:**__ ${pendingTradeSnapshot.size}`)
+                                .setTitle(`${process.env.EMOJI_PAGE}  __**List of Pending Received Trades:**__ ${pendingTradeSnapshot.size}`)
                                 .setDescription(tradesList));
             }
         }
@@ -112,13 +112,13 @@ module.exports = {
             const previousButton = new ButtonBuilder()
                 .setCustomId('previousButton')
                 .setStyle('Secondary')
-                .setEmoji('<a:white_arrow_left:1228528429620789341>')
+                .setEmoji(`${process.env.EMOJI_WHITE_ARROW_LEFT}`)
                 .setDisabled(pages[id] === 0);
 
             const nextButton = new ButtonBuilder()
                 .setCustomId('nextButton')
                 .setStyle('Secondary')
-                .setEmoji('<a:white_arrow_right:1228528624517255209>')
+                .setEmoji(`${process.env.EMOJI_WHITE_ARROW_RIGHT}`)
                 .setDisabled(pages[id] === embeds.length - 1);
 
             row.addComponents(previousButton, nextButton);

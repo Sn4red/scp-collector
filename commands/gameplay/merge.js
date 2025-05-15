@@ -5,8 +5,8 @@ const premiumWhitelist = require('../../utils/premiumWhitelist');
 
 const database = firebase.firestore();
 
-const guildId = process.env.GUILD_ID;
-const VIPRoleId = process.env.VIP_ROLE_ID;
+const guildId = process.env.DISCORD_SERVER_ID;
+const VIPRoleId = process.env.DISCORD_VIP_ROLE_ID;
 
 // * The crystals obtained based on the SCP class by a normal user.
 const normalCrystals = {
@@ -35,11 +35,11 @@ module.exports = {
         const userId = interaction.user.id;
 
         const userReference = database.collection('user').doc(userId);
-        let userSnapshot = await userReference.get();
+        const userSnapshot = await userReference.get();
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.reply({ content: '<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.', ephemeral: true });
+            await interaction.reply({ content: `${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`, ephemeral: true });
             return;
         }
 
@@ -51,7 +51,7 @@ module.exports = {
 
         // ! If the user has less than 5 cards, returns an error message.
         if (SCPCount < 5) {
-            await interaction.reply({ content: '<a:error:1229592805710762128>  You need at least 5 cards in your possession to do this operation.', ephemeral: true });
+            await interaction.reply({ content: `${process.env.EMOJI_ERROR}  You need at least 5 cards in your possession to do this operation.`, ephemeral: true });
             return;
         }
 
@@ -230,19 +230,19 @@ module.exports = {
 
                     switch (holograhicValue) {
                         case 'Emerald':
-                            holographicEmojiLeft = '<a:emerald:1228923470239367238>';
+                            holographicEmojiLeft = `${process.env.EMOJI_EMERALD}`;
                             holographicEmojiRight = holographicEmojiLeft;
                             embedColor = 0x00b65c;
 
                             break;
                         case 'Golden':
-                            holographicEmojiLeft = '<a:golden:1228925086690443345>';
+                            holographicEmojiLeft = `${process.env.EMOJI_GOLDEN}`;
                             holographicEmojiRight = holographicEmojiLeft;
                             embedColor = 0xffd700;
 
                             break;
                         case 'Diamond':
-                            holographicEmojiLeft = '<a:diamond:1228924014479671439>';
+                            holographicEmojiLeft = `${process.env.EMOJI_DIAMOND}`;
                             holographicEmojiRight = holographicEmojiLeft;
                             embedColor = 0x00bfff;
 
@@ -256,22 +256,22 @@ module.exports = {
                     }
                 });
 
-                await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** <a:merge:1262543042364051529>');
+                await modalInteraction.editReply(`${process.env.EMOJI_MISTERY_BOX}  Merging your cards **.** ${process.env.EMOJI_MERGE}`);
 
                 setTimeout(async () => {
-                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** <a:merge:1262543042364051529>');
+                    await modalInteraction.editReply(`${process.env.EMOJI_MISTERY_BOX}  Merging your cards **.** **.** ${process.env.EMOJI_MERGE}`);
                 }, 1000);
 
                 setTimeout(async () => {
-                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** <a:merge:1262543042364051529>');
+                    await modalInteraction.editReply(`${process.env.EMOJI_MISTERY_BOX}  Merging your cards **.** **.** **.** ${process.env.EMOJI_MERGE}`);
                 }, 2000);
 
                 setTimeout(async () => {
-                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** <a:merge:1262543042364051529>');
+                    await modalInteraction.editReply(`${process.env.EMOJI_MISTERY_BOX}  Merging your cards **.** **.** **.** **.** ${process.env.EMOJI_MERGE}`);
                 }, 3000);
 
                 setTimeout(async () => {
-                    await modalInteraction.editReply('<a:mistery_box:1260631628229640253>  Merging your cards **.** **.** **.** **.** **.** <a:check:1235800336317419580>');
+                    await modalInteraction.editReply(`${process.env.EMOJI_MISTERY_BOX}  Merging your cards **.** **.** **.** **.** **.** ${process.env.EMOJI_MERGE}`);
                 }, 4000);
 
                 const cardName = limitCardName(name);
@@ -280,16 +280,16 @@ module.exports = {
                     const cardEmbed = new EmbedBuilder();
                     
                     if (isPremium) {
-                        cardEmbed.setDescription(`|   **+${premiumCrystals[classCard]}** <a:crystal:1273453430190375043>  |`);
+                        cardEmbed.setDescription(`|   **+${premiumCrystals[classCard]}** ${process.env.EMOJI_CRYSTAL}  |`);
                     } else {
-                        cardEmbed.setDescription(`|   **+${normalCrystals[classCard]}** <a:crystal:1273453430190375043>  |`);
+                        cardEmbed.setDescription(`|   **+${normalCrystals[classCard]}** ${process.env.EMOJI_CRYSTAL}  |`);
                     }
 
                     cardEmbed.setColor(embedColor)
                                 .setTitle(`${holographicEmojiLeft}  Item #: \`${cardId}\` // \`${cardName}\``)
                                 .addFields(
-                                    { name: '<:invader:1228919814555177021>  Class', value: `\`${classCard}\``, inline: true },
-                                    { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },
+                                    { name: `${process.env.EMOJI_INVADER}  Class`, value: `\`${classCard}\``, inline: true },
+                                    { name: `${process.env.EMOJI_FILES}  File`, value: `**[View Document](${file})**`, inline: true },
                                 )
                                 .setImage(`attachment://${cardId}.jpg`)
                                 .setTimestamp();
@@ -301,32 +301,32 @@ module.exports = {
                 }, 5000);
 
                 setTimeout(async () => {
-                    await modalInteraction.followUp({ content: '<:summary:1262544727786651688>  Merge Summary:\n' +
-                                                                `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard1Value}\`<:close_bracket:1262546397840801912>// ${foundCard1.collection}\n` +
-                                                                `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard2Value}\`<:close_bracket:1262546397840801912>// ${foundCard2.collection}\n` +
-                                                                `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard3Value}\`<:close_bracket:1262546397840801912>// ${foundCard3.collection}\n` +
-                                                                `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard4Value}\`<:close_bracket:1262546397840801912>// ${foundCard4.collection}\n` +
-                                                                `<:small_white_dash:1247247464172355695><:open_bracket:1262546369793491014>\`${fieldsValidation.fixedCard5Value}\`<:close_bracket:1262546397840801912>// ${foundCard5.collection}\n` +
-                                                                `${holographicEmojiLeft}<:parenthesis_left:1262547567795900497>**\`${cardId}\`**<:parenthesis_right:1262547494202769470>${holographicEmojiRight}// **${classCard}**`,
+                    await modalInteraction.followUp({ content: `${process.env.EMOJI_SUMMARY}  Merge Summary:\n` +
+                                                                `${process.env.EMOJI_SMALL_WHITE_DASH}${process.env.EMOJI_OPEN_BRACKET}\`${fieldsValidation.fixedCard1Value}\`${process.env.EMOJI_CLOSE_BRACKET}// ${foundCard1.collection}\n` +
+                                                                `${process.env.EMOJI_SMALL_WHITE_DASH}${process.env.EMOJI_OPEN_BRACKET}\`${fieldsValidation.fixedCard2Value}\`${process.env.EMOJI_CLOSE_BRACKET}// ${foundCard2.collection}\n` +
+                                                                `${process.env.EMOJI_SMALL_WHITE_DASH}${process.env.EMOJI_OPEN_BRACKET}\`${fieldsValidation.fixedCard3Value}\`${process.env.EMOJI_CLOSE_BRACKET}// ${foundCard3.collection}\n` +
+                                                                `${process.env.EMOJI_SMALL_WHITE_DASH}${process.env.EMOJI_OPEN_BRACKET}\`${fieldsValidation.fixedCard4Value}\`${process.env.EMOJI_CLOSE_BRACKET}// ${foundCard4.collection}\n` +
+                                                                `${process.env.EMOJI_SMALL_WHITE_DASH}${process.env.EMOJI_OPEN_BRACKET}\`${fieldsValidation.fixedCard5Value}\`${process.env.EMOJI_CLOSE_BRACKET}// ${foundCard5.collection}\n` +
+                                                                `${holographicEmojiLeft}${process.env.EMOJI_PARENTHESIS_LEFT}**\`${cardId}\`**${process.env.EMOJI_PARENTHESIS_RIGHT}${holographicEmojiRight}// **${classCard}**`,
                                                         ephemeral: true });
                 }, 6000);
             } catch (error) {
                 if (error.message.includes('The following cards were not found in your collection:') ||
                     error.message.includes('The following cards are Thaumiel or Apollyon:')) {
 
-                    await modalInteraction.editReply(`<a:error:1229592805710762128>  Card Merge cancelled! ${error.message}`);
+                    await modalInteraction.editReply(`${process.env.EMOJI_ERROR}  Card Merge cancelled! ${error.message}`);
                 } else {
                     console.log(`${new Date()} >>> *** ERROR: merge.js *** by ${userId} (${interaction.user.username})`);
                     console.error(error);
 
-                    await modalInteraction.editReply('<a:error:1229592805710762128>  An error has occurred while trying to do the merge. Please try again.');
+                    await modalInteraction.editReply(`${process.env.EMOJI_ERROR}  An error has occurred while trying to do the merge. Please try again.`);
                 }
             }
         }).catch(async (error) => {
             console.log(`${new Date()} >>> *** WARNING: merge.js *** by ${userId} (${interaction.user.username})`);
             console.error(error);
 
-            await interaction.followUp({ content: '<a:error:1229592805710762128>  Card Merge cancelled due to inactivity.', ephemeral: true });
+            await interaction.followUp({ content: `${process.env.EMOJI_ERROR}  Card Merge cancelled due to inactivity.`, ephemeral: true });
         });
     },
 };
@@ -343,7 +343,7 @@ async function checkingUserPremiumStatus(userId, interaction) {
         const hasRole = member.roles.cache.has(VIPRoleId);
 
         isPremium = hasRole ? true : false;
-    } catch (error) {
+    } catch {
         isPremium = false;
     }
 
@@ -433,31 +433,31 @@ function validateFields(card1Value, card2Value, card3Value, card4Value, card5Val
     const card4Validation = /^scp-\d{3,4}$/i.test(fixedCard4Value);
     const card5Validation = /^scp-\d{3,4}$/i.test(fixedCard5Value);
 
-    let errorMessage = '<a:error:1229592805710762128>  The following data was entered incorrectly:\n';
+    let errorMessage = `${process.env.EMOJI_ERROR}  The following data was entered incorrectly:\n`;
     let errorState = false;
 
     if (!card1Validation) {
-        errorMessage += '<:small_white_dash:1247247464172355695>Card 1. Card ID format is `SCP-XXXX`.\n';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}Card 1. Card ID format is \`SCP-XXXX\`.\n`;
         errorState = true;
     }
 
     if (!card2Validation) {
-        errorMessage += '<:small_white_dash:1247247464172355695>Card 2. Card ID format is `SCP-XXXX`.\n';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}Card 2. Card ID format is \`SCP-XXXX\`.\n`;
         errorState = true;
     }
 
     if (!card3Validation) {
-        errorMessage += '<:small_white_dash:1247247464172355695>Card 3. Card ID format is `SCP-XXXX`.\n';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}Card 3. Card ID format is \`SCP-XXXX\`.\n`;
         errorState = true;
     }
 
     if (!card4Validation) {
-        errorMessage += '<:small_white_dash:1247247464172355695>Card 4. Card ID format is `SCP-XXXX`.\n';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}Card 4. Card ID format is \`SCP-XXXX\`.\n`;
         errorState = true;
     }
 
     if (!card5Validation) {
-        errorMessage += '<:small_white_dash:1247247464172355695>Card 5. Card ID format is `SCP-XXXX`.';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}Card 5. Card ID format is \`SCP-XXXX\`.`;
         errorState = true;
     }
 
@@ -520,27 +520,27 @@ function validateExistence(card1, card1Id, card2, card2Id, card3, card3Id, card4
     let errorState = false;
 
     if (!card1.wasFound) {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${card1Id}**\n`;
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}**${card1Id}**\n`;
         errorState = true;
     }
 
     if (!card2.wasFound) {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${card2Id}**\n`;
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}**${card2Id}**\n`;
         errorState = true;
     }
 
     if (!card3.wasFound) {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${card3Id}**\n`;
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}**${card3Id}**\n`;
         errorState = true;
     }
 
     if (!card4.wasFound) {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${card4Id}**\n`;
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}**${card4Id}**\n`;
         errorState = true;
     }
 
     if (!card5.wasFound) {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${card5Id}**`;
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}**${card5Id}**`;
         errorState = true;
     }
 
@@ -553,27 +553,27 @@ function validateClasses(classCard1, cardName1, classCard2, cardName2, classCard
     let errorState = false;
 
     if (classCard1 === 'Thaumiel' || classCard1 === 'Apollyon') {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName1}** (${classCard1})\n`;
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}**${cardName1}** (${classCard1})\n`;
         errorState = true;
     }
 
     if (classCard2 === 'Thaumiel' || classCard2 === 'Apollyon') {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName2}** (${classCard2})\n`;
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}**${cardName2}** (${classCard2})\n`;
         errorState = true;
     }
 
     if (classCard3 === 'Thaumiel' || classCard3 === 'Apollyon') {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName3}** (${classCard3})\n`;
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}**${cardName3}** (${classCard3})\n`;
         errorState = true;
     }
 
     if (classCard4 === 'Thaumiel' || classCard4 === 'Apollyon') {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName4}** (${classCard4})\n`;
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}**${cardName4}** (${classCard4})\n`;
         errorState = true;
     }
 
     if (classCard5 === 'Thaumiel' || classCard5 === 'Apollyon') {
-        errorMessage += `<:small_white_dash:1247247464172355695>**${cardName5}** (${classCard5})`;
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}**${cardName5}** (${classCard5})`;
         errorState = true;
     }
 

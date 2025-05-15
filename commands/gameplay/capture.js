@@ -5,8 +5,8 @@ const premiumWhitelist = require('../../utils/premiumWhitelist');
 
 const database = firebase.firestore();
 
-const guildId = process.env.GUILD_ID;
-const VIPRoleId = process.env.VIP_ROLE_ID;
+const guildId = process.env.DISCORD_SERVER_ID;
+const VIPRoleId = process.env.DISCORD_VIP_ROLE_ID;
 
 // * The XP obtained based on the SCP class by a normal user.
 const normalXP = {
@@ -83,7 +83,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
             return;
         }
 
@@ -98,9 +98,9 @@ module.exports = {
 
         // * Validates if there are still daily captures available.
         if (userDocument.dailyAttemptsRemaining === 0) {                
-            await interaction.editReply('<a:red_siren:1229660105692155904>  You have reached the daily limit of SCP captures.');
+            await interaction.editReply(`${process.env.EMOJI_RED_SIREN}  You have reached the daily limit of SCP captures.`);
         } else {
-            const isPremium = await checkingUserPremiumStatus(userId, interaction)
+            const isPremium = await checkingUserPremiumStatus(userId, interaction);
             
             // * Class obtained through probability.
             const obtainedClass = classProbability(isPremium);
@@ -166,9 +166,9 @@ module.exports = {
                     // * The definition of the embed is performed here because it is needed
                     // * by the promotionProcess function.
                     cardEmbed = new EmbedBuilder()
-                        .setTitle(`<a:dice:1228555582655561810>  Item #: \`${cardId}\` // \`${cardName}\``)
+                        .setTitle(`${process.env.EMOJI_DICE}  Item #: \`${cardId}\` // \`${cardName}\``)
                         .addFields(
-                            { name: '<:invader:1228919814555177021>  Class', value: `\`${classCard}\``, inline: true },
+                            { name: `${process.env.EMOJI_INVADER}  Class`, value: `\`${classCard}\``, inline: true },
                         )
                         .setImage(`attachment://${cardId}.jpg`)
                         .setTimestamp();
@@ -181,14 +181,14 @@ module.exports = {
                 const image = new AttachmentBuilder(imagePath);
 
                 if (isPremium) {
-                    promotionSystem.cardEmbed.setDescription(`|   **+${premiumXP[classCard]} XP** // **+${premiumCrystals[classCard]}** <a:crystal:1273453430190375043>  |`);
+                    promotionSystem.cardEmbed.setDescription(`|   **+${premiumXP[classCard]} XP** // **+${premiumCrystals[classCard]}** ${process.env.EMOJI_CRYSTAL}  |`);
     
                     switch (holographicValue) {
                         case 'Diamond':
                             promotionSystem.cardEmbed.setColor(0x00bfff);
     
                             promotionSystem.cardEmbed.addFields(
-                                { name: '<a:diamond:1228924014479671439>  Diamond', value: '+100 XP', inline: true },
+                                { name: `${process.env.EMOJI_DIAMOND}  Diamond`, value: '+100 XP', inline: true },
                             );
     
                             break;
@@ -196,7 +196,7 @@ module.exports = {
                             promotionSystem.cardEmbed.setColor(0xffd700);
     
                             promotionSystem.cardEmbed.addFields(
-                                { name: '<a:golden:1228925086690443345>  Golden', value: '+70 XP', inline: true },
+                                { name: `${process.env.EMOJI_GOLDEN}  Golden`, value: '+70 XP', inline: true },
                             );
     
                             break;
@@ -204,7 +204,7 @@ module.exports = {
                             promotionSystem.cardEmbed.setColor(0x00b65c);
     
                             promotionSystem.cardEmbed.addFields(
-                                { name: '<a:emerald:1228923470239367238>  Emerald', value: '+40 XP', inline: true },
+                                { name: `${process.env.EMOJI_EMERALD}  Emerald`, value: '+40 XP', inline: true },
                             );
     
                             break;
@@ -212,14 +212,14 @@ module.exports = {
                             promotionSystem.cardEmbed.setColor(0x010101);
                     }
                 } else {
-                    promotionSystem.cardEmbed.setDescription(`|   **+${normalXP[classCard]} XP** // **+${normalCrystals[classCard]}** <a:crystal:1273453430190375043>  |`);
+                    promotionSystem.cardEmbed.setDescription(`|   **+${normalXP[classCard]} XP** // **+${normalCrystals[classCard]}** ${process.env.EMOJI_CRYSTAL}  |`);
                     promotionSystem.cardEmbed.setColor(0x010101);
     
                     holographicValue = 'Normal';
                 }
     
                 promotionSystem.cardEmbed.addFields(
-                    { name: '<:files:1228920361723236412>  File', value: `**[View Document](${file})**`, inline: true },
+                    { name: `${process.env.EMOJI_FILES}  File`, value: `**[View Document](${file})**`, inline: true },
                 );
     
                 await interaction.editReply({
@@ -229,17 +229,17 @@ module.exports = {
         
                 switch (promotionSystem.promotionType) {
                     case 'level':
-                        await interaction.followUp(`<a:mixed_stars:1229605947895189534>  Nice, ${promotionSystem.userDocument.nickname}! You are now level **${promotionSystem.userDocument.level}**. <a:mixed_stars:1229605947895189534>`);
+                        await interaction.followUp(`${process.env.EMOJI_MIXED_STARS}  Nice, ${promotionSystem.userDocument.nickname}! You are now level **${promotionSystem.userDocument.level}**. ${process.env.EMOJI_MIXED_STARS}`);
                         break;
                     case 'rank':
-                        await interaction.followUp(`<a:mixed_stars:1229605947895189534>  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**. <a:mixed_stars:1229605947895189534>`);
+                        await interaction.followUp(`${process.env.EMOJI_MIXED_STARS}  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**. ${process.env.EMOJI_MIXED_STARS}`);
                         break;
                 }
             } catch (error) {
                 console.log(`${new Date()} >>> *** ERROR: capture.js *** by ${userId} (${interaction.user.username})`);
                 console.error(error);
 
-                await interaction.editReply('<a:error:1229592805710762128>  An error occurred while capturing the SCP. Please try again.');
+                await interaction.editReply(`${process.env.EMOJI_ERROR}  An error occurred while capturing the SCP. Please try again.`);
             }
         }
     },
@@ -257,7 +257,7 @@ async function checkingUserPremiumStatus(userId, interaction) {
         const hasRole = member.roles.cache.has(VIPRoleId);
 
         isPremium = hasRole ? true : false;
-    } catch (error) {
+    } catch {
         isPremium = false;
     }
 

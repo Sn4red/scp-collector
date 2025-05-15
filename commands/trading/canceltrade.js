@@ -23,7 +23,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
             return;
         }
         
@@ -33,7 +33,7 @@ module.exports = {
 
         // ! If the field has wrong data, returns an error message.
         if (!tradeIdValidation) {
-            await interaction.editReply('<a:error:1229592805710762128>  Error. Please, provide a valid trade ID.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  Error. Please, provide a valid trade ID.`);
             return;
         }
 
@@ -42,7 +42,7 @@ module.exports = {
 
         // ! If the trade ID provided does not exist, returns an error message.
         if (!tradeSnapshot.exists) {
-            await interaction.editReply('<a:error:1229592805710762128>  There is no trade with that ID!');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  There is no trade with that ID!`);
             return;
         }
 
@@ -50,20 +50,20 @@ module.exports = {
 
         // ! If the user didn't create the trade request, returns an error message.
         if (tradeDocument.issuer !== userId) {
-            await interaction.editReply('<a:error:1229592805710762128>  Error. You cannot cancel this trade because you are not the owner.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  Error. You cannot cancel this trade because you are not the owner.`);
             return;
         }
 
         // ! If the trade request has already been confirmed, returns an error message.
         if (tradeDocument.tradeConfirmation) {
-            await interaction.editReply('<a:error:1229592805710762128>  Error. The trade has already been made.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  Error. The trade has already been made.`);
             return;
         }
 
         const buttonsRow = displayButtons();
 
         const reply = await interaction.editReply({
-            content: `<a:stop:1243398806402240582>  Are you sure you want to cancel the trade request **\`${tradeSnapshot.id}\`**?`,
+            content: `${process.env.EMOJI_STOP}  Are you sure you want to cancel the trade request **\`${tradeSnapshot.id}\`**?`,
             components: [buttonsRow],
         });
 
@@ -79,8 +79,8 @@ module.exports = {
             if (button.customId === 'confirm') {
                 deletedMessage = true;
 
-                const errorMessage1 = '<a:error:1229592805710762128>  Error. It seems that the trade has already been cancelled/declined.';
-                const errorMessage2 = '<a:error:1229592805710762128>  Error. It seems that the trade has already been made.';
+                const errorMessage1 = `${process.env.EMOJI_ERROR}  Error. It seems that the trade has already been cancelled/declined.`;
+                const errorMessage2 = `${process.env.EMOJI_ERROR}  Error. It seems that the trade has already been made.`;
 
                 try {
                     await database.runTransaction(async (transaction) => {
@@ -105,7 +105,7 @@ module.exports = {
                         await transaction.delete(tradeReference);
                     });
 
-                    await interaction.followUp({ content: `<a:check:1235800336317419580>  Trade >> **\`${tradeSnapshot.id}\`** << successfully cancelled. <a:trash:1247734945552531628>`, ephemeral: true });
+                    await interaction.followUp({ content: `${process.env.EMOJI_CHECK}  Trade >> **\`${tradeSnapshot.id}\`** << successfully cancelled. ${process.env.EMOJI_TRASH}`, ephemeral: true });
                     await interaction.deleteReply();
                 } catch (error) {
                     if (error.message.includes(errorMessage1) || error.message.includes(errorMessage2)) {
@@ -115,7 +115,7 @@ module.exports = {
                         console.log(`${new Date()} >>> *** ERROR: canceltrade.js *** by ${userId} (${interaction.user.username})`);
                         console.error(error);
 
-                        await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to cancel the request. Please try again.', ephemeral: true });
+                        await interaction.followUp({ content: `${process.env.EMOJI_ERROR}  An error has occurred while trying to cancel the request. Please try again.`, ephemeral: true });
                     }
                 }
             }

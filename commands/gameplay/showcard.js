@@ -33,7 +33,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
             return;
         }
 
@@ -45,7 +45,7 @@ module.exports = {
 
         // ! If the field has wrong data, returns an error message.
         if (!cardIdValidation) {
-            await interaction.editReply('<a:error:1229592805710762128>  Invalid card ID format. Please use the following format: `SCP-XXXX`.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  Invalid card ID format. Please use the following format: \`SCP-XXXX\`.`);
             return;
         }
         
@@ -60,7 +60,7 @@ module.exports = {
                 formattedValue = 'Normal';
             }
 
-            await interaction.editReply(`<a:magnifying:1232095150935642214>  Card \`${fixedCardId}\` (${formattedValue}) not found in your collection!`);
+            await interaction.editReply(`${process.env.EMOJI_MAGNIFYING}  Card \`${fixedCardId}\` (${formattedValue}) not found in your collection!`);
             return;
         }
         
@@ -80,17 +80,17 @@ module.exports = {
 
         switch (foundCard.holographic) {
             case 'Emerald':
-                holographicEmoji = '<a:emerald:1228923470239367238>';
+                holographicEmoji = `${process.env.EMOJI_EMERALD}`;
                 embedColor = 0x00b65c;
 
                 break;
             case 'Golden':
-                holographicEmoji = '<a:golden:1228925086690443345>';
+                holographicEmoji = `${process.env.EMOJI_GOLDEN}`;
                 embedColor = 0xffd700;
 
                 break;
             case 'Diamond':
-                holographicEmoji = '<a:diamond:1228924014479671439>';
+                holographicEmoji = `${process.env.EMOJI_DIAMOND}`;
                 embedColor = 0x00bfff;
 
                 break;
@@ -107,8 +107,8 @@ module.exports = {
             .setColor(embedColor)
             .setTitle(`${holographicEmoji}  Item #: \`${fixedCardId}\` // \`${cardName}\``)
             .addFields(
-                { name: '<:invader:1228919814555177021>  Class', value: `\`${foundCard.class}\``, inline: true },
-                { name: '<:files:1228920361723236412>  File', value: `**[View Document](${cardData.file})**`, inline: true },
+                { name: `${process.env.EMOJI_INVADER}  Class`, value: `\`${foundCard.class}\``, inline: true },
+                { name: `${process.env.EMOJI_FILES}  File`, value: `**[View Document](${cardData.file})**`, inline: true },
             )
             .setImage(`attachment://${fixedCardId}.jpg`)
             .setTimestamp();

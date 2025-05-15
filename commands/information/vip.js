@@ -18,8 +18,8 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor(0x010101)
-            .setTitle('<a:thunder:1230360956056375317>   VIP Features')
-            .setDescription('<a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694>\n' +
+            .setTitle(`${process.env.EMOJI_THUNDER}   VIP Features`)
+            .setDescription(`${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}\n` +
                             'You can get extra features by subscribing to the Patreon page. In the following link, you can find the details,' +
                             'and make sure to link your Patreon account with Discord so you can enjoy all the benefits: [patreon.com/Sn4red](https://www.patreon.com/Sn4red/)\n\n' +
                             'Below are the exclusive benefits:\n\n' +

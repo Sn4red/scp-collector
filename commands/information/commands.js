@@ -18,19 +18,19 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor(0x010101)
-            .setTitle('<a:commands:1230371551849877515>   Command List')
+            .setTitle(`${process.env.EMOJI_COMMANDS}   Command List`)
             .setThumbnail('attachment://commands-thumbnail.gif')
-            .setDescription('<a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694>\n')
+            .setDescription(`${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}\n`)
             .addFields(
-                { name: '<a:paper_scroll:1230373637744496650>   Information', value: '/`commands` - Lists all usable commands.\n' +
+                { name: `${process.env.EMOJI_PAPER_SCROLL}   Information`, value: '/`commands` - Lists all usable commands.\n' +
                                             '/`system` - Explains how ranks, levels, and XP work.\n' +
                                             '/`classes` - Details the different classes of SCPs.\n' +
                                             '/`history` - Provides details on the theme of the bot for more context and a brief history of what the SCP Foundation is.\n' +
                                             '/`faq` - Frequently Asked Questions about bot functionality.\n' +
                                             '/`merges` - Explains about how merge works.\n' +
                                             '/`crystals` - Explains about the crystal system.\n' +
-                                            '**/`vip` - VIP Benefits Details. Get additional features by becoming a donor!** <a:thunder:1230360956056375317><a:thunder:1230360956056375317><a:thunder:1230360956056375317>' },
-                { name: '<a:dice:1228555582655561810>   Gameplay', value: '`/card` - Displays your personal card and progress details. This is the first command you should use to start playing.\n' +
+                                            `**/\`vip\` - VIP Benefits Details. Get additional features by becoming a donor!** ${process.env.EMOJI_THUNDER}${process.env.EMOJI_THUNDER}${process.env.EMOJI_THUNDER}` },
+                { name: `${process.env.EMOJI_DICE}   Gameplay`, value: '`/card` - Displays your personal card and progress details. This is the first command you should use to start playing.\n' +
                                             '/`capture` - Capture an SCP and add it to your collection. You may obtain duplicates that can be used for trading with someone else. ' +
                                             'The rarity (class) of the SCP will influence the probabilities of obtaining it. You can only capture **5 SCPs** per day.\n' +
                                             '/`showcard` `<SCP ID>` - Shows one of your cards to the public.\n' +
@@ -39,7 +39,7 @@ module.exports = {
                                             '/`merge` - Merges 5 cards to turn it into a higher class card.\n' +
                                             '/`market` - A weekly market where you can purchase up to 5 cards using your crystals.\n' +
                                             '/`buy` `<SCP ID>` - Buys a card that is currently in the market, using your crystals.' },
-                { name: '<a:box:1230371194302234644>   Trading System', value: '/`trade` - Creates a trade request to a user, specifying the user, the SCP they have, and the one you are willing to trade. ' +
+                { name: `${process.env.EMOJI_BOX}   Trading System`, value: '/`trade` - Creates a trade request to a user, specifying the user, the SCP they have, and the one you are willing to trade. ' +
                                                     'When the other user accepts your request, the trade will be executed automatically. **Before accepting, there is a 1-minute cooldown ' +
                                                     'in case a request was sent by mistake.**\n' +
                                                     '/`accepttrade` `<Trade ID>` - Accepts the request, and the trade is done.\n' +

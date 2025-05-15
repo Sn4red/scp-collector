@@ -19,7 +19,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
             return;
         }
             
@@ -32,7 +32,7 @@ module.exports = {
 
         // ! If the user has no SCPs, returns an error message.
         if (SCPCount === 0) {
-            await interaction.editReply('<a:error:1229592805710762128>  You don\'t have any SCPs captured!');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You don't have any SCPs captured!`);
             return;
         }
 
@@ -69,7 +69,7 @@ module.exports = {
 
             const cardName = limitCardName(card.name);
 
-            cardsList += `<:white_dash:1228526885676388352>**\`(${quantity})\`** \`${element}\` // \`${cardName}\` - **\`${classCard}\`**    <:green_dot:1228521302864953394>**${emeraldQuantity}** <:yellow_dot:1228522038097084488>**${goldenQuantity}** <:blue_dot:1228521760580833421>**${diamondQuantity}** \n`;
+            cardsList += `${process.env.EMOJI_WHITE_DASH}**\`(${quantity})\`** \`${element}\` // \`${cardName}\` - **\`${classCard}\`**    ${process.env.EMOJI_GREEN_DOT}**${emeraldQuantity}** ${process.env.EMOJI_YELLOW_DOT}**${goldenQuantity}** ${process.env.EMOJI_BLUE_DOT}**${diamondQuantity}** \n`;
 
             entriesPerPageLimit++;
                     
@@ -77,7 +77,7 @@ module.exports = {
             if (entriesPerPageLimit == 10) {
                 embeds.push(new EmbedBuilder()
                                 .setColor(0x010101)
-                                .setTitle(`<:page:1228553113804476537>  __**Collection of ${user.nickname}**__`)
+                                .setTitle(`${process.env.EMOJI_PAGE}  __**Collection of ${user.nickname}**__`)
                                 .setDescription(cardsList));
 
                 cardsList = '';
@@ -95,7 +95,7 @@ module.exports = {
 
                 embeds.push(new EmbedBuilder()
                                 .setColor(0x010101)
-                                .setTitle(`<:page:1228553113804476537>  __**Collection of ${user.nickname}**__`)
+                                .setTitle(`${process.env.EMOJI_PAGE}  __**Collection of ${user.nickname}**__`)
                                 .setDescription(cardsList));
             }
         });
@@ -107,13 +107,13 @@ module.exports = {
             const previousButton = new ButtonBuilder()
                 .setCustomId('previousButton')
                 .setStyle('Secondary')
-                .setEmoji('<a:white_arrow_left:1228528429620789341>')
+                .setEmoji(`${process.env.EMOJI_WHITE_ARROW_LEFT}`)
                 .setDisabled(pages[id] === 0);
 
             const nextButton = new ButtonBuilder()
                 .setCustomId('nextButton')
                 .setStyle('Secondary')
-                .setEmoji('<a:white_arrow_right:1228528624517255209>')
+                .setEmoji(`${process.env.EMOJI_WHITE_ARROW_RIGHT}`)
                 .setDisabled(pages[id] === embeds.length - 1);
 
             row.addComponents(previousButton, nextButton);

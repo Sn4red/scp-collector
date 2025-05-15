@@ -16,7 +16,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!issuerUserSnapshot.exists) {
-            await interaction.reply({ content: '<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.', ephemeral: true });
+            await interaction.reply({ content: `${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`, ephemeral: true });
             return;
         }
 
@@ -27,7 +27,7 @@ module.exports = {
 
         // ! If the user has no SCPs, returns an error message.
         if (SCPCount === 0) {
-            await interaction.reply('<a:error:1229592805710762128>  You don\'t have any SCPs to trade!');
+            await interaction.reply(`${process.env.EMOJI_ERROR}  You don't have any SCPs to trade!`);
             return;
         }
 
@@ -123,26 +123,26 @@ module.exports = {
                     });
                 });
 
-                await modalInteraction.editReply(`<a:check:1235800336317419580>  Trade request sent with ID **\`${tradeEntry.id}\`**. You can use the same ID to cancel the request.`);
+                await modalInteraction.editReply(`${process.env.EMOJI_CHECK}  Trade request sent with ID **\`${tradeEntry.id}\`**. You can use the same ID to cancel the request.`);
             } catch (error) {
                 if (error.message.includes(errorMessage1) ||
                     error.message.includes(errorMessage2) ||
                     error.message.includes(errorMessage3) ||
                     error.message.includes(errorMessage4)) {
 
-                    await modalInteraction.editReply(`<a:error:1229592805710762128>  Request cancelled! ${error.message}`);
+                    await modalInteraction.editReply(`${process.env.EMOJI_ERROR}  Request cancelled! ${error.message}`);
                 } else {
                     console.log(`${new Date()} >>> *** ERROR: trade.js *** by ${userId} (${interaction.user.username})`);
                     console.error(error);
 
-                    await modalInteraction.editReply('<a:error:1229592805710762128>  An error has occurred while trying to create the trade request. Please try again.');
+                    await modalInteraction.editReply('${process.env.EMOJI_ERROR}  An error has occurred while trying to create the trade request. Please try again.');
                 }
             }
         }).catch(async (error) => {
             console.log(`${new Date()} >>> *** WARNING: trade.js *** by ${userId} (${interaction.user.username})`);
             console.error(error);
 
-            await interaction.followUp({ content: '<a:error:1229592805710762128>  Request cancelled due to inactivity.', ephemeral: true });
+            await interaction.followUp({ content: `${process.env.EMOJI_ERROR}  Request cancelled due to inactivity.`, ephemeral: true });
         });
     },
 };
@@ -226,31 +226,31 @@ function validateFields(recipientValue, issuerCardValue, issuerHolographicValue,
     const issuerHolographicValidation = validHolographics.includes(fixedIssuerHolographicValue);
     const recipientHolographicValidation = validHolographics.includes(fixedRecipientHolographicValue);
     
-    let errorMessage = '<a:error:1229592805710762128>  The following data was entered incorrectly:\n';
+    let errorMessage = `${process.env.EMOJI_ERROR}  The following data was entered incorrectly:\n`;
     let errorState = false;
 
     if (!recipientValidation) {
-        errorMessage += '<:small_white_dash:1247247464172355695>User ID. It should only contain numbers.\n';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}User ID. It should only contain numbers.\n`;
         errorState = true;
     }
     
     if (!issuerCardValidation) {
-        errorMessage += '<:small_white_dash:1247247464172355695>Offered card. Card ID format is `SCP-XXXX`.\n';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}Offered card. Card ID format is \`SCP-XXXX\`.\n`;
         errorState = true;
     }
 
     if (!issuerHolographicValidation) {
-        errorMessage += '<:small_white_dash:1247247464172355695>Offered holographic. Allowed values are Emerald/Golden/Diamond.\n';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}Offered holographic. Allowed values are Emerald/Golden/Diamond.\n`;
         errorState = true;
     }
 
     if (!recipientCardValidation) {
-        errorMessage += '<:small_white_dash:1247247464172355695>Desired card. Card ID format is `SCP-XXXX`.\n';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}Desired card. Card ID format is \`SCP-XXXX\`.\n`;
         errorState = true;
     }
 
     if (!recipientHolographicValidation) {
-        errorMessage += '<:small_white_dash:1247247464172355695>Desired holographic. Allowed values are Emerald/Golden/Diamond.';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}Desired holographic. Allowed values are Emerald/Golden/Diamond.`;
         errorState = true;
     }
 
@@ -259,16 +259,16 @@ function validateFields(recipientValue, issuerCardValue, issuerHolographicValue,
 
 // * This function does special validations that are not covered by the previous function, such as trading with yourself or trading the same card.
 function validateSpecialConditions(userId, recipientValue, issuerCardValue, issuerHolographicValue, recipientCardValue, recipientHolographicValue) {
-    let errorMessage = '<a:error:1229592805710762128>  You can\'t perform the following actions:\n';
+    let errorMessage = `${process.env.EMOJI_ERROR}  You can't perform the following actions:\n`;
     let errorState = false;
     
     if (userId === recipientValue) {
-        errorMessage += '<:small_white_dash:1247247464172355695>You can\'t trade with yourself.\n';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}You can't trade with yourself.\n`;
         errorState = true;
     }
 
     if (issuerCardValue === recipientCardValue && issuerHolographicValue === recipientHolographicValue) {
-        errorMessage += '<:small_white_dash:1247247464172355695>You can\'t trade the same card.';
+        errorMessage += `${process.env.EMOJI_SMALL_WHITE_DASH}You can't trade the same card.`;
         errorState = true;
     }
 

@@ -19,7 +19,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
             return;
         }
 
@@ -34,8 +34,8 @@ module.exports = {
         if (pendingTradeSnapshot.empty) {
             const embed = new EmbedBuilder()
                 .setColor(0x010101)
-                .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
-                .setDescription('No pending trade requests found.\n\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**');
+                .setTitle(`${process.env.EMOJI_PAGE}  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
+                .setDescription(`No pending trade requests found.\n\n**${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}  Recent Trade History  ${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}**`);
 
             const filledEmbed = await historyTrades(userId, embed);
 
@@ -81,17 +81,17 @@ module.exports = {
             const recipientDocument = recipientSnapshot.data();
             const recipientNickname = recipientDocument.nickname;
 
-            tradesList += `<:small_white_dash:1247247464172355695>**\`${pendingTradeSnapshot.docs[i / 2].id}\`** // \`${tradeDate}\` to \`${recipientNickname}\`\n`;
+            tradesList += `${process.env.EMOJI_SMALL_WHITE_DASH}**\`${pendingTradeSnapshot.docs[i / 2].id}\`** // \`${tradeDate}\` to \`${recipientNickname}\`\n`;
 
             entriesPerPageLimit++;
 
             // * When 10 trade entries are accumulated, they are stored on a single page and the variable is reset.
             if (entriesPerPageLimit == 10) {
-                tradesList += '\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**';
+                tradesList += `\n**${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}  Recent Trade History  ${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}**`;
 
                 const pageEmbed = new EmbedBuilder()
                     .setColor(0x010101)
-                    .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
+                    .setTitle(`${process.env.EMOJI_PAGE}  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
                     .setDescription(tradesList);
 
                 const filledEmbed = await historyTrades(userId, pageEmbed);
@@ -111,11 +111,11 @@ module.exports = {
                     break;
                 }
 
-                tradesList += '\n**<a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>  Recent Trade History  <a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236><a:triangle_down:1245937974282162236>**';
+                tradesList += `\n**${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}  Recent Trade History  ${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}${process.env.EMOJI_TRIANGLE_DOWN}**`;
 
                 const pageEmbed = new EmbedBuilder()
                     .setColor(0x010101)
-                    .setTitle(`<:page:1228553113804476537>  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
+                    .setTitle(`${process.env.EMOJI_PAGE}  __**List of Pending Sent Trades:**__ ${pendingTradeSnapshot.size}`)
                     .setDescription(tradesList);
 
                 const filledEmbed = await historyTrades(userId, pageEmbed);
@@ -130,13 +130,13 @@ module.exports = {
             const previousButton = new ButtonBuilder()
                 .setCustomId('previousButton')
                 .setStyle('Secondary')
-                .setEmoji('<a:white_arrow_left:1228528429620789341>')
+                .setEmoji(`${process.env.WHITE_ARROW_LEFT}`)
                 .setDisabled(pages[id] === 0);
 
             const nextButton = new ButtonBuilder()
                 .setCustomId('nextButton')
                 .setStyle('Secondary')
-                .setEmoji('<a:white_arrow_right:1228528624517255209>')
+                .setEmoji(`${process.env.WHITE_ARROW_RIGHT}`)
                 .setDisabled(pages[id] === embeds.length - 1);
 
             row.addComponents(previousButton, nextButton);
@@ -241,16 +241,16 @@ async function historyTrades(userId, embed) {
         const issuerNickname = issuerDocument.nickname;
 
         const holographicEmojis = {
-            'Emerald': '<a:emerald:1228923470239367238>',
-            'Golden': '<a:golden:1228925086690443345>',
-            'Diamond': '<a:diamond:1228924014479671439>',
+            'Emerald': `${process.env.EMOJI_EMERALD}`,
+            'Golden': `${process.env.EMOJI_GOLDEN}`,
+            'Diamond': `${process.env.EMOJI_DIAMOND}`,
         };  
 
         const issuerCard = tradeDocument.issuerHolographic !== 'Normal' ? `${issuerCardSnapshot.id} (${holographicEmojis[tradeDocument.issuerHolographic]})` : `${issuerCardSnapshot.id}`;
         const recipientCard = tradeDocument.recipientHolographic !== 'Normal' ? `${recipientCardSnapshot.id} (${holographicEmojis[tradeDocument.recipientHolographic]})` : `${recipientCardSnapshot.id}`;
 
         embed.addFields(
-            { name: ' ', value: `<:white_dash:1228526885676388352> ${issuerCard} for ${recipientCard} (${tradeDate}) <:right_arrow:1247232535038132346> **${issuerNickname}**` },
+            { name: ' ', value: `${process.env.EMOJI_WHITE_DASH} ${issuerCard} for ${recipientCard} (${tradeDate}) ${process.env.EMOJI_RIGHT_ARROW} **${issuerNickname}**` },
         );
     }
 

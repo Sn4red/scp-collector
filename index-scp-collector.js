@@ -60,4 +60,4 @@ for (const file of eventFiles) {
 // * This starts the cron jobs defined in the cronJobs file.
 startCronJobs(client);
 
-client.login(process.env.DISCORD_TOKEN);
+client.login(process.env.DISCORD_TOKEN_SCP_COLLECTOR);

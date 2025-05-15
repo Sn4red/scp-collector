@@ -26,7 +26,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
             return;
         }
 
@@ -37,7 +37,7 @@ module.exports = {
 
         // ! If the field has wrong data, returns an error message.
         if (!cardIdValidation) {
-            await interaction.editReply('<a:error:1229592805710762128>  Invalid card ID format. Please use the following format: `SCP-XXXX`.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  Invalid card ID format. Please use the following format: \`SCP-XXXX\`.`);
             return;
         }
 
@@ -45,7 +45,7 @@ module.exports = {
 
         // ! If the card is not found in the market, returns an error message.
         if (!foundCardInMarket.wasFound) {
-            await interaction.editReply(`<a:error:1229592805710762128>  Card \`${fixedCardId}\` is not on the market!`);
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  Card \`${fixedCardId}\` is not on the market!`);
             return;
         }
 
@@ -53,7 +53,7 @@ module.exports = {
 
         // ! If the card has already been purchased, returns an error message.
         if (foundCardInformation.isAlreadyPurchased) {
-            await interaction.editReply('<a:error:1229592805710762128>  You already bought this card!');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You already bought this card!`);
             return;
         }
 
@@ -71,7 +71,7 @@ module.exports = {
         const buttonsRow = displayButtons();
 
         const reply = await interaction.editReply({
-            content: `<a:stop:1243398806402240582>  Are you sure you want to buy ${holographicEmojiText} \`${fixedCardId}\` (${cardClass}) for <a:crystal:1273453430190375043> **${crystals}**?`,
+            content: `${process.env.EMOJI_STOP}  Are you sure you want to buy ${holographicEmojiText} \`${fixedCardId}\` (${cardClass}) for ${process.env.EMOJI_CRYSTAL} **${crystals}**?`,
             components: [buttonsRow],
         });
 
@@ -87,7 +87,7 @@ module.exports = {
             if (button.customId === 'confirm') {
                 deletedMessage = true;
 
-                const errorMessage = `<a:error:1229592805710762128>  You don\'t have enough crystals to buy this card! (you're short <a:crystal:1273453430190375043> **${crystals - userDocument.crystals}**)`;
+                const errorMessage = `${process.env.EMOJI_ERROR}  You don't have enough crystals to buy this card! (you're short ${process.env.EMOJI_CRYSTAL} **${crystals - userDocument.crystals}**)`;
 
                 try {
                     await database.runTransaction(async (transaction) => {
@@ -124,8 +124,8 @@ module.exports = {
                         .setColor(embedColor)
                         .setTitle(`${holographicEmojiEmbed} Item #: \`${fixedCardId}\` // \`${cardName}\``)
                         .addFields(
-                            { name: '<:invader:1228919814555177021>  Class', value: `\`${cardClass}\``, inline: true },
-                            { name: '<:files:1228920361723236412>  File', value: `**[View Document](${cardData.file})**`, inline: true },
+                            { name: `${process.env.EMOJI_INVADER}  Class`, value: `\`${cardClass}\``, inline: true },
+                            { name: `${process.env.EMOJI_FILES}  File`, value: `**[View Document](${cardData.file})**`, inline: true },
                         )
                         .setImage(`attachment://${fixedCardId}.jpg`)
                         .setTimestamp();
@@ -145,7 +145,7 @@ module.exports = {
                         console.log(`${new Date()} >>> *** ERROR: buy.js *** by ${userId} (${interaction.user.username})`);
                         console.error(error);
 
-                        await interaction.followUp({ content: '<a:error:1229592805710762128>  An error has occurred while trying to buy a card. Please try again.', ephemeral: true });
+                        await interaction.followUp({ content: `${process.env.EMOJI_ERROR}  An error has occurred while trying to buy a card. Please try again.`, ephemeral: true });
                     }
                 }
             }
@@ -263,20 +263,20 @@ function getHolographicFeature(cardHolographic) {
     
     switch (cardHolographic) {
         case 'Emerald':
-            holographicEmojiText = '<a:emerald:1228923470239367238>';
-            holographicEmojiEmbed = '<a:emerald:1228923470239367238>';
+            holographicEmojiText = `${process.env.EMOJI_EMERALD}`;
+            holographicEmojiEmbed = `${process.env.EMOJI_EMERALD}`;
             embedColor = 0x00b65c;
 
             break;
         case 'Golden':
-            holographicEmojiText = '<a:golden:1228925086690443345>';
-            holographicEmojiEmbed = '<a:golden:1228925086690443345>';
+            holographicEmojiText = `${process.env.EMOJI_GOLDEN}`;
+            holographicEmojiEmbed = `${process.env.EMOJI_GOLDEN}`;
             embedColor = 0xffd700;
 
             break;
         case 'Diamond':
-            holographicEmojiText = '<a:diamond:1228924014479671439>';
-            holographicEmojiEmbed = '<a:diamond:1228924014479671439>';
+            holographicEmojiText = `${process.env.EMOJI_DIAMOND}`;
+            holographicEmojiEmbed = `${process.env.EMOJI_DIAMOND}`;
             embedColor = 0x00bfff;
 
             break;

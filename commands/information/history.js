@@ -18,8 +18,8 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor(0x010101)
-            .setTitle('<:building:1230367857791991898>   SCP Foundation')
-            .setDescription('<a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694><a:white_line:1228541666131185694>\n' +
+            .setTitle(`${process.env.EMOJI_BUILDING}   SCP Foundation`)
+            .setDescription(`${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}\n` +
                             'Operating clandestinely and globally, The Foundation operates beyond any jurisdiction, reinforced by major national governments that have tasked ' +
                             'it with containing anomalous objects, entities, and phenomena. These anomalies pose a significant threat to global security, as they are capable ' +
                             'of causing physical or psychological harm.\n\n' +

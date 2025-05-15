@@ -1,5 +1,4 @@
-const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
-const path = require('node:path');
+const { SlashCommandBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -8,17 +7,18 @@ module.exports = {
     cooldown: 1,
     data: new SlashCommandBuilder()
         .setName('countcards')
-        .setDescription('Shows the card from the database.'),
+        .setDescription('Shows the card from the database.')
+        .setContexts(['Guild']),
     async execute(interaction) {
         const userId = interaction.user.id;
-        const adminId = '402580354936078336';
+        const adminId = process.env.DISCORD_ADMINISTRATOR_ID;
 
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
         // ! If the user is not the administrator, returns an error message.
         if (userId !== adminId) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not the administrator!');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not the administrator!`);
             return;
         }
         

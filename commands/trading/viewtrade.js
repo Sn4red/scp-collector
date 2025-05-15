@@ -23,7 +23,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
             return;
         }
 
@@ -33,7 +33,7 @@ module.exports = {
 
         // ! If the field has wrong data, returns an error message.
         if (!tradeIdValidation) {
-            await interaction.editReply('<a:error:1229592805710762128>  Error. Please, provide a valid trade ID.');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  Error. Please, provide a valid trade ID.`);
             return;
         }
 
@@ -42,7 +42,7 @@ module.exports = {
 
         // ! If the trade ID provided does not exist, returns an error message.
         if (!tradeSnapshot.exists) {
-            await interaction.editReply('<a:error:1229592805710762128>  There is no trade with that ID!');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  There is no trade with that ID!`);
             return;
         }
 
@@ -61,19 +61,19 @@ module.exports = {
 
         const tradeEmbed = new EmbedBuilder()
             .setColor(0x010101)
-            .setTitle(`<:page:1228553113804476537>  Trade #: \`${tradeSnapshot.id}\``)
+            .setTitle(`${process.env.EMOJI_PAGE}  Trade #: \`${tradeSnapshot.id}\``)
             .addFields(
-                { name: '<:user:1240099663541960795>  Issuer', value: `\`${tradeObject.issuerNickname}\` (\`${tradeObject.issuerId}\`)` },
+                { name: `${process.env.EMOJI_USER}  Issuer`, value: `\`${tradeObject.issuerNickname}\` (\`${tradeObject.issuerId}\`)` },
                 { name: `${tradeObject.issuerHolographicEmoji}  Card`, value: `\`${tradeObject.issuerCardId}\` // \`${issuerCardName}\`` },
-                { name: '<:user:1240099663541960795>  Recipient', value: `\`${tradeObject.recipientNickname}\` (\`${tradeObject.recipientId}\`)` },
+                { name: `${process.env.EMOJI_USER}  Recipient`, value: `\`${tradeObject.recipientNickname}\` (\`${tradeObject.recipientId}\`)` },
                 { name: `${tradeObject.recipientHolographicEmoji}  Card`, value: `\`${tradeObject.recipientCardId}\` // \`${recipientCardName}\`` },
-                { name: '<a:bit_clock:1240110707295387718>  Creation Date', value: `\`${tradeObject.creationDate}\`` },
-                { name: '<a:pin:1230368962496434338>  Status', value: `**\`${tradeObject.tradeStatus}\`**  ${tradeObject.statusEmoji}` },
+                { name: `${process.env.EMOJI_BIT_CLOCK}  Creation Date`, value: `\`${tradeObject.creationDate}\`` },
+                { name: `${process.env.EMOJI_PIN}  Status`, value: `**\`${tradeObject.tradeStatus}\`**  ${tradeObject.statusEmoji}` },
             )
             .setTimestamp();
 
         if (tradeObject.tradeDate != null) {
-            tradeEmbed.addFields({ name: '<a:bit_clock:1240110707295387718>  Trade Date', value: `\`${tradeObject.tradeDate}\`` });
+            tradeEmbed.addFields({ name: `${process.env.EMOJI_BIT_CLOCK}  Trade Date`, value: `\`${tradeObject.tradeDate}\`` });
         }
 
         await interaction.editReply({ embeds: [tradeEmbed] });
@@ -107,10 +107,10 @@ async function formattingValues(tradeDocument) {
     const recipientCardName = recipientCardDocument.name;
 
     const holographicEmojis = {
-        'Normal': '<:normal:1247244326409601076>',
-        'Emerald': '<a:emerald:1228923470239367238>',
-        'Golden': '<a:golden:1228925086690443345>',
-        'Diamond': '<a:diamond:1228924014479671439>',
+        'Normal': `${process.env.EMOJI_NORMAL}`,
+        'Emerald': `${process.env.EMOJI_EMERALD}`,
+        'Golden': `${process.env.EMOJI_GOLDEN}`,
+        'Diamond': `${process.env.EMOJI_DIAMOND}`,
     }; 
 
     const issuerHolographicEmoji = holographicEmojis[tradeDocument.issuerHolographic];
@@ -124,10 +124,10 @@ async function formattingValues(tradeDocument) {
 
     if (tradeDocument.tradeConfirmation == false) {
         tradeStatus = 'Pending';
-        statusEmoji = '<a:pending_status:1240115134102241354>';
+        statusEmoji = `${process.env.EMOJI_PENDING_STATUS}`;
     } else {
         tradeStatus = 'Completed';
-        statusEmoji = '<a:check:1235800336317419580>';
+        statusEmoji = `${process.env.EMOJI_CHECK}`;
         tradeDate = new Date(tradeDocument.tradeDate._seconds * 1000 + tradeDocument.tradeDate._nanoseconds / 1000000).toLocaleString();
     }
 

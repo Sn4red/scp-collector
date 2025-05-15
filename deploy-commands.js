@@ -23,14 +23,14 @@ for (const folder of commandFolders) {
 	}
 }
 
-const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+const rest = new REST().setToken(process.env.DISCORD_TOKEN_SCP_COLLECTOR);
 
 (async () => {
 	try {
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
 		const data = await rest.put(
-			Routes.applicationCommands(process.env.DISCORD_CLIENT_ID),
+			Routes.applicationCommands(process.env.DISCORD_CLIENT_ID_SCP_COLLECTOR),
 			{ body: commands },
 		);
 

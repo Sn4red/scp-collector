@@ -1,5 +1,3 @@
-// TODO: Considerar mejorar el sello de Premium para la carta del usuario. Darle un toque brillante.
-
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
 const fetch = require('node-fetch');
@@ -9,8 +7,8 @@ const premiumWhitelist = require('../../utils/premiumWhitelist');
 
 const database = firebase.firestore();
 
-const guildId = process.env.GUILD_ID;
-const VIPRoleId = process.env.VIP_ROLE_ID;
+const guildId = process.env.DISCORD_SERVER_ID;
+const VIPRoleId = process.env.DISCORD_VIP_ROLE_ID;
 
 module.exports = {
     cooldown: 60 * 7,
@@ -75,7 +73,7 @@ module.exports = {
             const attachment = await displayCard(newUser, interaction.user.id, isPremium, interaction);
 
             await interaction.editReply({ files: [attachment] });
-            await interaction.followUp('<a:waving_hand:1229639454302670869>  New user! You can now use commands to collect cards and more.');
+            await interaction.followUp(`${process.env.EMOJI_WAVING_HAND}  New user! You can now use commands to collect cards and more.`);
         }
     },
 };
@@ -92,7 +90,7 @@ async function checkingUserPremiumStatus(userId, interaction) {
         const hasRole = member.roles.cache.has(VIPRoleId);
 
         isPremium = hasRole ? true : false;
-    } catch (error) {
+    } catch {
         isPremium = false;
     }
 

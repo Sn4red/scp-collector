@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const path = require('path');
 const fs = require('fs');
 const firebase = require('../../utils/firebase');
@@ -9,17 +9,18 @@ module.exports = {
     cooldown: 1,
     data: new SlashCommandBuilder()
         .setName('uploadcards')
-        .setDescription('Upload the cards stored in json files to the database.'),
+        .setDescription('Upload the cards stored in json files to the database.')
+        .setContexts(['Guild']),
     async execute(interaction) {
         const userId = interaction.user.id;
-        const adminId = '402580354936078336';
+        const adminId = process.env.DISCORD_ADMINISTRATOR_ID;
 
         // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
         // ! If the user is not the administrator, returns an error message.
         if (userId !== adminId) {
-            await interaction.editReply('<a:error:1229592805710762128>  You are not the administrator!');
+            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not the administrator!`);
             return;
         }
 
@@ -50,7 +51,7 @@ async function uploadJSON(interaction, filePath, collection, first = true) {
 
         for (const card of jsonData) {
             const cardId = card.id;
-            const { id, ...cardData } = card;
+            const { ...cardData } = card;
 
             const cardReference = database.collection('card').doc(collection).collection(collection.toLowerCase()).doc(cardId);
             await cardReference.set(cardData);

@@ -21,7 +21,7 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply({ content: '<a:error:1229592805710762128>  You are not registered! Use /`card` to start playing.', ephemeral: true });
+            await interaction.editReply({ content: `${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`, ephemeral: true });
             return;
         }
 
@@ -30,7 +30,7 @@ module.exports = {
 
         // ! If the market is not available, returns an error message.
         if (!marketSnapshot.exists) {
-            await interaction.editReply({ content: '<a:error:1229592805710762128>  The market is not available at the moment. Please, try again later.', ephemeral: true });
+            await interaction.editReply({ content: `${process.env.EMOJI_ERROR}  The market is not available at the moment. Please, try again later.`, ephemeral: true });
             return;
         }
 

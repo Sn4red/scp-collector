@@ -1,12 +1,3 @@
-// TODO: 12-14-2024: validar el domingo 12-29-2024 si el cron job para actualizar el market funciona correctamente,
-// TODO: estableciendo la fecha para el próximo domingo a la medianoche.
-
-// TODO: En la misma ejecución, se validará si el cron job para reiniciar los campos relacionados con el market de los usuarios
-// TODO: funciona correctamente.
-
-// TODO 12-26-2024: validar los días 28 al 31 de diciembre cómo se ejecuta el cron job para dar 1000 cristales a los usuarios Premium.
-// TODO: Su ejecución debería funcionar solamente el día 31 de este mes.
-
 const firebase = require('./firebase');
 const { Filter } = require('firebase-admin/firestore');
 const moment = require('moment');
@@ -15,8 +6,8 @@ const premiumWhitelist = require('./premiumWhitelist');
 
 const database = firebase.firestore();
 
-const guildId = process.env.GUILD_ID;
-const VIPRoleId = process.env.VIP_ROLE_ID;
+const guildId = process.env.DISCORD_SERVER_ID;
+const VIPRoleId = process.env.DISCORD_VIP_ROLE_ID;
 
 // * This function resets the daily limit of attempts.
 // * Sets to 10 for Premium users, and 5 for non Premium.
@@ -41,7 +32,7 @@ async function resetDailyLimit(client) {
                 const hasRole = member.roles.cache.has(VIPRoleId);
 
                 dailyAttemptsRemaining = hasRole ? 10 : 5;
-            } catch (error) {
+            } catch {
                 dailyAttemptsRemaining = 5;
             }
 
@@ -118,7 +109,7 @@ async function deleteOldTradeRequests() {
                 numberTrades--;
                 numberTradesErrors++;
 
-                console.log(`${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit *** by ${trade.id}`);
+                console.log(`${new Date()} >>> *** ERROR: Cron Job - deleteOldTradeRequests *** by ${trade.id}`);
                 console.error(error);
             }
         }
@@ -230,7 +221,7 @@ async function giveCrystalsEndOfMonth(client) {
                 const hasRole = member.roles.cache.has(VIPRoleId);
 
                 hasPremium = hasRole ? true : false;
-            } catch (error) {
+            } catch {
                 hasPremium = false;
             }
 

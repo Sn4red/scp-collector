@@ -94,3 +94,14 @@ Finally, it is important to note that trade requests pending for at least one mo
 
 ## Information
 There are several commands that provide useful information about the bot, with the most important being /`commands`. This lists all commands with a brief description of their usage!
+
+# VIP Features
+You can get extra features by subscribing to the Patreon page. Also, the Patreon account needs to be linked with the Discord one. Below are the exclusive benefits:
+
+- 10 shots daily instead of 5.
+- Double XP when capturing SCP cards.
+- Double crystals when capturing and merging SCP cards.
+- 1000 crystals at the end of each month.
+- Better chances of obtaining rare class cards.
+- Opportunity to obtain holographic cards.
+- A golden seal on your ID card.

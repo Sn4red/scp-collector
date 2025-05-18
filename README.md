@@ -95,6 +95,8 @@ Finally, it is important to note that trade requests pending for at least one mo
 ## Information
 There are several commands that provide useful information about the bot, with the most important being /`commands`. This lists all commands with a brief description of their usage!
 
+---
+
 # VIP Features
 You can get extra features by subscribing to the Patreon page. Also, the Patreon account needs to be linked with the Discord one. Below are the exclusive benefits:
 
@@ -105,3 +107,100 @@ You can get extra features by subscribing to the Patreon page. Also, the Patreon
 - Better chances of obtaining rare class cards.
 - Opportunity to obtain holographic cards.
 - A golden seal on your ID card.
+
+---
+
+# Firestore Schema and Random Selection Logic
+
+In Firestore, the `card` collection contains documents representing different SCP classes. Each class document has a subcollection that holds all the individual SCP cards
+classified under that class:
+
+``` mermaid
+flowchart LR
+  subgraph groupA["Collection"]
+    card
+  end
+
+  subgraph groupB["Class Documents"]
+    groupBSafe["Safe"]
+    groupBEuclid["Euclid"]
+    groupBKeter["Keter"]
+    groupBApollyon["Apollyon"]
+    groupBThaumiel["Thaumiel"]
+  end
+
+  subgraph groupC["Subcollections"]
+    groupCSafe["Safe"]
+    groupCEuclid["Euclid"]
+    groupCKeter["Keter"]
+    groupCApollyon["Apollyon"]
+    groupCThaumiel["Thaumiel"]
+  end
+
+  subgraph groupD["Card Documents"]
+    groupDSCP005["SCP-005"]
+    groupDSCP006["SCP-006"]
+    groupDSCP010["SCP-010"]
+    groupDMore["..."]
+
+    %% Customizing groupDMore so that it has no fill color, no strokes,
+    %% and making the text bold.
+    style groupDMore fill:none,stroke-width:0px,font-weight:bold
+  end
+
+  %% Connecting the subgraphs so they're aligned.
+  groupA --- groupB
+  groupB --- groupC
+  groupC --- groupD
+
+  %% Making subgraphs edges invisible.
+  linkStyle 0 stroke-width:0px
+  linkStyle 1 stroke-width:0px
+  linkStyle 2 stroke-width:0px
+
+  %% Flow through the nodes.
+  card ==> groupBSafe
+  groupBSafe ==> groupCSafe
+  groupCSafe ==> groupDSCP006
+```
+
+Each card document follows this structure:
+
+``` mermaid
+classDiagram
+    class SCP-000 {
+        string file
+        string name
+        number random
+    }
+```
+
+When the bot determines the SCP class based on probability, it performs a query to Firebase to retrieve the number of documents in the corresponding subcollection using
+an aggregation query:
+
+```javascript
+const cardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
+const cardSnapshot = await transaction.get(cardReference.count());
+
+const classCount = cardSnapshot.data().count;
+```
+
+Next, to select a card from the class, the bot generates a random number based on the total number of documents in that subcollection. It then queries for the document whose
+`random` field matches the generated number. If the random number is 0, it is incremented by 1, as no card has `random = 0`:
+
+```javascript
+const randomNumber = Math.floor(Math.random() * classCount) + 1;
+                    
+const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
+const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
+const selectedCardSnapshot = await transaction.get(selectedCardQuery);
+                    
+const cardDocument = selectedCardSnapshot.docs[0];
+const selectedCardDocument = cardDocument.data();
+```
+
+Each card within a class has a unique `random` field value, assigned sequentially and never repeated. This ensures consistent random selection. The list of `random` values for
+each class is carefully maintained in a separate `.xlsx` file.
+
+If, in the future, new SCP cards are added or existing cards are moved to a different class, the `random` values are redefined and updated in the `.xlsx` file. These updated
+values are then exported to `JSON` files and uploaded again to Firestore.

@@ -180,9 +180,9 @@ flowchart LR
 
 Each card document follows this structure:
 
-``` mermaid
-classDiagram
-    class SCP-000 {
+```mermaid
+erDiagram
+    SCP-000 {
         string file
         string name
         number random

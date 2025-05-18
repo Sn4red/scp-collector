@@ -112,7 +112,7 @@ There are several commands that provide useful information about the bot, with t
 ---
 
 # VIP Features
-You can get extra features by subscribing to the Patreon page. Also, the Patreon account needs to be linked with the Discord one. Below are the exclusive benefits:
+You can get extra features by subscribing to the [Patreon](https://www.patreon.com/Sn4red) page. Also, the Patreon account needs to be linked with the Discord one. Below are the exclusive benefits:
 
 - 10 shots daily instead of 5.
 - Double XP when capturing SCP cards.

@@ -4,6 +4,20 @@ with other users. The cards are classified into different classes, with chances 
 
 ---
 
+# Table of Contents
+- [Features](#features)
+- [Storage](#storage)
+- [Overview](#overview)
+  - [Gameplay - Collecting Cards](#gameplay---collecting-cards)
+  - [Gameplay - Merging Cards](#gameplay---merging-cards)
+  - [Gameplay - Market](#gameplay---market)
+  - [Trading System](#trading-system)
+  - [Information](#information)
+- [VIP Features](#vip-features)
+- [Firestore Schema and Random Selection Logic](#firestore-schema-and-random-selection-logic)
+
+---
+
 # Features
 - Card capture system (with rarity and holographic features incorporated).
 - Card trading between users.

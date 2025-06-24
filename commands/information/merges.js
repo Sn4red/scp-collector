@@ -1,5 +1,17 @@
 const path = require('node:path');
-const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
+const sharp = require('sharp');
+const {
+    SlashCommandBuilder,
+    AttachmentBuilder,
+    MessageFlags,
+    MediaGalleryItemBuilder,
+    MediaGalleryBuilder,
+    TextDisplayBuilder,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
+    ThumbnailBuilder,
+    SectionBuilder,
+    ContainerBuilder } = require('discord.js');
 
 module.exports = {
     cooldown: 60 * 30,
@@ -7,39 +19,168 @@ module.exports = {
         .setName('merges')
         .setDescription('Explains about how merge works.'),
     async execute(interaction) {
-        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+        // * Notify the Discord API that the interaction was received
+        // * successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
-        const thumbnailPath = path.join(__dirname, '../../images/embed/merges-thumbnail.gif');
-        const iconFooterPath = path.join(__dirname, '../../images/embed/merges-iconFooter.gif');
+        // * Image 1.
+        const image1Path = path
+            .join(__dirname, '../../images/container/merges-image-1.png');
 
-        const thumbnail = new AttachmentBuilder(thumbnailPath);
-        const iconFooter = new AttachmentBuilder(iconFooterPath);
+        const buffer1 = await sharp(image1Path)
+            .resize(570, 70)
+            .toBuffer();
 
-        const embed = new EmbedBuilder()
-            .setColor(0x010101)
-            .setTitle(`${process.env.EMOJI_CHEST}   Merges`)
-            .setDescription(`${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}${process.env.EMOJI_WHITE_LINE}\n` +
-                            'A merge consists in transforming 5 cards and converting them into a single card of a higher class. The cards used ' +
-                            'can be from different classes, but the class of the resulting card will always be higher than the class of the majority of ' +
-                            'the cards used. The following are examples of merges:\n\n' +
-                            '- `3 Safe` // `2 Keter` will merge to give and **Euclid** card.\n' +
-                            '- `4 Euclid` // `1 Safe` will merge to give a **Keter** card.\n' +
-                            '- `5 Euclid` will merge to give a **Keter** card.\n\n' +
-                            'If there is no a single majority group of cards, for example, `2 Safe` // `2 Euclid` // `1 Keter`, the result will be random ' +
-                            'between an **Euclid** or **Keter** card.')
-            .addFields(
-                { name: `${process.env.EMOJI_HOLOGRAPHIC_CARD}   Holographics`, value: 'For the resulting card to have a holograpic feature, the ' +
-                        'following probabilities will be considered:\n\n' +
-                        `- ${process.env.EMOJI_EMERALD}   Emerald -> 7% probability\n` +
-                        `- ${process.env.EMOJI_GOLDEN}   Golden -> 2% probability\n` +
-                        `- ${process.env.EMOJI_DIAMOND}   Diamond -> 0.7% probability` },
-                { name: `${process.env.EMOJI_DISTORTED_WARNING}   Limitations`, value: 'Note that this function is only limited to Safe, Euclid and Keter class cards with **no holographic attributes**.' },
-            )
-            .setThumbnail('attachment://merges-thumbnail.gif')
-            .setTimestamp()
-            .setFooter({ text: 'Use /commands to see the full list of available commands.', iconURL: 'attachment://merges-iconFooter.gif' });
+        const image1 = new AttachmentBuilder(
+            buffer1,
+            { name: 'merges-image-1.png' },
+        );
 
-        await interaction.editReply({ embeds: [embed], files: [thumbnail, iconFooter] });
+        const mediaGalleryItem1Component1 = new MediaGalleryItemBuilder()
+            .setURL('attachment://merges-image-1.png');
+
+        const mediaGallery1 = new MediaGalleryBuilder()
+            .addItems(mediaGalleryItem1Component1);
+
+        // * Header 1.
+        const header1 = new TextDisplayBuilder()
+            .setContent(`## ${process.env.EMOJI_CHEST}  Merges`);
+
+        // * Separator 1.
+        const separator1 = new SeparatorBuilder()
+            .setSpacing(SeparatorSpacingSize.Small);
+
+        // * Section 1.
+        const textSection1 = new TextDisplayBuilder()
+            .setContent(
+                'A merge consists in transforming 5 cards and converting ' +
+                    'them into a single card of a higher class. The cards ' +
+                    'used can be from different classes, but the class of ' +
+                    'the resulting card will always be higher than the class ' +
+                    'of the majority of the cards used. The following are ' +
+                    'examples of merges:',
+            );
+
+        const image2Path = path
+            .join(__dirname, '../../images/container/merges-image-2.gif');
+
+        const image2 = new AttachmentBuilder(
+            image2Path,
+            { name: 'merges-image-2.gif' },
+        );
+
+        const thumbnailSection1 = new ThumbnailBuilder()
+            .setURL('attachment://merges-image-2.gif');
+
+        const section1 = new SectionBuilder()
+            .addTextDisplayComponents(textSection1)
+            .setThumbnailAccessory(thumbnailSection1);
+
+        // * Separator 2.
+        const separator2 = new SeparatorBuilder()
+            .setSpacing(SeparatorSpacingSize.Small)
+            .setDivider(false);
+
+        // * Text 1.
+        const text1 = new TextDisplayBuilder()
+            .setContent(
+                '- `3 Safe` // `2 Keter` will merge to give and **Euclid** ' +
+                    'card.\n' +
+                    '- `4 Euclid` // `1 Safe` will merge to give a **Keter** ' +
+                    'card.\n' +
+                    '- `5 Euclid` will merge to give a **Keter** card.\n\n' +
+                    'If there is no a single majority group of cards, for ' +
+                    'example, `2 Safe` // `2 Euclid` // `1 Keter`, the ' +
+                    'result will be random between an **Euclid** or ' +
+                    '**Keter** card.',
+            );
+
+        // * Separator 3.
+        const separator3 = new SeparatorBuilder()
+            .setSpacing(SeparatorSpacingSize.Small)
+            .setDivider(false);
+
+        // * Header 2.
+        const header2 = new TextDisplayBuilder()
+            .setContent(
+                `## ${process.env.EMOJI_HOLOGRAPHIC_CARD}  Holographics`,
+            );
+
+        // * Separator 4.
+        const separator4 = new SeparatorBuilder()
+            .setSpacing(SeparatorSpacingSize.Small);
+
+        // * Text 2.
+        const text2 = new TextDisplayBuilder()
+            .setContent(
+                'For the resulting card to have a holograpic feature, the ' +
+                    'following probabilities will be considered:\n\n' +
+                    `- ${process.env.EMOJI_EMERALD}  Emerald -> 7% ` +
+                    'probability\n' +
+                    `- ${process.env.EMOJI_GOLDEN}   Golden -> 2% ` +
+                    'probability\n' +
+                    `- ${process.env.EMOJI_DIAMOND}   Diamond -> 0.7% ` +
+                    'probability',
+            );
+
+        // * Separator 5.
+        const separator5 = new SeparatorBuilder()
+            .setSpacing(SeparatorSpacingSize.Small)
+            .setDivider(false);
+
+        // * Header 3.
+        const header3 = new TextDisplayBuilder()
+            .setContent(
+                `## ${process.env.EMOJI_DISTORTED_WARNING}  Limitations`,
+            );
+
+        // * Separator 6.
+        const separator6 = new SeparatorBuilder()
+            .setSpacing(SeparatorSpacingSize.Small);
+
+        // * Text 3.
+        const text3 = new TextDisplayBuilder()
+            .setContent(
+                'Note that this function is only limited to Safe, Euclid and ' +
+                    'Keter class cards with **no holographic attributes**.',
+            );
+
+        // * Separator 7.
+        const separator7 = new SeparatorBuilder()
+            .setSpacing(SeparatorSpacingSize.Small)
+            .setDivider(false);
+
+        // * Text 4.
+        const text4 = new TextDisplayBuilder()
+            .setContent(
+                '### Use /`commands` to see the full list of available ' +
+                    'commands.',
+            );
+
+        // * Container.
+        const container = new ContainerBuilder()
+            .setAccentColor(0x010101)
+            .addMediaGalleryComponents(mediaGallery1)
+            .addTextDisplayComponents(header1)
+            .addSeparatorComponents(separator1)
+            .addSectionComponents(section1)
+            .addSeparatorComponents(separator2)
+            .addTextDisplayComponents(text1)
+            .addSeparatorComponents(separator3)
+            .addTextDisplayComponents(header2)
+            .addSeparatorComponents(separator4)
+            .addTextDisplayComponents(text2)
+            .addSeparatorComponents(separator5)
+            .addTextDisplayComponents(header3)
+            .addSeparatorComponents(separator6)
+            .addTextDisplayComponents(text3)
+            .addSeparatorComponents(separator7)
+            .addTextDisplayComponents(text4);
+
+        await interaction.editReply({
+            components: [container],
+            files: [image1, image2],
+            flags: MessageFlags.IsComponentsV2,
+        });
     },
 };

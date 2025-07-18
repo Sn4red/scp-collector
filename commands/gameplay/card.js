@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    AttachmentBuilder,
+    MessageFlags,
+    TextDisplayBuilder } = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
 const fetch = require('node-fetch');
 const { request } = require('undici');
@@ -16,16 +20,22 @@ module.exports = {
         .setName('card')
         .setDescription('Displays your personal card and progress details.'),
     async execute(interaction) {
-        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+        // * Notify the Discord API that the interaction was received
+        // * successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
-        const isPremium = await checkingUserPremiumStatus(interaction.user.id, interaction);
+        const isPremium = await checkingUserPremiumStatus(
+            interaction.user.id,
+            interaction,
+        );
 
         // * Database query is performed.
-        const userReference = database.collection('user').doc(interaction.user.id);
+        const userReference = database
+            .collection('user').doc(interaction.user.id);
         const userSnapshot = await userReference.get();
 
-        // * If the user exists, the data is updated, in this case the nickame (if it was changed manually).
+        // * If the user exists, the data is updated, in this case the nickame
+        // * (if it was changed manually).
         if (userSnapshot.exists) {
             const document = userSnapshot.data();
 
@@ -37,12 +47,21 @@ module.exports = {
 
             document.nickname = interaction.user.username;
 
-            // * Uses the AttachmentBuilder class to process the file and be able to attach it in the reply.
-            const attachment = await displayCard(document, userSnapshot.id, isPremium, interaction);
+            // * Uses the AttachmentBuilder class to process the file and be
+            // * able to attach it in the reply.
+            const attachment = await displayCard(
+                document,
+                userSnapshot.id,
+                isPremium,
+                interaction,
+            );
 
-            await interaction.editReply({ files: [attachment] });
+            await interaction.editReply({
+                files: [attachment],
+            });
         } else {
-            // * If the user doesn't exist, a new document is created before displaying the card.
+            // * If the user doesn't exist, a new document is created before
+            // * displaying the card.
 
             // * Formats the date in YYYY/MM/DD.
             const currentDate = new Date();
@@ -67,19 +86,39 @@ module.exports = {
                 card5Purchased: false,
             };
 
-            await database.collection('user').doc(interaction.user.id).set(newUser);
+            await database.collection('user')
+                .doc(interaction.user.id).set(newUser);
 
-            // * Uses the AttachmentBuilder class to process the file and be attached in the reply.
-            const attachment = await displayCard(newUser, interaction.user.id, isPremium, interaction);
+            // * Uses the AttachmentBuilder class to process the file and be
+            // * attached in the reply.
+            const attachment = await displayCard(
+                newUser,
+                interaction.user.id,
+                isPremium,
+                interaction,
+            );
 
-            await interaction.editReply({ files: [attachment] });
-            await interaction.followUp(`${process.env.EMOJI_WAVING_HAND}  New user! You can now use commands to collect cards and more.`);
+            await interaction.editReply({
+                files: [attachment],
+            });
+
+            const message = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_WAVING_HAND}  New user! You can now ` +
+                        'use commands to collect cards and more.',
+                );
+
+            await interaction.followUp({
+                components: [message],
+                flags: [MessageFlags.IsComponentsV2],
+            });
         }
     },
 };
 
-// * This function validates through fetching if the user has the Patreon role. That means is Premium.
-// * Also, if the user is not in the server, it will return false.
+// * This function validates through fetching if the user has the Patreon role.
+// * That means is Premium. Also, if the user is not in the server, it will
+// * return false.
 async function checkingUserPremiumStatus(userId, interaction) {
     let isPremium = false;
 
@@ -94,7 +133,8 @@ async function checkingUserPremiumStatus(userId, interaction) {
         isPremium = false;
     }
 
-    // * If the user it's in the premium whitelist, it will be considered as premium.
+    // * If the user it's in the premium whitelist, it will be considered as
+    // * premium.
     if (premiumWhitelist.includes(userId)) {
         isPremium = true;
     }
@@ -104,6 +144,27 @@ async function checkingUserPremiumStatus(userId, interaction) {
 
 // * This function draws all the user's card and returns it as an attachment.
 async function displayCard(document, userId, isPremium, interaction) {
+    // * The numeric ID is extracted from the emoji ID to build the URL, which
+    // * is then used in the canvas.
+    const emojiClassD = process.env.EMOJI_CLASS_D;
+    const emojiSecurityOfficer = process.env.EMOJI_SECURITY_OFFICER;
+    const emojiInvestigator = process.env.EMOJI_INVESTIGATOR;
+    const emojiContainmentSpecialist = process.env.EMOJI_CONTAINMENT_SPECIALIST;
+    const emojiFieldAgent = process.env.EMOJI_FIELD_AGENT;
+    const emojiSiteDirector = process.env.EMOJI_SITE_DIRECTOR;
+    const emojiO5CouncilMember = process.env.EMOJI_O5_COUNCIL_MEMBER;
+    const emojiCrystal = process.env.EMOJI_CRYSTAL;
+
+    const emojiIdClassD = emojiClassD.match(/\d{15,}/g)[0];
+    const emojiIdSecurityOfficer = emojiSecurityOfficer.match(/\d{15,}/g)[0];
+    const emojiIdInvestigator = emojiInvestigator.match(/\d{15,}/g)[0];
+    const emojiIdContainmentSpecialist = emojiContainmentSpecialist
+        .match(/\d{15,}/g)[0];
+    const emojiIdFieldAgent = emojiFieldAgent.match(/\d{15,}/g)[0];
+    const emojiIdSiteDirector = emojiSiteDirector.match(/\d{15,}/g)[0];
+    const emojiIdO5CouncilMember = emojiO5CouncilMember.match(/\d{15,}/g)[0];
+    const emojiIdCrystal = emojiCrystal.match(/\d{15,}/g)[0];
+
     // * User data.
     const issueDate = document.issueDate;
     const id = userId;
@@ -115,7 +176,8 @@ async function displayCard(document, userId, isPremium, interaction) {
     const premium = isPremium;
 
     // * Aggregation query to the database counting the number of obtained SCPs.
-    const obtainingReference = database.collection('user').doc(id).collection('obtaining');
+    const obtainingReference = database.collection('user')
+        .doc(id).collection('obtaining');
     const obtainingSnapshot = await obtainingReference.count().get();
 
     const SCPCount = obtainingSnapshot.data().count;
@@ -125,7 +187,8 @@ async function displayCard(document, userId, isPremium, interaction) {
     const canvas = Canvas.createCanvas(450, 250);
     const context = canvas.getContext('2d');
     
-    // * Loads the background image onto the canvas and uses its dimensions to stretch it. 
+    // * Loads the background image onto the canvas and uses its dimensions to
+    // * stretch it.
     const background = await Canvas.loadImage('./images/card/background.png');
     context.drawImage(background, 0, 0, canvas.width, canvas.height);
     
@@ -160,37 +223,53 @@ async function displayCard(document, userId, isPremium, interaction) {
     context.font = 'bold 14px Roboto Condensed';
     context.fillText(rank, 188, 91);
 
-    let emojiImage = null;
+    let rankEmoji = null;
 
     switch (rank) {
         case 'Class D':
-            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230353704972976128');
+            rankEmoji = await loadEmoji(
+                `https://cdn.discordapp.com/emojis/${emojiIdClassD}`,
+            );
             break;
         case 'Security Officer':
-            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230354487559061504');
+            rankEmoji = await loadEmoji(
+                `https://cdn.discordapp.com/emojis/${emojiIdSecurityOfficer}`,
+            );
             break;
         case 'Investigator':
-            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230354913780039793');
+            rankEmoji = await loadEmoji(
+                `https://cdn.discordapp.com/emojis/${emojiIdInvestigator}`,
+            );
             break;
         case 'Containment Specialist':
-            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230355217607037040');
+            rankEmoji = await loadEmoji(
+                'https://cdn.discordapp.com/emojis/' +
+                    `${emojiIdContainmentSpecialist}`,
+            );
             break;
         case 'Field Agent':
-            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230356442913968128');
+            rankEmoji = await loadEmoji(
+                `https://cdn.discordapp.com/emojis/${emojiIdFieldAgent}`,
+            );
             break;
         case 'Site Director':
-            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230357575644479539');
+            rankEmoji = await loadEmoji(
+                `https://cdn.discordapp.com/emojis/${emojiIdSiteDirector}`,
+            );
             break;
         case 'O5 Council Member':
-            emojiImage = await loadEmoji('https://cdn.discordapp.com/emojis/1230357613049286797');
+            rankEmoji = await loadEmoji(
+                `https://cdn.discordapp.com/emojis/${emojiIdO5CouncilMember}`,
+            );
             break;
     }
 
-    // * This section is used to calculate the position of the emoji according to the rank, and give it a margin.
+    // * This section is used to calculate the position of the emoji according
+    // * to the rank, and give it a margin.
     const rankTextWidth = context.measureText(rank).width;
     const emojiX = 188 + rankTextWidth + 10;
 
-    context.drawImage(emojiImage, emojiX, 91 - 17, 20, 20);
+    context.drawImage(rankEmoji, emojiX, 91 - 17, 20, 20);
     
     // * Issue date.
     context.font = 'bold 10px Roboto Condensed';
@@ -205,7 +284,9 @@ async function displayCard(document, userId, isPremium, interaction) {
     context.fillText(SCPCount + '', 212, 132);
 
     // * Crystals.
-    const crystalEmoji = await loadEmoji('https://cdn.discordapp.com/emojis/1273453430190375043');
+    const crystalEmoji = await loadEmoji(
+        `https://cdn.discordapp.com/emojis/${emojiIdCrystal}`,
+    );
 
     context.font = 'bold 10px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
@@ -284,14 +365,17 @@ async function displayCard(document, userId, isPremium, interaction) {
     
     // * Using undici to make HTTP request with better performance.
     // * Loading the user's photo.
-    const { body: avatarBody } = await request(interaction.user.displayAvatarURL({ extension: 'jpg' }));
+    const { body: avatarBody } = await request(
+        interaction.user.displayAvatarURL({ extension: 'jpg' }),
+    );
     const avatar = await Canvas.loadImage(await avatarBody.arrayBuffer());
     
     // * Loading the logo.
     let logo = null;
 
     if (premium) {
-        logo = await Canvas.loadImage('./images/card/scp-premium-logo-card.png');
+        logo = await Canvas
+            .loadImage('./images/card/scp-premium-logo-card.png');
     } else {
         logo = await Canvas.loadImage('./images/card/scp-normal-logo-card.png');
     }
@@ -304,10 +388,14 @@ async function displayCard(document, userId, isPremium, interaction) {
     context.drawImage(logo, 280, 120, 70, 70);
     context.drawImage(qr, 365, 5, 80, 80);
     
-    return new AttachmentBuilder(await canvas.encode('png'), { name: `card-${nickname}.png` });
+    return new AttachmentBuilder(
+        await canvas.encode('png'),
+        { name: `card-${nickname}.png` },
+    );
 }
 
-// * This function is to convert the emoji URL into an image, to be used in the canvas.
+// * This function is to convert the emoji URL into an image, to be used in the
+// * canvas.
 async function loadEmoji(emojiUrl) {
     const response = await fetch(emojiUrl);
     const image = await Canvas.loadImage(await response.buffer());

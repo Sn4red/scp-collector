@@ -1,18 +1,13 @@
-# Ignore dependencies directories.
+# * Ignore dependencies directories.
 node_modules
 
-# Ignore ESLintt config file.
+# * Ignore ESLintt config file.
 eslint.config.js
 
-# Ignore .env files.
+# * Ignore .env files.
 .env
 .env.development
 .env.production
 
-# Ignore the firebase keys JSON files.
-firebase-key.json
-firebase-key-development.json
-firebase-key-production.json
-
-# Ignore the administration directory located in the root directory.
+# * Ignore the administration directory located in the root directory.
 /administration/

@@ -1,6 +1,19 @@
-const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    AttachmentBuilder,
+    MessageFlags,
+    MediaGalleryItemBuilder,
+    MediaGalleryBuilder,
+    TextDisplayBuilder,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
+    ButtonBuilder,
+    ButtonStyle,
+    SectionBuilder,
+    ContainerBuilder } = require('discord.js');
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
+const wrap = require('word-wrap');
 const premiumWhitelist = require('../../utils/premiumWhitelist');
 
 const database = firebase.firestore();
@@ -48,6 +61,14 @@ const ranks = [
     'O5 Council Member',
 ];
 
+// * The additional XP obtained based on the holographic type.
+const holographicXP = {
+    'Normal': 0,
+    'Emerald': 40,
+    'Golden': 70,
+    'Diamond': 100,
+};
+
 // * The crystals obtained based on the SCP class by a normal user.
 const normalCrystals = {
     'Safe': 10,
@@ -72,181 +93,205 @@ module.exports = {
         .setName('capture')
         .setDescription('Capture an SCP and add it to your collection.'),
     async execute(interaction) {
-        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
+        // * Notify the Discord API that the interaction was received
+        // * successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
         const userId = interaction.user.id;
 
-        // * Database query is performed.
         const userReference = database.collection('user').doc(userId);
         let userSnapshot = await userReference.get();
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
+            const errorMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_ERROR}  You are not registered! ` +
+                        'Use /`card` to start playing.',
+                );
+
+            await interaction.editReply({
+                components: [errorMessage],
+                flags: [MessageFlags.IsComponentsV2],
+            });
             return;
         }
 
         /**
-          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-          * * The command passes all validations and the operation is performed. *
-          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-          */
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         * * The command passes all validations and the operation is performed.*
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         */
 
         // * Data is retrieved from here for daily limit validation.
         let userDocument = userSnapshot.data();
 
         // * Validates if there are still daily captures available.
-        if (userDocument.dailyAttemptsRemaining === 0) {                
-            await interaction.editReply(`${process.env.EMOJI_RED_SIREN}  You have reached the daily limit of SCP captures.`);
+        if (userDocument.dailyAttemptsRemaining === 0) {
+            const errorMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_RED_SIREN}  You have reached the ` +
+                        'daily limit of SCP captures.',
+                );
+
+            await interaction.editReply({
+                components: [errorMessage],
+                flags: [MessageFlags.IsComponentsV2],
+            });
         } else {
-            const isPremium = await checkingUserPremiumStatus(userId, interaction);
+            const isPremium = await checkingUserPremiumStatus(
+                userId,
+                interaction,
+            );
             
             // * Class obtained through probability.
             const obtainedClass = classProbability(isPremium);
 
             let cardId = null;
-            let classCard = null;
-            let file = null;
-            let name = null;
+            let cardClass = null;
+            let cardFile = null;
+            let cardName = null;
 
             let holographicValue = 'Normal';
 
-            let cardEmbed = null;
+            // * Only premium users can obtain holographic cards.
+            if (isPremium) {
+                holographicValue = holographicProbability();
+            }
 
-            let promotionSystem = null;
+            // * The holographic emoji and container color are obtained
+            // * based on the holographic value.
+            const holographicFeature = getHolographicFeature(
+                holographicValue,
+            );
+            const holographicEmoji = holographicFeature
+                .holographicEmoji;
+            const containerColor = holographicFeature.containerColor;
+
+            let cardContainer = null;
+            let promotionResults = null;
     
             try {
                 await database.runTransaction(async (transaction) => {
-                    // * Retrieves the user data from the database. This is used below to validate if the user is premium or not.
+                    // * Retrieves the user data from the database. This is
+                    // * used below to check the user's stats.
                     userSnapshot = await transaction.get(userReference);
                     userDocument = userSnapshot.data();
 
-                    // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
-                    const cardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
-                    const cardSnapshot = await transaction.get(cardReference.count());
+                    // * Retrieves through Aggregation Query the numbers of
+                    // * documents contained in the collection.
+                    const cardReference = database.collection('card')
+                        .doc(obtainedClass)
+                        .collection(obtainedClass.toLowerCase());
+                    const cardSnapshot = await transaction
+                        .get(cardReference.count());
 
                     const classCount = cardSnapshot.data().count;
 
-                    // * Using the Math object, a random number is obtained based on the number of cards,
-                    // * and a random card is selected matching the random number with the 'random' field in the document.
-                    // * We add 1 to the result in case it returns 0.
-                    const randomNumber = Math.floor(Math.random() * classCount) + 1;
+                    // * Using the Math object, a random number is obtained
+                    // * based on the number of cards, and a random card is
+                    // * selected matching the random number with the 'random'
+                    // * field in the document. We add 1 to the result in case
+                    // * it returns 0.
+                    const randomNumber = Math
+                        .floor(Math.random() * classCount) + 1;
                     
-                    const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
-                    const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
-                    const selectedCardSnapshot = await transaction.get(selectedCardQuery);
+                    const selectedCardReference = database.collection('card')
+                        .doc(obtainedClass)
+                        .collection(obtainedClass.toLowerCase());
+                    const selectedCardQuery = selectedCardReference
+                        .where('random', '==', randomNumber);
+                    const selectedCardSnapshot = await transaction
+                        .get(selectedCardQuery);
                     
                     const cardDocument = selectedCardSnapshot.docs[0];
                     const selectedCardDocument = cardDocument.data();
 
                     // * Card data.
-                    cardId = cardDocument.id;   
-                    classCard = obtainedClass;
-                    file = selectedCardDocument.file;
-                    name = selectedCardDocument.name;
-                    
-                    // * Only premium users can obtain holographic cards.
-                    if (isPremium) {
-                        holographicValue = holographicProbability();
-                    }
+                    cardId = cardDocument.id;
+                    cardClass = obtainedClass;
+                    cardFile = selectedCardDocument.file;
+                    cardName = selectedCardDocument.name;
 
                     // * The entry of obtaining the card is inserted.
-                    const obtainingEntry = database.collection('user').doc(userSnapshot.id).collection('obtaining').doc();
+                    const obtainingEntry = database.collection('user')
+                        .doc(userSnapshot.id).collection('obtaining').doc();
     
                     await transaction.set(obtainingEntry, {
-                        card: database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase()).doc(cardId),
+                        card: database.collection('card')
+                            .doc(obtainedClass)
+                            .collection(obtainedClass.toLowerCase())
+                            .doc(cardId),
                         holographic: holographicValue,
                     });
 
-                    const cardName = limitCardName(name);
+                    // * To ensure all images have the same size, they are
+                    // * resized to 300x200 pixels. The definition of the
+                    // * container is performed here because it is needed by the
+                    // * promotionProcess function.
+                    cardContainer = createCardContainer(
+                        holographicEmoji,
+                        containerColor,
+                        cardId,
+                        cardClass,
+                        cardFile,
+                        cardName,
+                    );
 
-                    // * To ensure all images have the same size,
-                    // * they are resized to 300x200 pixels.
-                    // * The definition of the embed is performed here because it is needed
-                    // * by the promotionProcess function.
-                    cardEmbed = new EmbedBuilder()
-                        .setTitle(`${process.env.EMOJI_DICE}  Item #: \`${cardId}\` // \`${cardName}\``)
-                        .addFields(
-                            { name: `${process.env.EMOJI_INVADER}  Class`, value: `\`${classCard}\``, inline: true },
-                        )
-                        .setImage(`attachment://${cardId}.jpg`)
-                        .setTimestamp();
-
-                    // * The rank and level promotion is performed here, along with the increase of daily limits.
-                    promotionSystem = await promotionProcess(classCard, holographicValue, userDocument, isPremium, userReference, cardEmbed, transaction);
+                    // * The rank and level promotion is performed here, along
+                    // * with the increase of daily limits.
+                    promotionResults = await promotionProcess(
+                        cardClass,
+                        holographicValue,
+                        userDocument,
+                        isPremium,
+                        userReference,
+                        transaction,
+                    );
                 });
 
-                const imagePath = path.join(__dirname, `../../images/scp/${cardId}.jpg`);
+                const imagePath = path
+                    .join(__dirname, `../../images/scp/${cardId}.jpg`);
                 const image = new AttachmentBuilder(imagePath);
 
-                if (isPremium) {
-                    promotionSystem.cardEmbed.setDescription(`|   **+${premiumXP[classCard]} XP** // **+${premiumCrystals[classCard]}** ${process.env.EMOJI_CRYSTAL}  |`);
-    
-                    switch (holographicValue) {
-                        case 'Diamond':
-                            promotionSystem.cardEmbed.setColor(0x00bfff);
-    
-                            promotionSystem.cardEmbed.addFields(
-                                { name: `${process.env.EMOJI_DIAMOND}  Diamond`, value: '+100 XP', inline: true },
-                            );
-    
-                            break;
-                        case 'Golden':
-                            promotionSystem.cardEmbed.setColor(0xffd700);
-    
-                            promotionSystem.cardEmbed.addFields(
-                                { name: `${process.env.EMOJI_GOLDEN}  Golden`, value: '+70 XP', inline: true },
-                            );
-    
-                            break;
-                        case 'Emerald':
-                            promotionSystem.cardEmbed.setColor(0x00b65c);
-    
-                            promotionSystem.cardEmbed.addFields(
-                                { name: `${process.env.EMOJI_EMERALD}  Emerald`, value: '+40 XP', inline: true },
-                            );
-    
-                            break;
-                        default:
-                            promotionSystem.cardEmbed.setColor(0x010101);
-                    }
-                } else {
-                    promotionSystem.cardEmbed.setDescription(`|   **+${normalXP[classCard]} XP** // **+${normalCrystals[classCard]}** ${process.env.EMOJI_CRYSTAL}  |`);
-                    promotionSystem.cardEmbed.setColor(0x010101);
-    
-                    holographicValue = 'Normal';
-                }
-    
-                promotionSystem.cardEmbed.addFields(
-                    { name: `${process.env.EMOJI_FILES}  File`, value: `**[View Document](${file})**`, inline: true },
+                const resultsContainer = createResultsContainer(
+                    holographicValue,
+                    holographicEmoji,
+                    cardClass,
+                    isPremium,
+                    promotionResults,
                 );
     
                 await interaction.editReply({
-                    embeds: [promotionSystem.cardEmbed],
+                    components: [cardContainer, resultsContainer],
                     files: [image],
+                    flags: [MessageFlags.IsComponentsV2],
                 });
-        
-                switch (promotionSystem.promotionType) {
-                    case 'level':
-                        await interaction.followUp(`${process.env.EMOJI_MIXED_STARS}  Nice, ${promotionSystem.userDocument.nickname}! You are now level **${promotionSystem.userDocument.level}**. ${process.env.EMOJI_MIXED_STARS}`);
-                        break;
-                    case 'rank':
-                        await interaction.followUp(`${process.env.EMOJI_MIXED_STARS}  Congrats, ${promotionSystem.userDocument.nickname}. You have been promoted to **${ranks[promotionSystem.indexCurrentElement]}**. ${process.env.EMOJI_MIXED_STARS}`);
-                        break;
-                }
             } catch (error) {
-                console.log(`${new Date()} >>> *** ERROR: capture.js *** by ${userId} (${interaction.user.username})`);
+                console.log(
+                    `${new Date()} >>> *** ERROR: capture.js *** by ` +
+                        `${userId} (${interaction.user.username})`,
+                );
                 console.error(error);
 
-                await interaction.editReply(`${process.env.EMOJI_ERROR}  An error occurred while capturing the SCP. Please try again.`);
+                const errorMessage = new TextDisplayBuilder()
+                    .setContent(
+                        `${process.env.EMOJI_ERROR}  An error occurred while ` +
+                            'capturing the SCP. Please try again.',
+                    );
+
+                await interaction.editReply({
+                    components: [errorMessage],
+                    flags: [MessageFlags.IsComponentsV2],
+                });
             }
         }
     },
 };
 
-// * This function validates through fetching if the user has the Patreon role. That means is Premium.
-// * Also, if the user is not in the server, it will return false.
+// * This function validates through fetching if the user has the Patreon
+// * role. That means is Premium. Also, if the user is not in the server, it
+// * will return false.
 async function checkingUserPremiumStatus(userId, interaction) {
     let isPremium = false;
 
@@ -261,7 +306,8 @@ async function checkingUserPremiumStatus(userId, interaction) {
         isPremium = false;
     }
 
-    // * If the user it's in the premium whitelist, it will be considered as premium.
+    // * If the user it's in the premium whitelist, it will be considered as
+    // * premium.
     if (premiumWhitelist.includes(userId)) {
         isPremium = true;
     }
@@ -314,7 +360,8 @@ function holographicProbability() {
     const randomNumber = Math.random();
 
     /**
-     * * This algorithm sets the probability of drawing holographic cards as follows:
+     * * This algorithm sets the probability of drawing holographic cards as
+     * * follows:
      * * - Diamond 0.7%
      * * - Golden 2%
      * * - Emerald 7%
@@ -331,51 +378,140 @@ function holographicProbability() {
     }
 }
 
-// * This function ensures that the card name with the title does not exceed the maximum character limit, which is 256.
-// * To make sure that no errors occur, the function will limit the card name by 179 characters as maximum.
-function limitCardName(cardName) {
-    let fixedCardName = cardName;
+// * This function returns the holographic emoji and container color for the
+// * card, based on the holographic type.
+function getHolographicFeature(cardHolographic) {
+    let holographicEmoji = null;
+    let containerColor = null;
 
-    if (fixedCardName.length <= 179) {
-        return fixedCardName;
+    switch (cardHolographic) {
+        case 'Emerald':
+            holographicEmoji = `${process.env.EMOJI_EMERALD}`;
+            containerColor = 0x00b65c;
+
+            break;
+        case 'Golden':
+            holographicEmoji = `${process.env.EMOJI_GOLDEN}`;
+            containerColor = 0xffd700;
+
+            break;
+        case 'Diamond':
+            holographicEmoji = `${process.env.EMOJI_DIAMOND}`;
+            containerColor = 0x00bfff;
+
+            break;
+        default:
+            holographicEmoji = ' ';
+            containerColor = 0x010101;
+
+            break;
     }
 
-    fixedCardName = fixedCardName.slice(0, 180);
-
-    // * If the last character is not a space, it will be removed until it finds one,
-    // * to avoid cutting a word in half.
-    while (fixedCardName[fixedCardName.length - 1] !== ' ') {
-        fixedCardName = fixedCardName.slice(0, -1);
-    }
-
-    // * The original card name is replaced by the new one with an ellipsis.
-    fixedCardName = fixedCardName.slice(0, -1) + '...';
-
-    return fixedCardName;
+    return {
+        holographicEmoji: holographicEmoji,
+        containerColor: containerColor,
+    };
 }
 
-// * This function performs the promotion process based on the user's type, level and rank.
-// * Also, it adds the amount of crystals based on the SCP class and user type.
-async function promotionProcess(classCard, holographicValue, userDocument, isPremium, userReference, cardEmbed, transaction) {
+// * Creates the container for the card.
+function createCardContainer(
+    holographicEmoji,
+    containerColor,
+    cardId,
+    cardClass,
+    cardFile,
+    cardName,
+) {
+    // * Through the word-wrap library, the card name is wrapped to a
+    // * maximum of 46 characters per line, with no indentation. This
+    // * is to ensure that the container size doesn't get longer.
+    const fixedCardName = wrap(cardName, {
+        indent: '',
+        width: 46,
+    });
+
+    // * Card ID.
+    const textCardId = new TextDisplayBuilder()
+        .setContent(`## ${holographicEmoji}  Item #: \`${cardId}\``);
+
+    // * Separator.
+    const separator = new SeparatorBuilder()
+        .setSpacing(SeparatorSpacingSize.Small);
+
+    // * Section.
+    // * Class.
+    const textClass = new TextDisplayBuilder()
+        .setContent(
+            `${process.env.EMOJI_INVADER}  Class\n` +
+                `\`${cardClass}\``,
+        );
+
+    // * File.
+    const buttonFile = new ButtonBuilder()
+        .setURL(cardFile)
+        .setLabel('File')
+        .setEmoji(process.env.EMOJI_FILES)
+        .setStyle(ButtonStyle.Link);
+
+    const section = new SectionBuilder()
+        .addTextDisplayComponents(textClass)
+        .setButtonAccessory(buttonFile);
+
+    // * Image.
+    const mediaGalleryItemComponent = new MediaGalleryItemBuilder()
+        .setURL(`attachment://${cardId}.jpg`);
+
+    const mediaGallery = new MediaGalleryBuilder()
+        .addItems(mediaGalleryItemComponent);
+
+    // * Name.
+    const textName = new TextDisplayBuilder()
+        .setContent(
+            `*${fixedCardName}*`,
+        );
+
+    // * Container.
+    const container = new ContainerBuilder()
+        .setAccentColor(containerColor)
+        .addTextDisplayComponents(textCardId)
+        .addSeparatorComponents(separator)
+        .addSectionComponents(section)
+        .addMediaGalleryComponents(mediaGallery)
+        .addTextDisplayComponents(textName);
+
+    return container;
+}
+
+// * This function performs the promotion process based on the user's type,
+// * level and rank. Also, it adds the amount of crystals based on the SCP class
+// * and user type.
+async function promotionProcess(
+    cardClass,
+    holographicValue,
+    userDocument,
+    isPremium,
+    userReference,
+    transaction,
+) {
     let earnedXP = null;
     let crystals = null;
 
     if (isPremium) {
-        earnedXP = premiumXP[classCard];
-        crystals = premiumCrystals[classCard]; 
+        earnedXP = premiumXP[cardClass];
+        crystals = premiumCrystals[cardClass];
     } else {
-        earnedXP = normalXP[classCard];
-        crystals = normalCrystals[classCard];
+        earnedXP = normalXP[cardClass];
+        crystals = normalCrystals[cardClass];
     }
 
     let maxXP = userXP[userDocument.rank];
 
-    // * The variable determines what type of promotion will be performed (rank or level),
-    // * so that a different type of message is displayed.
+    // * The variable determines what type of promotion will be performed (rank
+    // * or level), so that a different type of message is displayed.
     let promotionType = 'none';
 
-    // * This section retrieves the next rank based on the user's current rank. If the current rank is
-    // * 'Council O5 Member', there is no promotion.
+    // * This section retrieves the next rank based on the user's current rank.
+    // * If the current rank is 'Council O5 Member', there is no promotion.
     let indexCurrentElement = ranks.indexOf(userDocument.rank);
     indexCurrentElement++;
 
@@ -383,23 +519,7 @@ async function promotionProcess(classCard, holographicValue, userDocument, isPre
         indexCurrentElement--;
     }
 
-    let holographicXP = null;
-
-    switch (holographicValue) {
-        case 'Diamond':
-            holographicXP = 100;
-            break;
-        case 'Golden':
-            holographicXP = 70;
-            break;
-        case 'Emerald':
-            holographicXP = 40;
-            break;
-        default:
-            holographicXP = 0;
-    }
-
-    let fullXP = userDocument.xp + earnedXP + holographicXP;
+    let fullXP = userDocument.xp + earnedXP + holographicXP[holographicValue];
 
     let rankPromotion = false;
 
@@ -411,7 +531,8 @@ async function promotionProcess(classCard, holographicValue, userDocument, isPre
     
                 promotionType = 'level';
             } else {
-                // * If the rank is O5 Council Member, after level 500 keeps leveling up.
+                // * If the rank is O5 Council Member, after level 500 keeps
+                // * leveling up.
                 if (userDocument.rank === 'O5 Council Member') {
                     fullXP -= maxXP;
                     userDocument.level++;
@@ -461,7 +582,93 @@ async function promotionProcess(classCard, holographicValue, userDocument, isPre
 
     userDocument.dailyAttemptsRemaining--;
 
-    cardEmbed.setFooter({ text: `${userDocument.dailyAttemptsRemaining} ${userDocument.dailyAttemptsRemaining === 1 ? 'shot' : 'shots'} remaining` });
+    return { promotionType, userDocument, indexCurrentElement };
+}
 
-    return { cardEmbed, promotionType, userDocument, indexCurrentElement };
+// * Creates the results container that will display the results of the capture
+// * operation, such as the holographic type, class, XP, crystals, and
+// * promotion messages.
+function createResultsContainer(
+    holographicValue,
+    holographicEmoji,
+    cardClass,
+    isPremium,
+    promotionResults,
+) {
+    let totalXP = null;
+    let crystals = null;
+
+    if (isPremium) {
+        totalXP = premiumXP[cardClass] + holographicXP[holographicValue];
+        crystals = premiumCrystals[cardClass];
+    } else {
+        totalXP = normalXP[cardClass] + holographicXP[holographicValue];
+        crystals = normalCrystals[cardClass];
+    }
+
+    // * Header.
+    const header = new TextDisplayBuilder()
+        .setContent(`### ${process.env.EMOJI_DICE}  Results`);
+
+    // * Separator.
+    const separator = new SeparatorBuilder()
+        .setSpacing(SeparatorSpacingSize.Small);
+
+    // * Stats.
+    const textStats = new TextDisplayBuilder()
+        .setContent(
+            `${holographicEmoji}  ${cardClass} +\`${totalXP}\` XP\n` +
+                `Crystals: +\`${crystals}\`${process.env.EMOJI_CRYSTAL}`,
+        );
+
+    // * Container.
+    const container = new ContainerBuilder()
+        .setAccentColor(0x010101)
+        .addTextDisplayComponents(header)
+        .addSeparatorComponents(separator)
+        .addTextDisplayComponents(textStats);
+
+    switch (promotionResults.promotionType) {
+        case 'level': {
+            const textLevelUpMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_MIXED_STARS}  Nice, ` +
+                        `\`${promotionResults.userDocument.nickname}\`! You ` +
+                        'are now level ' +
+                        `**${promotionResults.userDocument.level}**. ` +
+                        `${process.env.EMOJI_MIXED_STARS}`,
+                );
+
+            container.addTextDisplayComponents(textLevelUpMessage);
+
+            break;
+        }
+        case 'rank': {
+            const textRankUpMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_MIXED_STARS}  Congrats, ` +
+                        `\`${promotionResults.userDocument.nickname}\`. You ` +
+                        'have been promoted to ' +
+                        `**${ranks[promotionResults.indexCurrentElement]}**. ` +
+                        `${process.env.EMOJI_MIXED_STARS}`,
+                );
+
+            container.addTextDisplayComponents(textRankUpMessage);
+
+            break;
+        }
+    }
+
+    const shotsRemaining = promotionResults.userDocument.dailyAttemptsRemaining;
+
+    // * Shots remaining.
+    const textShotsRemaining = new TextDisplayBuilder()
+        .setContent(
+            `You have \`${shotsRemaining}\` ` +
+                `${shotsRemaining === 1 ? 'shot' : 'shots'} remaining.`,
+        );
+
+    container.addTextDisplayComponents(textShotsRemaining);
+
+    return container;
 }

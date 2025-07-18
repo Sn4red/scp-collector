@@ -36,7 +36,8 @@ async function resetDailyLimit(client) {
                 dailyAttemptsRemaining = 5;
             }
 
-            // * If the user it's in the premium whitelist, it will be considered as premium.
+            // * If the user it's in the premium whitelist, it will be
+            // * considered as premium.
             if (premiumWhitelist.includes(user.id)) {
                 dailyAttemptsRemaining = 10;
             }
@@ -72,20 +73,33 @@ async function resetDailyLimit(client) {
                     numberNonPremiumErrors++;
                 }
 
-                console.log(`${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit *** by ${user.id} (${user.data().nickname})`);
+                console.log(
+                    `${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit ` +
+                        `*** by ${user.id} (${user.data().nickname})`,
+                );
                 console.error(error);
             }
         }
 
-        console.log(`${new Date()} >>> *** The daily attempts of ${numberPremium} Premium user(s) and ${numberNonPremium} Non Premium user(s) have been restarted. ***`);
-        console.log(`*** Errors with Premium users: ${numberPremiumErrors} | Errors with Non Premium users: ${numberNonPremiumErrors} ***`);
+        console.log(
+            `${new Date()} >>> *** The daily attempts of ${numberPremium} ` +
+                `Premium user(s) and ${numberNonPremium} Non Premium user(s) ` +
+                'have been restarted. ***',
+        );
+        console.log(
+            `*** Errors with Premium users: ${numberPremiumErrors} | Errors ` +
+                `with Non Premium users: ${numberNonPremiumErrors} ***`,
+        );
     } catch (error) {
-        console.log(`${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit ***`);
+        console.log(
+            `${new Date()} >>> *** ERROR: Cron Job - resetDailyLimit ***`,
+        );
         console.error(error);
     }
 }
 
-// * This function deletes trade requests documents that are 1 month old, whereas the trade has been completed or not.
+// * This function deletes trade requests documents that are 1 month old,
+// * whereas the trade has been completed or not.
 async function deleteOldTradeRequests() {
     let numberTrades = 0;
     let numberTradesErrors = 0;
@@ -95,7 +109,8 @@ async function deleteOldTradeRequests() {
 
     const tradeReference = database.collection('trade');
     // * Then is used to query the trade requests that are at least 1 month old.
-    const tradeQuery = tradeReference.where('securityCooldown', '<=', oneMonthAgo);
+    const tradeQuery = tradeReference
+        .where('securityCooldown', '<=', oneMonthAgo);
 
     try {
         const tradeSnapshot = await tradeQuery.get();
@@ -109,17 +124,26 @@ async function deleteOldTradeRequests() {
                 numberTrades--;
                 numberTradesErrors++;
 
-                console.log(`${new Date()} >>> *** ERROR: Cron Job - deleteOldTradeRequests *** by ${trade.id}`);
+                console.log(
+                    `${new Date()} >>> *** ERROR: Cron Job - ` +
+                        `deleteOldTradeRequests *** by ${trade.id}`,
+                );
                 console.error(error);
             }
         }
 
         numberTrades += tradeSnapshot.size;
 
-        console.log(`${new Date()} >>> *** ${numberTrades} trade request(s) that were 1 month old have been deleted. ***`);
+        console.log(
+            `${new Date()} >>> *** ${numberTrades} trade request(s) that ` +
+                'were 1 month old have been deleted. ***',
+        );
         console.log(`*** Errors with trades: ${numberTradesErrors} ***`);
     } catch (error) {
-        console.log(`${new Date()} >>> *** ERROR: Cron Job - deleteOldTradeRequests ***`);
+        console.log(
+            `${new Date()} >>> *** ERROR: Cron Job - deleteOldTradeRequests ` +
+                '***',
+        );
         console.error(error);
     }
 }
@@ -136,13 +160,22 @@ async function updateMarket() {
     try {
         await database.runTransaction(async (transaction) => {
             // * According to the given classes, the cards are obtained.
-            const cardResults = await getMarketCards(obtainedClasses, transaction);
+            const cardResults = await getMarketCards(
+                obtainedClasses,
+                transaction,
+            );
 
             // * Holographic values obtained through probability.
             const obtainedHolographics = holographicProbability();
 
-            // * The market is updated with the obtained cards references, holographics values and card IDs.
-            await updateMarketCards(cardResults.cardReferences, obtainedHolographics, cardResults.cardIds, transaction);
+            // * The market is updated with the obtained cards references,
+            // * holographics values and card IDs.
+            await updateMarketCards(
+                cardResults.cardReferences,
+                obtainedHolographics,
+                cardResults.cardIds,
+                transaction,
+            );
         });
 
         console.log(`${new Date()} >>> *** Market was updated. ***`);
@@ -186,17 +219,26 @@ async function resetUserMarketFields() {
                 numberUsers--;
                 numberUsersErrors++;
 
-                console.log(`${new Date()} >>> *** ERROR: Cron Job - resetUserMarketFields *** by ${user.id} (${user.data().nickname})`);
+                console.log(
+                    `${new Date()} >>> *** ERROR: Cron Job - ` +
+                        `resetUserMarketFields *** by ${user.id} ` +
+                        `(${user.data().nickname})`,
+                );
                 console.error(error);
             }
         }
 
         numberUsers += userSnapshot.size;
 
-        console.log(`${new Date()} >>> *** ${numberUsers} User(s) with market-related fields have been resetted. ***`);
+        console.log(
+            `${new Date()} >>> *** ${numberUsers} User(s) with ` +
+                'market-related fields have been resetted. ***',
+        );
         console.log(`*** Errors with users: ${numberUsersErrors} ***`);
     } catch (error) {
-        console.log(`${new Date()} >>> *** ERROR: Cron Job - resetUserMarketFields ***`);
+        console.log(
+            `${new Date()} >>> *** ERROR: Cron Job - resetUserMarketFields ***`,
+        );
         console.error(error);
     }
 }
@@ -225,7 +267,8 @@ async function giveCrystalsEndOfMonth(client) {
                 hasPremium = false;
             }
 
-            // * If the user it's in the premium whitelist, it will be considered as premium.
+            // * If the user it's in the premium whitelist, it will be
+            // * considered as premium.
             if (premiumWhitelist.includes(user.id)) {
                 hasPremium = true;
             }
@@ -237,7 +280,8 @@ async function giveCrystalsEndOfMonth(client) {
                     await database.runTransaction(async (transaction) => {
 
                         await transaction.update(user.ref, {
-                            crystals: firebase.firestore.FieldValue.increment(1000),
+                            crystals: firebase
+                                .firestore.FieldValue.increment(1000),
                         });
                     });
                 }
@@ -245,15 +289,25 @@ async function giveCrystalsEndOfMonth(client) {
                 numberUsers--;
                 numberUsersErrors++;
 
-                console.log(`${new Date()} >>> *** ERROR: Cron Job - giveCrystalsEndOfMonth *** by ${user.id} (${user.data().nickname})`);
+                console.log(
+                    `${new Date()} >>> *** ERROR: Cron Job - ` +
+                        `giveCrystalsEndOfMonth *** by ${user.id} ` +
+                        `(${user.data().nickname})`,
+                );
                 console.error(error);
             }
         }
 
-        console.log(`${new Date()} >>> *** 1000 crystals were given to ${numberUsers} Premium user(s). ***`);
+        console.log(
+            `${new Date()} >>> *** 1000 crystals were given to ` +
+                `${numberUsers} Premium user(s). ***`,
+        );
         console.log(`*** Errors with Premium users: ${numberUsersErrors} ***`);
     } catch (error) {
-        console.log(`${new Date()} >>> *** ERROR: Cron Job - giveCrystalsEndOfMonth ***`);
+        console.log(
+            `${new Date()} >>> *** ERROR: Cron Job - giveCrystalsEndOfMonth ` +
+                '***',
+        );
         console.error(error);
     }
 }
@@ -273,7 +327,8 @@ function startCronJobs(client) {
     });
 
     // * The cron task executes the update market function and the
-    // * reset user market-related fields function every Sunday at midnight (12:05).
+    // * reset user market-related fields function every Sunday at midnight
+    // * (12:05).
     cron.schedule('5 0 * * 0', async () => {
         console.log('*** Updating market ***');
         await updateMarket();
@@ -282,13 +337,14 @@ function startCronJobs(client) {
         await resetUserMarketFields();
     });
 
-    // * The cron task executes the give crystals function at the end of the month
-    // * at midnight (12:20).
+    // * The cron task executes the give crystals function at the end of the
+    // * month at midnight (12:20).
     cron.schedule('20 0 28-31 * *', async () => {
         const now = moment();
         const endOfMonth = now.clone().endOf('month');
 
-        // * If the current date is the last day of the month, the function is executed.
+        // * If the current date is the last day of the month, the function is
+        // * executed.
         if (now.isSame(endOfMonth, 'day')) {
             console.log('*** Giving 1000 crystals to Premium users ***');
             await giveCrystalsEndOfMonth(client);
@@ -337,24 +393,35 @@ async function getMarketCards(obtainedClasses, transaction) {
         let uniqueCardFound = false;
 
         while (!uniqueCardFound) {
-            // * Retrieves through Aggregation Query the numbers of documents contained in the collection.
-            const cardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
+            // * Retrieves through Aggregation Query the numbers of documents
+            // * contained in the collection.
+            const cardReference = database
+                .collection('card')
+                .doc(obtainedClass)
+                .collection(obtainedClass.toLowerCase());
             const cardSnapshot = await transaction.get(cardReference.count());
 
             const classCount = cardSnapshot.data().count;
 
-            // * Using the Math object, a random number is obtained based on the number of cards,
-            // * and a random card is selected matching the random number with the 'random' field in the document.
-            // * We add 1 to the result in case it returns 0.
+            // * Using the Math object, a random number is obtained based on
+            // * the number of cards, and a random card is selected matching
+            // * the random number with the 'random' field in the document. 1 is
+            // * added to the result in case it returns 0.
             const randomNumber = Math.floor(Math.random() * classCount) + 1;
             
-            const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
-            const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
-            const selectedCardSnapshot = await transaction.get(selectedCardQuery);
+            const selectedCardReference = database
+                .collection('card')
+                .doc(obtainedClass)
+                .collection(obtainedClass.toLowerCase());
+            const selectedCardQuery = selectedCardReference
+                .where('random', '==', randomNumber);
+            const selectedCardSnapshot = await transaction
+                .get(selectedCardQuery);
 
             const cardDocument = selectedCardSnapshot.docs[0];
 
-            //  * This verifies if the document is already in the array (repeated).
+            //  * This verifies if the document is already in the array
+            // * (repeated).
             if (!cardReferences.some(ref => ref.id === cardDocument.id)) {
                 cardReferences.push(cardDocument.ref);
                 cardIds.push(cardDocument.id);
@@ -377,7 +444,8 @@ function holographicProbability() {
         const randomNumber = Math.random();
 
         /**
-         * * This algorithm sets the probability of drawing holographic cards as follows:
+         * * This algorithm sets the probability of drawing holographic cards
+         * * as follows:
          * * - Diamond 5%
          * * - Golden 10%
          * * - Emerald 20%
@@ -398,13 +466,25 @@ function holographicProbability() {
 }
 
 // * This function updates the market with the new cards and holographics.
-async function updateMarketCards(cardReferences, obtainedHolographics, cardIds, transaction) {
+async function updateMarketCards(
+    cardReferences,
+    obtainedHolographics,
+    cardIds,
+    transaction,
+) {
     const marketReference = database.collection('market').doc('market');
 
     // * This calculates the date of the following Sunday at midnight (12:05).
-    const nextSundayMidnight = moment().day(7).startOf('day').add(1, 'days').utcOffset('-05:00').set({ minute: 5 }).toDate();
+    const nextSundayMidnight = moment()
+        .day(7)
+        .startOf('day')
+        .add(1, 'days')
+        .utcOffset('-05:00')
+        .set({ minute: 5 })
+        .toDate();
 
-    // * The cards ID are also inserted for a faster process when a user buys a card.
+    // * The cards ID are also inserted for a faster process when a user buys a
+    // * card.
     await transaction.update(marketReference, {
         card1: cardReferences[0],
         card2: cardReferences[1],

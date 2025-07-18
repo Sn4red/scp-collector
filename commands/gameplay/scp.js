@@ -1,4 +1,13 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    MessageFlags,
+    TextDisplayBuilder,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ContainerBuilder,
+    ComponentType } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -11,35 +20,58 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
 
-        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
-        await interaction.deferReply({ ephemeral: true });
+        // * Notify the Discord API that the interaction was received
+        // * successfully and set a maximun timeout of 15 minutes.
+        await interaction.deferReply({
+            flags: [MessageFlags.Ephemeral],
+        });
 
         const userReference = database.collection('user').doc(userId);
         const userSnapshot = await userReference.get();
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
+            const errorMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_ERROR}  You are not registered! ` +
+                        'Use /`card` to start playing.',
+                );
+
+            await interaction.editReply({
+                components: [errorMessage],
+                flags: [MessageFlags.IsComponentsV2],
+            });
             return;
         }
             
         const user = userSnapshot.data();
 
-        // * Aggregation query to the database counting the number of obtained SCPs.
-        const obtainingReference = database.collection('user').doc(userId).collection('obtaining');
+        // * Aggregation query to the database counting the number of obtained
+        // * SCPs.
+        const obtainingReference = database.collection('user')
+            .doc(userId).collection('obtaining');
         let obtainingSnapshot = await obtainingReference.count().get();
         const SCPCount = obtainingSnapshot.data().count;
 
         // ! If the user has no SCPs, returns an error message.
         if (SCPCount === 0) {
-            await interaction.editReply(`${process.env.EMOJI_ERROR}  You don't have any SCPs captured!`);
+            const errorMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_ERROR}  You don't have any SCPs ` +
+                        'captured!',
+                );
+
+            await interaction.editReply({
+                components: [errorMessage],
+                flags: [MessageFlags.IsComponentsV2],
+            });
             return;
         }
 
         /**
-         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-         * * The command passes all validations and the operation is performed. *
-         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         * * The command passes all validations and the operation is performed.*
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          */
 
         // * The variable is being reutilized to store all the user's SCPs.
@@ -48,14 +80,25 @@ module.exports = {
         const sortedCards = await cardsSorting(obtainingSnapshot);
 
         // * The list is numerically sorted considering the ID after 'SCP-'
-        // * (from the fifh character onward), and converts the collection's ID list into an array.
-        const cardsOrder = Array.from(sortedCards.cardsCount.keys()).sort((a, b) => parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10));
+        // * (from the fifth character onward), and converts the collection's ID
+        // * list into an array.
+        const cardsOrder = Array.from(sortedCards.cardsCount.keys())
+            .sort((a, b) => parseInt(
+                a.slice(4), 10) - parseInt(b.slice(4), 10),
+            );
 
-        // * The cards are listed by iterating in a single string to display it in the embed.
-        let cardsList = '';
-
-        const embeds = [];
+        // * The cards are listed by iterating in a single string to display it
+        // * in the container.
+        let cardList = '';
+        // * 'cardLists' will store the accumulated text of 'cardList' and it
+        // * will be used when creating the container.
+        const cardLists = [];
+        // * 'pages' will store the current page number of the user.
         const pages = {};
+        // * 'totalContainers' will store the total number of containers.
+        let totalContainers = 0;
+        // * 'entriesPerPageLimit' will store the number of entries per page
+        // * (10 entries per page).
         let entriesPerPageLimit = 0;
 
         cardsOrder.forEach((element, index, array) => {
@@ -69,102 +112,127 @@ module.exports = {
 
             const cardName = limitCardName(card.name);
 
-            cardsList += `${process.env.EMOJI_WHITE_DASH}**\`(${quantity})\`** \`${element}\` // \`${cardName}\` - **\`${classCard}\`**    ${process.env.EMOJI_GREEN_DOT}**${emeraldQuantity}** ${process.env.EMOJI_YELLOW_DOT}**${goldenQuantity}** ${process.env.EMOJI_BLUE_DOT}**${diamondQuantity}** \n`;
+            cardList += `**\`[${quantity}]\`** \`${element}\` -> ` +
+                `\`${cardName}\` - **\`${classCard}\`**    ` +
+                `${process.env.EMOJI_GREEN_DOT}**${emeraldQuantity}** ` +
+                `${process.env.EMOJI_YELLOW_DOT}**${goldenQuantity}** ` +
+                `${process.env.EMOJI_BLUE_DOT}**${diamondQuantity}** \n`;
 
             entriesPerPageLimit++;
                     
-            // * When 10 card entries are accumulated, they are stored on a single page and the variable is reset.
+            // * When 10 card entries are accumulated, they are stored on a
+            // * single page and the variable is reset.
             if (entriesPerPageLimit == 10) {
-                embeds.push(new EmbedBuilder()
-                                .setColor(0x010101)
-                                .setTitle(`${process.env.EMOJI_PAGE}  __**Collection of ${user.nickname}**__`)
-                                .setDescription(cardsList));
+                cardLists.push(cardList);
 
-                cardsList = '';
+                totalContainers++;
+                cardList = '';
                 entriesPerPageLimit = 0;
             }
 
-            // * The validation is performed here for the last page in case 10 entries are not accumulated.
+            // * The validation is performed here for the last page in case 10
+            // * entries are not accumulated.
             if (index == array.length - 1) {
-                // * If there are only 10 entries, the execution will still enter here, which will result in an error because 'cardsList'
-                // * no longer contains text and it will attempt to add this in a new embed. So, this validation is performed to prevent this.
-                if (cardsList.length == 0) {
+                // * If there are only 10 entries, the execution will still
+                // * enter here, which will result in an error because
+                // * 'cardList' no longer contains text and it will attempt to
+                // * add this in a new container. So, this validation is
+                // * performed to prevent this.
+                if (cardList.length == 0) {
                     // * 'return' is used for 'forEach'.
                     return;
                 }
 
-                embeds.push(new EmbedBuilder()
-                                .setColor(0x010101)
-                                .setTitle(`${process.env.EMOJI_PAGE}  __**Collection of ${user.nickname}**__`)
-                                .setDescription(cardsList));
+                cardLists.push(cardList);
+
+                totalContainers++;
             }
         });
 
-        // * A new ActionRow is created containing 2 buttons.
-        const userRow = (id) => {
-            const row = new ActionRowBuilder();
+        // * Initializes the pagination to 0, which this is the first page when
+        // * the command is executed.
+        pages[userId] = 0;
 
-            const previousButton = new ButtonBuilder()
-                .setCustomId('previousButton')
-                .setStyle('Secondary')
-                .setEmoji(`${process.env.EMOJI_WHITE_ARROW_LEFT}`)
-                .setDisabled(pages[id] === 0);
+        // * The initial container is created.
+        const container = createContainer(
+            user.nickname,
+            SCPCount,
+            cardLists[pages[userId]],
+            pages[userId],
+            totalContainers,
+        );
 
-            const nextButton = new ButtonBuilder()
-                .setCustomId('nextButton')
-                .setStyle('Secondary')
-                .setEmoji(`${process.env.EMOJI_WHITE_ARROW_RIGHT}`)
-                .setDisabled(pages[id] === embeds.length - 1);
-
-            row.addComponents(previousButton, nextButton);
-
-            return row;
-        };
-
-        pages[userId] = pages[userId] || 0;
-
-        const embed = embeds[pages[userId]];
+        // * Although the reply is ephemeral and only the command executor can
+        // * interact with it, this filter is kept for security purposes and
+        // * code clarity.
         const collectorFilter = (x) => x.user.id === userId;
         const time = 1000 * 60 * 5;
 
         const reply = await interaction.editReply({
-            embeds: [embed],
-            components: [userRow(userId)],
+            components: [container],
+            flags: [MessageFlags.IsComponentsV2],
         });
 
-        const collector = reply.createMessageComponentCollector({ filter: collectorFilter, time: time });
+        const collector = reply.createMessageComponentCollector({
+            componentType: ComponentType.Button,
+            filter: collectorFilter,
+            time: time,
+        });
 
+        // * Collector listener for the navigation buttons.
         collector.on('collect', async (button) => {
+            // * Validates the button interaction so it prevents unexpected
+            // * errors (it basically makes sure that the buttons was actually
+            // * clicked).
             if (!button) {
                 return;
             }
-        
+
+            // * Interaction is acknowledged to prevent the interaction timeout.
             button.deferUpdate();
         
-            if (button.customId !== 'previousButton' && button.customId !== 'nextButton') {
+            // * Validates that the button clicked is one of the navigation
+            // * buttons (there is just 2 buttons, but it clarifies the
+            // * intention).
+            if (button.customId !== 'previousButton' &&
+                button.customId !== 'nextButton') {
                 return;
             }
         
+            // * If the user is going backwards but the page is not the first
+            // * one, the pagination is decremented.
+            // * If the user is going forwards but the page is not the last
+            // * one, the pagination is incremented.
             if (button.customId === 'previousButton' && pages[userId] > 0) {
                 --pages[userId];
-            } else if (button.customId === 'nextButton' && pages[userId] < embeds.length - 1) {
+            } else if (button.customId === 'nextButton' &&
+                pages[userId] < totalContainers - 1) {
                 ++pages[userId];
             }
+
+            // * The container is recreated to update the page with the new
+            // * information.
+            const updatedContainer = createContainer(
+                user.nickname,
+                SCPCount,
+                cardLists[pages[userId]],
+                pages[userId],
+                totalContainers,
+            );
         
             await interaction.editReply({
-                embeds: [embeds[pages[userId]]],
-                components: [userRow(userId)],
+                components: [updatedContainer],
             });
         });
     },
 };
 
-
 // * This function sorts the cards by quantity and stores the data in maps.
 async function cardsSorting(obtainingSnapshot) {
     // * 'cardsCount' will store the quantity repeated per card.
     // * 'cards' will store the complete data of the card.
-    // * 'cardsClass' will store the classes of the cards (they are not a field of the card but of its collection's name in Firebase).
+    // * 'cardsClass' will store the classes of the cards (they are not a field
+    // * of the card but of its collection's name in Firebase).
     const cardsCount = new Map();
     const cards = new Map();
     const cardsClass = new Map();
@@ -176,8 +244,9 @@ async function cardsSorting(obtainingSnapshot) {
 
     const promises = [];
 
-    // * Retrieves cards by the field that references them and stores the document in an array.
-    // * This is to obtain the card data (the name is needed for the listing).
+    // * Retrieves cards by the field that references them and stores the
+    // * document in an array. This is to obtain the card data (the name is
+    // * needed for the listing).
     for (const obtaining of obtainingSnapshot.docs) {
         const obtainingDocument = obtaining.data();
 
@@ -233,11 +302,20 @@ async function cardsSorting(obtainingSnapshot) {
         cardsClass.set(cardId, x.ref.parent.parent.id);
     });
 
-    return { cardsCount, cards, cardsClass, emeraldCards, goldenCards, diamondCards };
+    return {
+        cardsCount,
+        cards,
+        cardsClass,
+        emeraldCards,
+        goldenCards,
+        diamondCards,
+    };
 }
 
-// * This function ensures that the name of the cards all together don't exceed the maximum character limit of the embed description, which is 4096.
-// * To make sure that no errors occur, and for a better visual, the function will limit the card name by 80 characters as maximum.
+// * This function ensures that the name of the cards all together don't exceed
+// * the maximum character limit of the Text Display. To make sure that no
+// * errors occur, and for a better visual, the function will limit the card
+// * name by 80 characters as maximum.
 function limitCardName(cardName) {
     let fixedCardName = cardName;
 
@@ -247,8 +325,8 @@ function limitCardName(cardName) {
 
     fixedCardName = fixedCardName.slice(0, 81);
 
-    // * If the last character is not a space, it will be removed until it finds one,
-    // * to avoid cutting a word in half.
+    // * If the last character is not a space, it will be removed until it finds
+    // * one, to avoid cutting a word in half.
     while (fixedCardName[fixedCardName.length - 1] !== ' ') {
         fixedCardName = fixedCardName.slice(0, -1);
     }
@@ -257,4 +335,55 @@ function limitCardName(cardName) {
     fixedCardName = fixedCardName.slice(0, -1) + '...';
 
     return fixedCardName;
+}
+
+// * Creates a container simulating a single page of the collection.
+function createContainer(
+    nickname,
+    SCPCount,
+    cardList,
+    currentPage,
+    totalPages,
+) {
+    // * Header.
+    const header = new TextDisplayBuilder()
+        .setContent(
+            `## ${process.env.EMOJI_PAGE}  ` +
+                `${nickname}'s Collection - ${SCPCount}`,
+        );
+
+    // * Separator.
+    const separator = new SeparatorBuilder()
+        .setSpacing(SeparatorSpacingSize.Small);
+
+    // * Card list.
+    const textCardList = new TextDisplayBuilder()
+        .setContent(cardList);
+
+    // * Navigation Action Row.
+    const navigationRow = new ActionRowBuilder();
+
+    const previousButton = new ButtonBuilder()
+        .setCustomId('previousButton')
+        .setStyle('Secondary')
+        .setEmoji(`${process.env.EMOJI_WHITE_ARROW_LEFT}`)
+        .setDisabled(currentPage === 0);
+
+    const nextButton = new ButtonBuilder()
+        .setCustomId('nextButton')
+        .setStyle('Secondary')
+        .setEmoji(`${process.env.EMOJI_WHITE_ARROW_RIGHT}`)
+        .setDisabled(currentPage === totalPages - 1);
+
+    navigationRow.addComponents(previousButton, nextButton);
+
+    // * Container.
+    const container = new ContainerBuilder()
+        .setAccentColor(0x010101)
+        .addTextDisplayComponents(header)
+        .addSeparatorComponents(separator)
+        .addTextDisplayComponents(textCardList)
+        .addActionRowComponents(navigationRow);
+
+    return container;
 }

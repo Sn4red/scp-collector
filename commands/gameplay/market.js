@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    AttachmentBuilder,
+    MessageFlags,
+    TextDisplayBuilder } = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
 const firebase = require('../../utils/firebase');
 const moment = require('moment');
@@ -9,10 +13,16 @@ module.exports = {
     cooldown: 60 * 5,
     data: new SlashCommandBuilder()
         .setName('market')
-        .setDescription('A weekly market where you can purchase up to 5 cards using your crystals.'),
+        .setDescription(
+            'A weekly market where you can purchase up to 5 cards using your ' +
+                'crystals.',
+        ),
     async execute(interaction) {
-        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
-        await interaction.deferReply({ ephemeral: true });
+        // * Notify the Discord API that the interaction was received
+        // * successfully and set a maximun timeout of 15 minutes.
+        await interaction.deferReply({
+            flags: [MessageFlags.Ephemeral],
+        });
 
         const userId = interaction.user.id;
 
@@ -21,7 +31,16 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply({ content: `${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`, ephemeral: true });
+            const errorMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_ERROR}  You are not registered! ` +
+                        'Use /`card` to start playing.',
+                );
+
+            await interaction.editReply({
+                components: [errorMessage],
+                flags: [MessageFlags.IsComponentsV2],
+            });
             return;
         }
 
@@ -30,19 +49,32 @@ module.exports = {
 
         // ! If the market is not available, returns an error message.
         if (!marketSnapshot.exists) {
-            await interaction.editReply({ content: `${process.env.EMOJI_ERROR}  The market is not available at the moment. Please, try again later.`, ephemeral: true });
+            const errorMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_ERROR}  The market is not available ` +
+                        'at the moment. Please, try again later.',
+                );
+
+            await interaction.editReply({
+                components: [errorMessage],
+                flags: [MessageFlags.IsComponentsV2],
+            });
             return;
         }
 
         /**
-          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-          * * The command passes all validations and the operation is performed. *
-          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-          */
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         * * The command passes all validations and the operation is performed.*
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         */
 
         const userDocument = userSnapshot.data();
         const marketDocument = marketSnapshot.data();
-        const deadline = moment.unix(marketDocument.deadline._seconds).utcOffset('-05:00').format('YYYY/MM/DD hh:mm a [UTC-5]');
+
+        // * Gets the deadline of the market stored in timestamp format and
+        // * formats it to a readable format.
+        const deadline = moment.unix(marketDocument.deadline._seconds)
+            .utcOffset('-05:00').format('YYYY/MM/DD hh:mm a [UTC-5]');
 
         const marketDocuments = [
             marketDocument.card1,
@@ -72,6 +104,8 @@ module.exports = {
             cardIds.push(snapshot.id);
 
             // * Pushing the classes.
+            // * It splits the reference path in an array to get the class name
+            // * of the card.
             const pathSegment = snapshot.ref.path.split('/');
             const className = pathSegment[1];
 
@@ -89,22 +123,42 @@ module.exports = {
             marketDocument.holographic5,
         ];
 
-        // * Uses the AttachmentBuilder class to process the file and be attached in the reply.
-        const attachment = await displayMarket(userDocument, cardHolographics, cardIds, cardClasses, cardNames, deadline);
+        // * Uses the AttachmentBuilder class to process the file and be
+        // * attached in the reply.
+        const attachment = await displayMarket(
+            userDocument,
+            cardHolographics,
+            cardIds,
+            cardClasses,
+            cardNames,
+            deadline,
+        );
 
-        await interaction.editReply({ files: [attachment] });
+        await interaction.editReply({
+            files: [attachment],
+        });
     },
 };
 
 // * This function draws all the user's card and returns it as an attachment.
-async function displayMarket(userDocument, cardHolographics, cardIds, cardClasses, cardNames, deadline) {
+async function displayMarket(
+    userDocument,
+    cardHolographics,
+    cardIds,
+    cardClasses,
+    cardNames,
+    deadline,
+) {
     // * Creates a canvas of 571x527 pixels and obtain its context.
     // * The context will be used to modify the canvas.
     const canvas = Canvas.createCanvas(571, 527);
     const context = canvas.getContext('2d');
 
-    // * Loads the background image onto the canvas and uses its dimensions to stretch it. 
-    const background = await Canvas.loadImage('./images/market/background-market.png');
+    // * Loads the background image onto the canvas and uses its dimensions to
+    // * stretch it.
+    const background = await Canvas.loadImage(
+        './images/market/background-market.png',
+    );
     context.drawImage(background, 0, 0, canvas.width, canvas.height);
 
     // * Market border.
@@ -121,7 +175,11 @@ async function displayMarket(userDocument, cardHolographics, cardIds, cardClasse
     context.font = 'bold 20px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.textAlign = 'center';
-    context.fillText(`CRYSTALS: ${userDocument.crystals}`, canvas.width / 2, 40);
+    context.fillText(
+        `CRYSTALS: ${userDocument.crystals}`,
+        canvas.width / 2,
+        40,
+    );
 
     // * Card textures.
     const cardPositions = [
@@ -225,12 +283,26 @@ async function displayMarket(userDocument, cardHolographics, cardIds, cardClasse
         let cardName = cardNames[i];
 
         // * Displaying card texture.
-        const card = await Canvas.loadImage(`./images/market/${cardHolographics[i].toLowerCase()}-card.png`);
-        context.drawImage(card, cardPositions[i].x, cardPositions[i].y, 230, 260);
+        const card = await Canvas.loadImage(
+            `./images/market/${cardHolographics[i].toLowerCase()}-card.png`,
+        );
+        context.drawImage(
+            card,
+            cardPositions[i].x,
+            cardPositions[i].y,
+            230,
+            260,
+        );
 
         // * Displaying card image.
         const cardImage = await Canvas.loadImage(`./images/scp/${cardId}.jpg`);
-        context.drawImage(cardImage, cardImagesPositions[i].x, cardImagesPositions[i].y, 117, 86);
+        context.drawImage(
+            cardImage,
+            cardImagesPositions[i].x,
+            cardImagesPositions[i].y,
+            117,
+            86,
+        );
 
         // * Displaying card ID.
         context.font = 'bold 13px Roboto Condensed';
@@ -242,12 +314,21 @@ async function displayMarket(userDocument, cardHolographics, cardIds, cardClasse
         context.font = 'bold 9px Roboto Condensed';
         context.fillStyle = '#000000';
         context.textAlign = 'center';
-        context.fillText(cardClass, cardClassesPositions[i].x, cardClassesPositions[i].y);
+        context.fillText(
+            cardClass,
+            cardClassesPositions[i].x,
+            cardClassesPositions[i].y,
+        );
 
         // *  Displaying card name.
         const maxWidth = 119;
         const initialFontSize = 8;
-        const textFitted = fitTextToWidth(context, cardName, maxWidth, initialFontSize);
+        const textFitted = fitTextToWidth(
+            context,
+            cardName,
+            maxWidth,
+            initialFontSize,
+        );
 
         context.font = `bold ${textFitted.fontSize}px Roboto Condensed`;
         context.fillStyle = '#000000';
@@ -256,26 +337,30 @@ async function displayMarket(userDocument, cardHolographics, cardIds, cardClasse
         if (textFitted.splitName) {
             let textLength = cardName.length;
     
-            // * If the card name has more than 75 characters, it will be replaced the rest with an ellipsis.
+            // * If the card name has more than 75 characters, it will be
+            // * replaced the rest with an ellipsis.
             if (textLength > 75) {
                 cardName = cardName.slice(0, 76);
     
-                // * If the last character is not a space, it will be removed until it finds one,
-                // * to avoid cutting a word in half.
+                // * If the last character is not a space, it will be removed
+                // * until it finds one, to avoid cutting a word in half.
                 while (cardName[cardName.length - 1] !== ' ') {
                     cardName = cardName.slice(0, -1);
                 }
                 
-                // * The original card name is replaced by the new one with an ellipsis.
+                // * The original card name is replaced by the new one with an
+                // * ellipsis.
                 cardName = cardName.slice(0, -1) + '...';
                 textLength = cardName.length;
             }
     
-            // * Getting the index where the card name will be split, taking the first half with a 60%.
-            // * The number is rounded to avoid getting a decimal number.
+            // * Getting the index where the card name will be split, taking
+            // * the first half with a 60%. The number is rounded to avoid
+            // * getting a decimal number.
             let splitIndex = Math.round(textLength * 0.6);
     
-            // * If the split index is in the middle of a word, it will be moved to the left until it finds a space.
+            // * If the split index is in the middle of a word, it will be
+            // * moved to the left until it finds a space.
             while (cardName[splitIndex] !== ' ') {
                 splitIndex--;
             }
@@ -283,10 +368,22 @@ async function displayMarket(userDocument, cardHolographics, cardIds, cardClasse
             const firstHalf = cardName.slice(0, splitIndex);
             const secondHalf = cardName.slice(splitIndex + 1);
     
-            context.fillText(firstHalf, cardNamesPositions[i].x, cardNamesPositions[i].y);
-            context.fillText(secondHalf, cardNamesPositions[i].x, cardNamesPositions[i].y + 10);
+            context.fillText(
+                firstHalf,
+                cardNamesPositions[i].x,
+                cardNamesPositions[i].y,
+            );
+            context.fillText(
+                secondHalf,
+                cardNamesPositions[i].x,
+                cardNamesPositions[i].y + 10,
+            );
         } else {
-            context.fillText(cardName, cardNamesPositions[i].x, cardNamesPositions[i].y);
+            context.fillText(
+                cardName,
+                cardNamesPositions[i].x,
+                cardNamesPositions[i].y,
+            );
         }
     }
 
@@ -296,61 +393,121 @@ async function displayMarket(userDocument, cardHolographics, cardIds, cardClasse
 
     if (userDocument.card1Purchased) {
         context.beginPath();
-        context.moveTo(firstXPositions.firstLineMoveToX, firstXPositions.firstLineMoveToY);
-        context.lineTo(firstXPositions.firstLineLineToX, firstXPositions.firstLineLineToY);
+        context.moveTo(
+            firstXPositions.firstLineMoveToX,
+            firstXPositions.firstLineMoveToY,
+        );
+        context.lineTo(
+            firstXPositions.firstLineLineToX,
+            firstXPositions.firstLineLineToY,
+        );
         context.stroke();
 
         context.beginPath();
-        context.moveTo(firstXPositions.secondLineMoveToX, firstXPositions.secondLineMoveToY);
-        context.lineTo(firstXPositions.secondLineLineToX, firstXPositions.secondLineLineToY);
+        context.moveTo(
+            firstXPositions.secondLineMoveToX,
+            firstXPositions.secondLineMoveToY,
+        );
+        context.lineTo(
+            firstXPositions.secondLineLineToX,
+            firstXPositions.secondLineLineToY,
+        );
         context.stroke();
     }
 
     if (userDocument.card2Purchased) {
         context.beginPath();
-        context.moveTo(secondXPositions.firstLineMoveToX, secondXPositions.firstLineMoveToY);
-        context.lineTo(secondXPositions.firstLineLineToX, secondXPositions.firstLineLineToY);
+        context.moveTo(
+            secondXPositions.firstLineMoveToX,
+            secondXPositions.firstLineMoveToY,
+        );
+        context.lineTo(
+            secondXPositions.firstLineLineToX,
+            secondXPositions.firstLineLineToY,
+        );
         context.stroke();
 
         context.beginPath();
-        context.moveTo(secondXPositions.secondLineMoveToX, secondXPositions.secondLineMoveToY);
-        context.lineTo(secondXPositions.secondLineLineToX, secondXPositions.secondLineLineToY);
+        context.moveTo(
+            secondXPositions.secondLineMoveToX,
+            secondXPositions.secondLineMoveToY,
+        );
+        context.lineTo(
+            secondXPositions.secondLineLineToX,
+            secondXPositions.secondLineLineToY,
+        );
         context.stroke();
     }
 
     if (userDocument.card3Purchased) {
         context.beginPath();
-        context.moveTo(thirdXPositions.firstLineMoveToX, thirdXPositions.firstLineMoveToY);
-        context.lineTo(thirdXPositions.firstLineLineToX, thirdXPositions.firstLineLineToY);
+        context.moveTo(
+            thirdXPositions.firstLineMoveToX,
+            thirdXPositions.firstLineMoveToY,
+        );
+        context.lineTo(
+            thirdXPositions.firstLineLineToX,
+            thirdXPositions.firstLineLineToY,
+        );
         context.stroke();
 
         context.beginPath();
-        context.moveTo(thirdXPositions.secondLineMoveToX, thirdXPositions.secondLineMoveToY);
-        context.lineTo(thirdXPositions.secondLineLineToX, thirdXPositions.secondLineLineToY);
+        context.moveTo(
+            thirdXPositions.secondLineMoveToX,
+            thirdXPositions.secondLineMoveToY,
+        );
+        context.lineTo(
+            thirdXPositions.secondLineLineToX,
+            thirdXPositions.secondLineLineToY,
+        );
         context.stroke();
     }
 
     if (userDocument.card4Purchased) {
         context.beginPath();
-        context.moveTo(fourthXPositions.firstLineMoveToX, fourthXPositions.firstLineMoveToY);
-        context.lineTo(fourthXPositions.firstLineLineToX, fourthXPositions.firstLineLineToY);
+        context.moveTo(
+            fourthXPositions.firstLineMoveToX,
+            fourthXPositions.firstLineMoveToY,
+        );
+        context.lineTo(
+            fourthXPositions.firstLineLineToX,
+            fourthXPositions.firstLineLineToY,
+        );
         context.stroke();
 
         context.beginPath();
-        context.moveTo(fourthXPositions.secondLineMoveToX, fourthXPositions.secondLineMoveToY);
-        context.lineTo(fourthXPositions.secondLineLineToX, fourthXPositions.secondLineLineToY);
+        context.moveTo(
+            fourthXPositions.secondLineMoveToX,
+            fourthXPositions.secondLineMoveToY,
+        );
+        context.lineTo(
+            fourthXPositions.secondLineLineToX,
+            fourthXPositions.secondLineLineToY,
+        );
         context.stroke();
     }
 
     if (userDocument.card5Purchased) {
         context.beginPath();
-        context.moveTo(fifthXPositions.firstLineMoveToX, fifthXPositions.firstLineMoveToY);
-        context.lineTo(fifthXPositions.firstLineLineToX, fifthXPositions.firstLineLineToY);
+        context.moveTo(
+            fifthXPositions.firstLineMoveToX,
+            fifthXPositions.firstLineMoveToY,
+        );
+        context.lineTo(
+            fifthXPositions.firstLineLineToX,
+            fifthXPositions.firstLineLineToY,
+        );
         context.stroke();
 
         context.beginPath();
-        context.moveTo(fifthXPositions.secondLineMoveToX, fifthXPositions.secondLineMoveToY);
-        context.lineTo(fifthXPositions.secondLineLineToX, fifthXPositions.secondLineLineToY);
+        context.moveTo(
+            fifthXPositions.secondLineMoveToX,
+            fifthXPositions.secondLineMoveToY,
+        );
+        context.lineTo(
+            fifthXPositions.secondLineLineToX,
+            fifthXPositions.secondLineLineToY,
+        );
         context.stroke();
     }
 
@@ -364,12 +521,15 @@ async function displayMarket(userDocument, cardHolographics, cardIds, cardClasse
     context.textAlign = 'center';
     context.fillText(`ENDS ON ${deadline}`, canvas.width / 2, 485);
 
-    return new AttachmentBuilder(await canvas.encode('png'), { name: 'market.png' });
+    return new AttachmentBuilder(
+        await canvas.encode('png'),
+        { name: 'market.png' },
+    );
 }
 
-// * This function adjusts the font size of the card's name to fit into the card properly.
-// * If it is too long, it will just lower the font size to 6 (originally is 8) and tell
-// * the function to split the name into two lines.
+// * This function adjusts the font size of the card's name to fit into the card
+// * properly. If it is too long, it will just lower the font size to 6
+// * (originally is 8) and tell the function to split the name into two lines.
 function fitTextToWidth(context, name, maxWidth, initialFontSize) {
     let splitName = false;
     let fontSize = initialFontSize;

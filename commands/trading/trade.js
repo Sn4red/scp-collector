@@ -275,7 +275,7 @@ function validateSpecialConditions(userId, recipientValue, issuerCardValue, issu
     return { errorState, errorMessage };
 }
 
-// * This function searches for the card data through all the card collections, and then with the reference it checks if the user has the card in his collection.
+// * This function searches for the card data through all the card collections, and then with the reference it checks if the user has the card in the collection.
 async function findCard(userId, cardId, holographic, transaction) {
     let holographicValue = holographic;
 

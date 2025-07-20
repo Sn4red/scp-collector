@@ -223,6 +223,7 @@ async function displayCard(document, userId, isPremium, interaction) {
     context.font = 'bold 14px Roboto Condensed';
     context.fillText(rank, 188, 91);
 
+    // * Loads the rank emoji according to the user's rank through an URL.
     let rankEmoji = null;
 
     switch (rank) {
@@ -383,7 +384,7 @@ async function displayCard(document, userId, isPremium, interaction) {
     // * Loading the DataMatrix QR code.
     const qr = await Canvas.loadImage('./images/card/qr-datamatrix-card.png');
     
-    // * Dibuja las imágenes en el lienzo.
+    // * Draws the images on the canvas.
     context.drawImage(avatar, 25, 55, 100, 100);
     context.drawImage(logo, 280, 120, 70, 70);
     context.drawImage(qr, 365, 5, 80, 80);

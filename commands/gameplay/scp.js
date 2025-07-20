@@ -6,6 +6,7 @@ const {
     SeparatorSpacingSize,
     ActionRowBuilder,
     ButtonBuilder,
+    ButtonStyle,
     ContainerBuilder,
     ComponentType } = require('discord.js');
 const firebase = require('../../utils/firebase');
@@ -361,21 +362,20 @@ function createContainer(
         .setContent(cardList);
 
     // * Navigation Action Row.
-    const navigationRow = new ActionRowBuilder();
-
     const previousButton = new ButtonBuilder()
         .setCustomId('previousButton')
-        .setStyle('Secondary')
+        .setStyle(ButtonStyle.Secondary)
         .setEmoji(`${process.env.EMOJI_WHITE_ARROW_LEFT}`)
         .setDisabled(currentPage === 0);
 
     const nextButton = new ButtonBuilder()
         .setCustomId('nextButton')
-        .setStyle('Secondary')
+        .setStyle(ButtonStyle.Secondary)
         .setEmoji(`${process.env.EMOJI_WHITE_ARROW_RIGHT}`)
         .setDisabled(currentPage === totalPages - 1);
 
-    navigationRow.addComponents(previousButton, nextButton);
+    const navigationRow = new ActionRowBuilder()
+        .addComponents(previousButton, nextButton);
 
     // * Container.
     const container = new ContainerBuilder()

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -129,13 +129,13 @@ module.exports = {
 
             const previousButton = new ButtonBuilder()
                 .setCustomId('previousButton')
-                .setStyle('Secondary')
+                .setStyle(ButtonStyle.Secondary)
                 .setEmoji(`${process.env.WHITE_ARROW_LEFT}`)
                 .setDisabled(pages[id] === 0);
 
             const nextButton = new ButtonBuilder()
                 .setCustomId('nextButton')
-                .setStyle('Secondary')
+                .setStyle(ButtonStyle.Secondary)
                 .setEmoji(`${process.env.WHITE_ARROW_RIGHT}`)
                 .setDisabled(pages[id] === embeds.length - 1);
 

@@ -1,11 +1,12 @@
 require('dotenv').config();
 
-const fs = require('node:fs');
-const path = require('node:path');
 const {
 	Client,
 	Collection,
-	GatewayIntentBits } = require('discord.js');
+	GatewayIntentBits,
+} = require('discord.js');
+const fs = require('node:fs');
+const path = require('node:path');
 const { startCronJobs } = require('./utils/cronJobs');
 
 // * GuildMembers Intent is to fetch the users with their most recent data.

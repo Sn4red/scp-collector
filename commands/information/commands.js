@@ -15,7 +15,8 @@ const {
     SeparatorSpacingSize,
     ThumbnailBuilder,
     SectionBuilder,
-    ContainerBuilder } = require('discord.js');
+    ContainerBuilder,
+} = require('discord.js');
 
 module.exports = {
     cooldown: 60 * 30,

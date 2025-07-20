@@ -8,7 +8,8 @@ const {
     ButtonBuilder,
     ButtonStyle,
     ContainerBuilder,
-    ComponentType } = require('discord.js');
+    ComponentType,
+} = require('discord.js');
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();

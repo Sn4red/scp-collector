@@ -4,7 +4,8 @@ const {
     SeparatorBuilder,
     SeparatorSpacingSize,
     ContainerBuilder,
-    MessageFlags } = require('discord.js');
+    MessageFlags,
+} = require('discord.js');
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();

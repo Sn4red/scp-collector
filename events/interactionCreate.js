@@ -1,7 +1,8 @@
 const {
     Events,
     Collection,
-    MessageFlags } = require('discord.js');
+    MessageFlags,
+} = require('discord.js');
 const { cooldowns } = require('../index-scp-collector.js');
 
 module.exports = {

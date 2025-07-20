@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     AttachmentBuilder,
     MessageFlags,
-    TextDisplayBuilder } = require('discord.js');
+    TextDisplayBuilder,
+} = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
 const fetch = require('node-fetch');
 const { request } = require('undici');

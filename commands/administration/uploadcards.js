@@ -4,7 +4,8 @@ const {
     SeparatorBuilder,
     SeparatorSpacingSize,
     ContainerBuilder,
-    MessageFlags } = require('discord.js');
+    MessageFlags,
+} = require('discord.js');
 const path = require('path');
 const fs = require('fs');
 const firebase = require('../../utils/firebase');

@@ -10,7 +10,8 @@ const {
     ButtonBuilder,
     ButtonStyle,
     SectionBuilder,
-    ContainerBuilder } = require('discord.js');
+    ContainerBuilder,
+} = require('discord.js');
 const path = require('node:path');
 const wrap = require('word-wrap');
 const firebase = require('../../utils/firebase');

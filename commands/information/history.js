@@ -26,27 +26,55 @@ module.exports = {
         // * successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
-        // * Image 1.
-        const image1Path = path
+        // * Banner Image.
+        const bannerImagePath = path
             .join(__dirname, '../../images/container/history-image-1.png');
 
-        const buffer1 = await sharp(image1Path)
+        const bannerImageBuffer = await sharp(bannerImagePath)
             .resize(570, 70, { position: 'top' })
             .toBuffer();
 
-        const image1 = new AttachmentBuilder(
-            buffer1,
+        const bannerImage = new AttachmentBuilder(
+            bannerImageBuffer,
             { name: 'history-image-1.png' },
         );
 
-        const mediaGalleryItem1Component1 = new MediaGalleryItemBuilder()
+        // * Thumbnail Image.
+        const thumbnailImagePath = path
+            .join(__dirname, '../../images/container/history-image-2.gif');
+
+        const thumbnailImage = new AttachmentBuilder(
+            thumbnailImagePath,
+            { name: 'history-image-2.gif' },
+        );
+
+        // * Image Gallery 1.
+        const imageGallery1Path = path
+            .join(__dirname, '../../images/container/history-image-3.jpg');
+
+        const imageGallery1 = new AttachmentBuilder(
+            imageGallery1Path,
+            { name: 'history-image-3.jpg' },
+        );
+
+        // * Image Gallery 2.
+        const imageGallery2Path = path
+            .join(__dirname, '../../images/container/history-image-4.gif');
+
+        const imageGallery2 = new AttachmentBuilder(
+            imageGallery2Path,
+            { name: 'history-image-4.gif' },
+        );
+
+        // * Banner.
+        const bannerMediaGalleryItem = new MediaGalleryItemBuilder()
             .setURL('attachment://history-image-1.png');
 
-        const mediaGallery1 = new MediaGalleryBuilder()
-            .addItems(mediaGalleryItem1Component1);
+        const bannerMediaGallery = new MediaGalleryBuilder()
+            .addItems(bannerMediaGalleryItem);
 
-       // * Header 1.
-        const header1 = new TextDisplayBuilder()
+       // * Header.
+        const header = new TextDisplayBuilder()
             .setContent(
                 `## ${process.env.EMOJI_BUILDING}  SCP Foundation`,
             );
@@ -55,8 +83,8 @@ module.exports = {
         const separator1 = new SeparatorBuilder()
             .setSpacing(SeparatorSpacingSize.Small);
 
-        // * Section 1.
-        const textSection1 = new TextDisplayBuilder()
+        // * Section.
+        const textSection = new TextDisplayBuilder()
             .setContent(
                 'Operating clandestinely and globally, The Foundation ' +
                     'operates beyond any jurisdiction, reinforced by major ' +
@@ -67,23 +95,15 @@ module.exports = {
                     'psychological harm.',
             );
 
-        const image2Path = path
-            .join(__dirname, '../../images/container/history-image-2.gif');
-
-        const image2 = new AttachmentBuilder(
-            image2Path,
-            { name: 'history-image-2.gif' },
-        );
-
-        const thumbnailSection1 = new ThumbnailBuilder()
+        const thumbnailSection = new ThumbnailBuilder()
             .setURL('attachment://history-image-2.gif');
 
-        const section1 = new SectionBuilder()
-            .addTextDisplayComponents(textSection1)
-            .setThumbnailAccessory(thumbnailSection1);
+        const section = new SectionBuilder()
+            .addTextDisplayComponents(textSection)
+            .setThumbnailAccessory(thumbnailSection);
 
-        // * Text 1.
-        const text1 = new TextDisplayBuilder()
+        // * Text.
+        const text = new TextDisplayBuilder()
             .setContent(
                 'The Foundation operates to maintain normalcy, ensuring that ' +
                     'the civilian population worldwide can live and carry on ' +
@@ -98,35 +118,18 @@ module.exports = {
             .setSpacing(SeparatorSpacingSize.Small)
             .setDivider(false);
 
-        // * Image 3.
-        const image3Path = path
-            .join(__dirname, '../../images/container/history-image-3.jpg');
-
-        const image3 = new AttachmentBuilder(
-            image3Path,
-            { name: 'history-image-3.jpg' },
-        );
-
-        const mediaGalleryItem1Component2 = new MediaGalleryItemBuilder()
+        // * Media Gallery.
+        const mediaGalleryItem1 = new MediaGalleryItemBuilder()
             .setURL('attachment://history-image-3.jpg');
 
-        // * Image 4.
-        const image4Path = path
-            .join(__dirname, '../../images/container/history-image-4.gif');
-
-        const image4 = new AttachmentBuilder(
-            image4Path,
-            { name: 'history-image-4.gif' },
-        );
-
-        const mediaGalleryItem2Component2 = new MediaGalleryItemBuilder()
+        const mediaGalleryItem2 = new MediaGalleryItemBuilder()
             .setURL('attachment://history-image-4.gif');
 
-        const mediaGallery2 = new MediaGalleryBuilder()
-            .addItems(mediaGalleryItem1Component2, mediaGalleryItem2Component2);
+        const mediaGallery = new MediaGalleryBuilder()
+            .addItems(mediaGalleryItem1, mediaGalleryItem2);
 
-        // * Text 2.
-        const text2 = new TextDisplayBuilder()
+        // * Footer.
+        const footer = new TextDisplayBuilder()
             .setContent(
                 '### Use /`commands` to see the full list of available ' +
                     'commands.',
@@ -135,18 +138,18 @@ module.exports = {
         // * Container.
         const container = new ContainerBuilder()
             .setAccentColor(0x010101)
-            .addMediaGalleryComponents(mediaGallery1)
-            .addTextDisplayComponents(header1)
+            .addMediaGalleryComponents(bannerMediaGallery)
+            .addTextDisplayComponents(header)
             .addSeparatorComponents(separator1)
-            .addSectionComponents(section1)
-            .addTextDisplayComponents(text1)
+            .addSectionComponents(section)
+            .addTextDisplayComponents(text)
             .addSeparatorComponents(separator2)
-            .addMediaGalleryComponents(mediaGallery2)
-            .addTextDisplayComponents(text2);
+            .addMediaGalleryComponents(mediaGallery)
+            .addTextDisplayComponents(footer);
 
         await interaction.editReply({
             components: [container],
-            files: [image1, image2, image3, image4],
+            files: [bannerImage, thumbnailImage, imageGallery1, imageGallery2],
             flags: MessageFlags.IsComponentsV2,
         });
     },

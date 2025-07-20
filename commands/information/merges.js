@@ -23,24 +23,34 @@ module.exports = {
         // * successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
-        // * Image 1.
-        const image1Path = path
+        // * Banner Image.
+        const bannerImagePath = path
             .join(__dirname, '../../images/container/merges-image-1.png');
 
-        const buffer1 = await sharp(image1Path)
+        const bannerImageBuffer = await sharp(bannerImagePath)
             .resize(570, 70)
             .toBuffer();
 
-        const image1 = new AttachmentBuilder(
-            buffer1,
+        const bannerImage = new AttachmentBuilder(
+            bannerImageBuffer,
             { name: 'merges-image-1.png' },
         );
 
-        const mediaGalleryItem1Component1 = new MediaGalleryItemBuilder()
+        // * Thumbnail Image.
+        const thumbnailImagePath = path
+            .join(__dirname, '../../images/container/merges-image-2.gif');
+
+        const thumbnailImage = new AttachmentBuilder(
+            thumbnailImagePath,
+            { name: 'merges-image-2.gif' },
+        );
+
+        // * Banner.
+        const BannerMediaGalleryItem = new MediaGalleryItemBuilder()
             .setURL('attachment://merges-image-1.png');
 
-        const mediaGallery1 = new MediaGalleryBuilder()
-            .addItems(mediaGalleryItem1Component1);
+        const bannerMediaGallery = new MediaGalleryBuilder()
+            .addItems(BannerMediaGalleryItem);
 
         // * Header 1.
         const header1 = new TextDisplayBuilder()
@@ -50,8 +60,8 @@ module.exports = {
         const separator1 = new SeparatorBuilder()
             .setSpacing(SeparatorSpacingSize.Small);
 
-        // * Section 1.
-        const textSection1 = new TextDisplayBuilder()
+        // * Section.
+        const textSection = new TextDisplayBuilder()
             .setContent(
                 'A merge consists in transforming 5 cards and converting ' +
                     'them into a single card of a higher class. The cards ' +
@@ -61,20 +71,12 @@ module.exports = {
                     'examples of merges:',
             );
 
-        const image2Path = path
-            .join(__dirname, '../../images/container/merges-image-2.gif');
-
-        const image2 = new AttachmentBuilder(
-            image2Path,
-            { name: 'merges-image-2.gif' },
-        );
-
-        const thumbnailSection1 = new ThumbnailBuilder()
+        const thumbnailSection = new ThumbnailBuilder()
             .setURL('attachment://merges-image-2.gif');
 
         const section1 = new SectionBuilder()
-            .addTextDisplayComponents(textSection1)
-            .setThumbnailAccessory(thumbnailSection1);
+            .addTextDisplayComponents(textSection)
+            .setThumbnailAccessory(thumbnailSection);
 
         // * Separator 2.
         const separator2 = new SeparatorBuilder()
@@ -150,8 +152,8 @@ module.exports = {
             .setSpacing(SeparatorSpacingSize.Small)
             .setDivider(false);
 
-        // * Text 4.
-        const text4 = new TextDisplayBuilder()
+        // * Footer.
+        const footer = new TextDisplayBuilder()
             .setContent(
                 '### Use /`commands` to see the full list of available ' +
                     'commands.',
@@ -160,7 +162,7 @@ module.exports = {
         // * Container.
         const container = new ContainerBuilder()
             .setAccentColor(0x010101)
-            .addMediaGalleryComponents(mediaGallery1)
+            .addMediaGalleryComponents(bannerMediaGallery)
             .addTextDisplayComponents(header1)
             .addSeparatorComponents(separator1)
             .addSectionComponents(section1)
@@ -175,11 +177,11 @@ module.exports = {
             .addSeparatorComponents(separator6)
             .addTextDisplayComponents(text3)
             .addSeparatorComponents(separator7)
-            .addTextDisplayComponents(text4);
+            .addTextDisplayComponents(footer);
 
         await interaction.editReply({
             components: [container],
-            files: [image1, image2],
+            files: [bannerImage, thumbnailImage],
             flags: MessageFlags.IsComponentsV2,
         });
     },

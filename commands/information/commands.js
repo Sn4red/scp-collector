@@ -257,11 +257,11 @@ function createPageContainer(text, buttonId, includeThumbnail) {
         const thumbnailSection = new ThumbnailBuilder()
             .setURL('attachment://commands-image-2.gif');
 
-        const section1 = new SectionBuilder()
+        const section = new SectionBuilder()
             .addTextDisplayComponents(textSection)
             .setThumbnailAccessory(thumbnailSection);
 
-        container.addSectionComponents(section1);
+        container.addSectionComponents(section);
     } else {
         // * Text.
         const textSection = new TextDisplayBuilder()

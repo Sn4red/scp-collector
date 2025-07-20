@@ -23,27 +23,37 @@ module.exports = {
         // * successfully and set a maximun timeout of 15 minutes.
         await interaction.deferReply();
 
-        // * Image 1.
-        const image1Path = path
+        // * Banner Image.
+        const bannerImagePath = path
             .join(__dirname, '../../images/container/faq-image-1.png');
 
-        const buffer1 = await sharp(image1Path)
+        const bannerImageBuffer = await sharp(bannerImagePath)
             .resize(570, 70)
             .toBuffer();
 
-        const image1 = new AttachmentBuilder(
-            buffer1,
+        const bannerImage = new AttachmentBuilder(
+            bannerImageBuffer,
             { name: 'faq-image-1.png' },
         );
 
-        const mediaGalleryItem1Component1 = new MediaGalleryItemBuilder()
+        // * Thumbnail Image.
+        const thumbnailImagePath = path
+                .join(__dirname, '../../images/container/faq-image-2.jpg');
+
+        const thumbnailImage = new AttachmentBuilder(
+            thumbnailImagePath,
+            { name: 'faq-image-2.jpg' },
+        );
+
+        // * Banner.
+        const bannerMediaGalleryItem = new MediaGalleryItemBuilder()
             .setURL('attachment://faq-image-1.png');
 
-        const mediaGallery1 = new MediaGalleryBuilder()
-            .addItems(mediaGalleryItem1Component1);
+        const bannerMediaGallery = new MediaGalleryBuilder()
+            .addItems(bannerMediaGalleryItem);
 
-        // * Header 1.
-        const header1 = new TextDisplayBuilder()
+        // * Header.
+        const header = new TextDisplayBuilder()
             .setContent(
                 `## ${process.env.EMOJI_PIN}  FAQ - Frequently Asked Questions`,
             );
@@ -52,30 +62,22 @@ module.exports = {
         const separator1 = new SeparatorBuilder()
             .setSpacing(SeparatorSpacingSize.Small);
 
-        // * Section 1.
-        const textSection1 = new TextDisplayBuilder()
+        // * Section.
+        const textSection = new TextDisplayBuilder()
             .setContent(
                 'Here are some questions that may be common and could arise ' +
-                    'during the use of this bot.\n\n' +
+                    'during the use of this bot.\n' +
                     `### ${process.env.EMOJI_SMALL_WHITE_DASH}What is the ` +
                     'schedule for the shots reset?\n' +
                     'Every day at 12:00 a.m (EST/EDT).',
             );
 
-        const image2Path = path
-                .join(__dirname, '../../images/container/faq-image-2.jpg');
-
-        const image2 = new AttachmentBuilder(
-                image2Path,
-                { name: 'faq-image-2.jpg' },
-        );
-
-        const thumbnailSection1 = new ThumbnailBuilder()
+        const thumbnailSection = new ThumbnailBuilder()
                 .setURL('attachment://faq-image-2.jpg');
 
-        const section1 = new SectionBuilder()
-                .addTextDisplayComponents(textSection1)
-                .setThumbnailAccessory(thumbnailSection1);
+        const section = new SectionBuilder()
+                .addTextDisplayComponents(textSection)
+                .setThumbnailAccessory(thumbnailSection);
 
         // * Question 2.
         const question2 = new TextDisplayBuilder()
@@ -201,8 +203,8 @@ module.exports = {
             .setSpacing(SeparatorSpacingSize.Small)
             .setDivider(false);
 
-        // * Text 1.
-        const text1 = new TextDisplayBuilder()
+        // * Footer.
+        const footer = new TextDisplayBuilder()
             .setContent(
                 '### Use /`commands` to see the full list of available ' +
                     'commands.',
@@ -211,10 +213,10 @@ module.exports = {
         // * Container.
         const container = new ContainerBuilder()
             .setAccentColor(0x010101)
-            .addMediaGalleryComponents(mediaGallery1)
-            .addTextDisplayComponents(header1)
+            .addMediaGalleryComponents(bannerMediaGallery)
+            .addTextDisplayComponents(header)
             .addSeparatorComponents(separator1)
-            .addSectionComponents(section1)
+            .addSectionComponents(section)
             .addTextDisplayComponents(question2)
             .addTextDisplayComponents(question3)
             .addTextDisplayComponents(question4)
@@ -226,11 +228,11 @@ module.exports = {
             .addTextDisplayComponents(question10)
             .addTextDisplayComponents(question11)
             .addSeparatorComponents(separator2)
-            .addTextDisplayComponents(text1);
+            .addTextDisplayComponents(footer);
 
         await interaction.editReply({
             components: [container],
-            files: [image1, image2],
+            files: [bannerImage, thumbnailImage],
             flags: MessageFlags.IsComponentsV2,
         });
     },

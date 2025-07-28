@@ -185,7 +185,7 @@ erDiagram
     SCP-000 {
         string file
         string name
-        number random
+        int random
     }
 ```
 

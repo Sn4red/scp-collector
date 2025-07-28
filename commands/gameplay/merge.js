@@ -111,7 +111,7 @@ module.exports = {
 
         // * The filter ensures that the modal interaction is only processed by
         // * the user who invoked the command.
-        const filter = (userModal) => userModal.customId === `modal-${userId}`;
+        const filter = (userModal) => userModal.customId === `mdl-${userId}`;
         const time = 1000 * 60;
 
         // * Promise that resolves when the user submits the modal.
@@ -580,7 +580,7 @@ async function checkingUserPremiumStatus(userId, interaction) {
 // * Function that builds the modal.
 function displayModal(userId) {
     const modal = new ModalBuilder()
-        .setCustomId(`modal-${userId}`)
+        .setCustomId(`mdl-${userId}`)
         .setTitle('Card Merge  📑');
 
     const txtCard1 = new TextInputBuilder()

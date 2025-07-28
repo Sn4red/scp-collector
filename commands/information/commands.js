@@ -146,9 +146,9 @@ module.exports = {
             // * Validates that the button clicked is one of the navigation
             // * buttons (there is just 3 buttons, but it clarifies the
             // * intention).
-            if (button.customId !== 'btnInformationButton' &&
-                button.customId !== 'btnGameplayButton' &&
-                button.customId !== 'btnTradingSystemButton') {
+            if (button.customId !== 'btnInformation' &&
+                button.customId !== 'btnGameplay' &&
+                button.customId !== 'btnTradingSystem') {
                 return;
             }
 
@@ -157,13 +157,13 @@ module.exports = {
             // * Depending on the button clicked, the text is set to the
             // * corresponding text.
             switch (button.customId) {
-                case 'btnInformationButton':
+                case 'btnInformation':
                     text = informationText;
                     break;
-                case 'btnGameplayButton':
+                case 'btnGameplay':
                     text = gameplayText;
                     break;
-                case 'btnTradingSystemButton':
+                case 'btnTradingSystem':
                     text = tradingSystemText;
                     break;
             }
@@ -199,25 +199,25 @@ function createPageContainer(text, buttonId, includeThumbnail) {
 
     // * Navigation Buttons.
     const informationButton = new ButtonBuilder()
-        .setCustomId('btnInformationButton')
+        .setCustomId('btnInformation')
         .setLabel('Information')
         .setEmoji(process.env.EMOJI_PAPER_SCROLL)
         .setStyle(ButtonStyle.Secondary)
-        .setDisabled(buttonId === 'btnInformationButton');
+        .setDisabled(buttonId === 'btnInformation');
 
     const gameplayButton = new ButtonBuilder()
-        .setCustomId('btnGameplayButton')
+        .setCustomId('btnGameplay')
         .setLabel('Gameplay')
         .setEmoji(process.env.EMOJI_DICE)
         .setStyle(ButtonStyle.Secondary)
-        .setDisabled(buttonId === 'btnGameplayButton');
+        .setDisabled(buttonId === 'btnGameplay');
 
     const tradingSystemButton = new ButtonBuilder()
-        .setCustomId('btnTradingSystemButton')
+        .setCustomId('btnTradingSystem')
         .setLabel('Trading System')
         .setEmoji(process.env.EMOJI_BOX)
         .setStyle(ButtonStyle.Secondary)
-        .setDisabled(buttonId === 'btnTradingSystemButton');
+        .setDisabled(buttonId === 'btnTradingSystem');
 
     const navigationRow = new ActionRowBuilder()
         .addComponents(

@@ -161,7 +161,7 @@ module.exports = {
         // * Collector listener for the confirmation buttons.
         // * The return statements are used to get out of the collector event.
         collector.on('collect', async (button) => {
-            if (button.customId === 'confirm') {
+            if (button.customId === 'btnConfirm') {
                 deletedMessage = true;
 
                 try {
@@ -269,7 +269,7 @@ module.exports = {
                 }
             }
 
-            if (button.customId === 'cancel') {
+            if (button.customId === 'btnCancel') {
                 deletedMessage = true;
 
                 await interaction.deleteReply();
@@ -487,12 +487,12 @@ function createConfirmationContainer(
 
     // * Confirmation buttons.
     const confirmButton = new ButtonBuilder()
-        .setCustomId('confirm')
+        .setCustomId('btnConfirm')
         .setLabel('Confirm')
         .setStyle(ButtonStyle.Danger);
     
     const cancelButton = new ButtonBuilder()
-        .setCustomId('cancel')
+        .setCustomId('btnCancel')
         .setLabel('Cancel')
         .setStyle(ButtonStyle.Secondary);
 

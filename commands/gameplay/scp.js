@@ -196,8 +196,8 @@ module.exports = {
             // * Validates that the button clicked is one of the navigation
             // * buttons (there is just 2 buttons, but it clarifies the
             // * intention).
-            if (button.customId !== 'previousButton' &&
-                button.customId !== 'nextButton') {
+            if (button.customId !== 'btnPrevious' &&
+                button.customId !== 'btnNext') {
                 return;
             }
         
@@ -205,9 +205,9 @@ module.exports = {
             // * one, the pagination is decremented.
             // * If the user is going forwards but the page is not the last
             // * one, the pagination is incremented.
-            if (button.customId === 'previousButton' && pages[userId] > 0) {
+            if (button.customId === 'btnPrevious' && pages[userId] > 0) {
                 --pages[userId];
-            } else if (button.customId === 'nextButton' &&
+            } else if (button.customId === 'btnNext' &&
                 pages[userId] < totalContainers - 1) {
                 ++pages[userId];
             }
@@ -364,13 +364,13 @@ function createContainer(
 
     // * Navigation Action Row.
     const previousButton = new ButtonBuilder()
-        .setCustomId('previousButton')
+        .setCustomId('btnPrevious')
         .setStyle(ButtonStyle.Secondary)
         .setEmoji(`${process.env.EMOJI_WHITE_ARROW_LEFT}`)
         .setDisabled(currentPage === 0);
 
     const nextButton = new ButtonBuilder()
-        .setCustomId('nextButton')
+        .setCustomId('btnNext')
         .setStyle(ButtonStyle.Secondary)
         .setEmoji(`${process.env.EMOJI_WHITE_ARROW_RIGHT}`)
         .setDisabled(currentPage === totalPages - 1);

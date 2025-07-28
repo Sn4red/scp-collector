@@ -222,7 +222,10 @@ module.exports = {
                     await interaction.followUp({
                         components: [cardContainer],
                         files: [image],
-                        flags: [MessageFlags.IsComponentsV2],
+                        flags: [
+                            MessageFlags.IsComponentsV2,
+                            MessageFlags.Ephemeral,
+                        ],
                     });
 
                     await interaction.deleteReply();
@@ -235,7 +238,10 @@ module.exports = {
 
                         await interaction.followUp({
                             components: [errorMessage],
-                            flags: [MessageFlags.IsComponentsV2],
+                            flags: [
+                                MessageFlags.IsComponentsV2,
+                                MessageFlags.Ephemeral,
+                            ],
                         });
                         await interaction.deleteReply();
                     } else {
@@ -254,7 +260,10 @@ module.exports = {
 
                         await interaction.followUp({
                             components: [errorMessage],
-                            flags: [MessageFlags.IsComponentsV2],
+                            flags: [
+                                MessageFlags.IsComponentsV2,
+                                MessageFlags.Ephemeral,
+                            ],
                         });
                     }
                 }
@@ -469,7 +478,7 @@ function createConfirmationContainer(
         .setSpacing(SeparatorSpacingSize.Small);
 
     // * Details.
-    const details = new TextDisplayBuilder()
+    const detailsText = new TextDisplayBuilder()
         .setContent(
             `Card:  ${holographicEmoji.trim()} \`${cardId}\`\n` +
                 `Class:  \`${cardClass}\`\n` +
@@ -495,7 +504,7 @@ function createConfirmationContainer(
         .setAccentColor(0x010101)
         .addTextDisplayComponents(confirmHeader)
         .addSeparatorComponents(separator)
-        .addTextDisplayComponents(details)
+        .addTextDisplayComponents(detailsText)
         .addActionRowComponents(confirmationRow);
 
     return confirmationContainer;

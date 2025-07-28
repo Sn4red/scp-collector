@@ -2,6 +2,7 @@ const {
     Events,
     Collection,
     MessageFlags,
+    TextDisplayBuilder,
 } = require('discord.js');
 const { cooldowns } = require('../index-scp-collector.js');
 
@@ -40,11 +41,19 @@ module.exports = {
 
             if (now < expirationTime) {
                 const expiredTimestamp = Math.round(expirationTime / 1000);
+                const errorMessage = new TextDisplayBuilder()
+                    .setContent(
+                        `${process.env.EMOJI_CLASSIC_HOURGLASS}  You can use ` +
+                            `/\`${command.data.name}\` again ` +
+                            `<t:${expiredTimestamp}:R>.`,
+                    );
+
                 return interaction.reply({
-                    content: `${process.env.EMOJI_CLASSIC_HOURGLASS}  You ` +
-                        `can use /\`${command.data.name}\` again ` +
-                        `<t:${expiredTimestamp}:R>.`,
-                    flags: [MessageFlags.Ephemeral],
+                    components: [errorMessage],
+                    flags: [
+                        MessageFlags.IsComponentsV2,
+                        MessageFlags.Ephemeral,
+                    ],
                 });
             }
         }
@@ -57,17 +66,28 @@ module.exports = {
             await command.execute(interaction);
         } catch (error) {
             console.error(error);
+
+            const errorMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_ERROR}  An error occurred while ` +
+                        'executing this command!',
+                );
+
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp({
-                    content: `${process.env.EMOJI_ERROR}  An error occurred ` +
-                        'while executing this command!',
-                    flags: [MessageFlags.Ephemeral],
+                    components: [errorMessage],
+                    flags: [
+                        MessageFlags.IsComponentsV2,
+                        MessageFlags.Ephemeral,
+                    ],
                 });
             } else {
                 await interaction.reply({
-                    content: `${process.env.EMOJI_ERROR}  An error occurred ` +
-                        'while executing this command!',
-                    flags: [MessageFlags.Ephemeral],
+                    components: [errorMessage],
+                    flags: [
+                        MessageFlags.IsComponentsV2,
+                        MessageFlags.Ephemeral,
+                    ],
                 });
             }
         }

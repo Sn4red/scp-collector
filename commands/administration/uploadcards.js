@@ -146,7 +146,10 @@ async function uploadJSON(interaction, filePath, collection, first = true) {
 
             await interaction.followUp({
                 components: [container],
-                flags: [MessageFlags.IsComponentsV2],
+                flags: [
+                    MessageFlags.IsComponentsV2,
+                    MessageFlags.Ephemeral,
+                ],
             });
         }
     } catch (error) {

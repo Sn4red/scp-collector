@@ -1,4 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    MessageFlags,
+    TextDisplayBuilder,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
+    ContainerBuilder,
+ } = require('discord.js');
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -13,8 +20,11 @@ module.exports = {
                 .setDescription('Trade request ID to inquire about.')
                 .setRequired(true)),
     async execute(interaction) {
-        // * Notify the Discord API that the interaction was received successfully and set a maximun timeout of 15 minutes.
-        await interaction.deferReply({ ephemeral: true });
+        // * Notify the Discord API that the interaction was received
+        // * successfully and set a maximun timeout of 15 minutes.
+        await interaction.deferReply({
+            flags: [MessageFlags.Ephemeral],
+        });
 
         const userId = interaction.user.id;
 
@@ -23,17 +33,38 @@ module.exports = {
 
         // ! If the user is not registered, returns an error message.
         if (!userSnapshot.exists) {
-            await interaction.editReply(`${process.env.EMOJI_ERROR}  You are not registered! Use /\`card\` to start playing.`);
+            const errorMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_ERROR}  You are not registered! ` +
+                        'Use /`card` to start playing.',
+                );
+
+            await interaction.editReply({
+                components: [errorMessage],
+                flags: [MessageFlags.IsComponentsV2],
+            });
             return;
         }
 
-        // * Some extra validation is performed here, according to the Firestore's documents ID requirements.
+        // * Some extra validation is performed here, according to the
+        // * Firestore's documents ID requirements.
         const tradeId = interaction.options.getString('trade');
-        const tradeIdValidation = /^(?!\.\.?$)(?!.*__.*__)([^/]{1,1500})$/.test(tradeId);
+        const tradeIdValidation = /^(?!\.\.?$)(?!.*__.*__)([^/]{1,1500})$/
+            .test(tradeId);
 
-        // ! If the field has wrong data, returns an error message.
-        if (!tradeIdValidation) {
-            await interaction.editReply(`${process.env.EMOJI_ERROR}  Error. Please, provide a valid trade ID.`);
+        // ! If the field has wrong data or enters the test trade ID, return an
+        // ! error message.
+        if (!tradeIdValidation || tradeId === 'testTradeDocument') {
+            const errorMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_ERROR}  Error. Please, provide a ` +
+                        'valid trade ID.',
+                );
+
+            await interaction.editReply({
+                components: [errorMessage],
+                flags: [MessageFlags.IsComponentsV2],
+            });
             return;
         }
 
@@ -42,14 +73,23 @@ module.exports = {
 
         // ! If the trade ID provided does not exist, returns an error message.
         if (!tradeSnapshot.exists) {
-            await interaction.editReply(`${process.env.EMOJI_ERROR}  There is no trade with that ID!`);
+            const errorMessage = new TextDisplayBuilder()
+                .setContent(
+                    `${process.env.EMOJI_ERROR}  There is no trade with that ` +
+                        'ID!',
+                );
+
+            await interaction.editReply({
+                components: [errorMessage],
+                flags: [MessageFlags.IsComponentsV2],
+            });
             return;
         }
 
         /**
-         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-         * * The command passes all validations and the operation is performed. *
-         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         * * The command passes all validations and the operation is performed.*
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          */
 
         const tradeDocument = tradeSnapshot.data();
@@ -59,30 +99,26 @@ module.exports = {
         const issuerCardName = limitCardName(tradeObject.issuerCardName);
         const recipientCardName = limitCardName(tradeObject.recipientCardName);
 
-        const tradeEmbed = new EmbedBuilder()
-            .setColor(0x010101)
-            .setTitle(`${process.env.EMOJI_PAGE}  Trade #: \`${tradeSnapshot.id}\``)
-            .addFields(
-                { name: `${process.env.EMOJI_USER}  Issuer`, value: `\`${tradeObject.issuerNickname}\` (\`${tradeObject.issuerId}\`)` },
-                { name: `${tradeObject.issuerHolographicEmoji}  Card`, value: `\`${tradeObject.issuerCardId}\` // \`${issuerCardName}\`` },
-                { name: `${process.env.EMOJI_USER}  Recipient`, value: `\`${tradeObject.recipientNickname}\` (\`${tradeObject.recipientId}\`)` },
-                { name: `${tradeObject.recipientHolographicEmoji}  Card`, value: `\`${tradeObject.recipientCardId}\` // \`${recipientCardName}\`` },
-                { name: `${process.env.EMOJI_BIT_CLOCK}  Creation Date`, value: `\`${tradeObject.creationDate}\`` },
-                { name: `${process.env.EMOJI_PIN}  Status`, value: `**\`${tradeObject.tradeStatus}\`**  ${tradeObject.statusEmoji}` },
-            )
-            .setTimestamp();
+        // * The trade container is created.
+        const tradeContainer = createTradeContainer(
+            tradeSnapshot.id,
+            tradeObject,
+            issuerCardName,
+            recipientCardName,
+        );
 
-        if (tradeObject.tradeDate != null) {
-            tradeEmbed.addFields({ name: `${process.env.EMOJI_BIT_CLOCK}  Trade Date`, value: `\`${tradeObject.tradeDate}\`` });
-        }
-
-        await interaction.editReply({ embeds: [tradeEmbed] });
+        await interaction.editReply({
+            components: [tradeContainer],
+            flags: [MessageFlags.IsComponentsV2],
+        });
     },
 };
 
-// * This function formats the values of the trade document to be displayed in the embed.
+// * This function formats the values of the trade document to be displayed in
+// * the container.
 async function formattingValues(tradeDocument) {
-    const issuerReference = database.collection('user').doc(tradeDocument.issuer);
+    const issuerReference = database.collection('user')
+        .doc(tradeDocument.issuer);
     const issuerSnapshot = await issuerReference.get();
     const issuerDocument = issuerSnapshot.data();
     const issuerNickname = issuerDocument.nickname;
@@ -94,7 +130,8 @@ async function formattingValues(tradeDocument) {
     const issuerCardId = issuerCardSnapshot.id;
     const issuerCardName = issuerCardDocument.name;
 
-    const recipientReference = database.collection('user').doc(tradeDocument.recipient);
+    const recipientReference = database.collection('user')
+        .doc(tradeDocument.recipient);
     const recipientSnapshot = await recipientReference.get();
     const recipientDocument = recipientSnapshot.data();
     const recipientNickname = recipientDocument.nickname;
@@ -113,10 +150,15 @@ async function formattingValues(tradeDocument) {
         'Diamond': `${process.env.EMOJI_DIAMOND}`,
     }; 
 
-    const issuerHolographicEmoji = holographicEmojis[tradeDocument.issuerHolographic];
-    const recipientHolographicEmoji = holographicEmojis[tradeDocument.recipientHolographic];
+    const issuerHolographicEmoji = holographicEmojis[
+        tradeDocument.issuerHolographic
+    ];
+    const recipientHolographicEmoji = holographicEmojis[
+        tradeDocument.recipientHolographic
+    ];
 
-    const creationDate = new Date(tradeDocument.securityCooldown._seconds * 1000 + tradeDocument.securityCooldown._nanoseconds / 1000000).toLocaleString();
+    const creationDate = tradeDocument.securityCooldown.toDate()
+        .toLocaleString();
 
     let tradeStatus = false;
     let statusEmoji = null;
@@ -128,14 +170,31 @@ async function formattingValues(tradeDocument) {
     } else {
         tradeStatus = 'Completed';
         statusEmoji = `${process.env.EMOJI_CHECK}`;
-        tradeDate = new Date(tradeDocument.tradeDate._seconds * 1000 + tradeDocument.tradeDate._nanoseconds / 1000000).toLocaleString();
+        tradeDate = tradeDocument.tradeDate.toDate().toLocaleString();
     }
 
-    return { issuerNickname, issuerId, issuerCardId, issuerCardName, issuerHolographicEmoji, recipientNickname, recipientId, recipientCardId, recipientCardName, recipientHolographicEmoji, creationDate, tradeStatus, statusEmoji, tradeDate };
+    return {
+        issuerNickname,
+        issuerId,
+        issuerCardId,
+        issuerCardName,
+        issuerHolographicEmoji,
+        recipientNickname,
+        recipientId,
+        recipientCardId,
+        recipientCardName,
+        recipientHolographicEmoji,
+        creationDate,
+        tradeStatus,
+        statusEmoji,
+        tradeDate,
+    };
 }
 
-// * This function ensures that the card name with all the value field does not exceed the maximum character limit, which is 1024.
-// * To make sure that no errors occur, and for a better visual, the card name will be cutted more than it should be (until 100).
+// * This function ensures that the card name with all the value field does not
+// * exceed the maximum character limit, which is 1024.
+// * To make sure that no errors occur, and for a better visual, the card name
+// * will be cutted more than it should be (until 100).
 function limitCardName(cardName) {
     let fixedCardName = cardName;
 
@@ -145,8 +204,8 @@ function limitCardName(cardName) {
 
     fixedCardName = fixedCardName.slice(0, 101);
 
-    // * If the last character is not a space, it will be removed until it finds one,
-    // * to avoid cutting a word in half.
+    // * If the last character is not a space, it will be removed until it finds
+    // * one, to avoid cutting a word in half.
     while (fixedCardName[fixedCardName.length - 1] !== ' ') {
         fixedCardName = fixedCardName.slice(0, -1);
     }
@@ -155,4 +214,93 @@ function limitCardName(cardName) {
     fixedCardName = fixedCardName.slice(0, -1) + '...';
 
     return fixedCardName;
+}
+
+// * Creates the trade container with all the information.
+function createTradeContainer(
+    tradeId,
+    tradeObject,
+    issuerCardName,
+    recipientCardName,
+) {
+    // * Header.
+    const header = new TextDisplayBuilder()
+        .setContent(
+            `### ${process.env.EMOJI_PAGE}  Trade #: \`${tradeId}\``,
+        );
+
+    // * Separator.
+    const separator = new SeparatorBuilder()
+        .setSpacing(SeparatorSpacingSize.Small);
+
+    // * Issuer.
+    const issuerText = new TextDisplayBuilder()
+        .setContent(
+            `**${process.env.EMOJI_USER}  Issuer**\n` +
+                `\`${tradeObject.issuerNickname}\` ` +
+                `(\`${tradeObject.issuerId}\`)`,
+        );
+
+    // * Issuer Card.
+    const issuerCardText = new TextDisplayBuilder()
+        .setContent(
+            `**${tradeObject.issuerHolographicEmoji}  Card**\n` +
+                `\`${tradeObject.issuerCardId}\` // \`${issuerCardName}\``,
+        );
+
+    // * Recipient.
+    const recipientText = new TextDisplayBuilder()
+        .setContent(
+            `**${process.env.EMOJI_USER}  Recipient**\n` +
+                `\`${tradeObject.recipientNickname}\` ` +
+                `(\`${tradeObject.recipientId}\`)`,
+        );
+
+    // * Recipient Card.
+    const recipientCardText = new TextDisplayBuilder()
+        .setContent(
+            `**${tradeObject.recipientHolographicEmoji}  Card**\n` +
+                `\`${tradeObject.recipientCardId}\` // ` +
+                `\`${recipientCardName}\``,
+        );
+
+    // * Creation Date.
+    const creationDateText = new TextDisplayBuilder()
+        .setContent(
+            `**${process.env.EMOJI_BIT_CLOCK}  Creation Date**\n` +
+                `\`${tradeObject.creationDate}\``,
+        );
+
+    // * Status.
+    const statusText = new TextDisplayBuilder()
+        .setContent(
+            `**${process.env.EMOJI_PIN}  Status**\n` +
+                `**\`${tradeObject.tradeStatus}\`**  ` +
+                `${tradeObject.statusEmoji}`,
+        );
+
+    // * Container.
+    const tradeContainer = new ContainerBuilder()
+        .setAccentColor(0x010101)
+        .addTextDisplayComponents(header)
+        .addSeparatorComponents(separator)
+        .addTextDisplayComponents(issuerText)
+        .addTextDisplayComponents(issuerCardText)
+        .addTextDisplayComponents(recipientText)
+        .addTextDisplayComponents(recipientCardText)
+        .addTextDisplayComponents(creationDateText)
+        .addTextDisplayComponents(statusText);
+
+    if (tradeObject.tradeConfirmation) {
+        // * Trade Date.
+        const tradeDateText = new TextDisplayBuilder()
+            .setContent(
+                `**${process.env.EMOJI_BIT_CLOCK}  Trade Date**\n` +
+                    `\`${tradeObject.tradeDate}\``,
+            );
+
+        tradeContainer.addTextDisplayComponents(tradeDateText);
+    }
+
+    return tradeContainer;
 }

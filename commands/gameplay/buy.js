@@ -148,7 +148,10 @@ module.exports = {
         // * code clarity.
         const collectorFilter = (userInteraction) =>
             userInteraction.user.id === userId;
-        const time = 1000 * 30;
+        // * The time is set to 10 seconds. Less time than the command cooldown,
+        // * so the user can't spawn more than 1 collector at the same time,
+        // * which could cause glitches, like buying the card multiple times.
+        const time = 1000 * 10;
 
         const collector = reply.createMessageComponentCollector({
             componentType: ComponentType.Button,

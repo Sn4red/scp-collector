@@ -246,6 +246,7 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
+
                         await interaction.deleteReply();
                     } else {
                         console.log(
@@ -268,6 +269,8 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
+
+                        await interaction.deleteReply();
                     }
                 }
             }

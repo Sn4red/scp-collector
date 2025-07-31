@@ -164,6 +164,24 @@ module.exports = {
         // * Collector listener for the confirmation buttons.
         // * The return statements are used to get out of the collector event.
         collector.on('collect', async (button) => {
+            // * Validates the button interaction so it prevents unexpected
+            // * errors (it basically makes sure that the buttons was actually
+            // * clicked).
+            if (!button) {
+                return;
+            }
+
+            // * Interaction is acknowledged to prevent the interaction timeout.
+            button.deferUpdate();
+
+            // * Validates that the button clicked is one of the confirmation
+            // * buttons (there is just 2 buttons, but it clarifies the
+            // * intention).
+            if (button.customId !== 'btnConfirm' &&
+                button.customId !== 'btnCancel') {
+                return;
+            }
+
             if (button.customId === 'btnConfirm') {
                 deletedMessage = true;
 

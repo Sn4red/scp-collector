@@ -139,9 +139,27 @@ module.exports = {
 
         let deletedMessage = false;
 
-        // * All errors inside the transaction are handled with user-defined
+        // * All errors inside the transactions are handled with user-defined
         // * exceptions, along with its corresponding error message.
         collector.on('collect', async (button) => {
+            // * Validates the button interaction so it prevents unexpected
+            // * errors (it basically makes sure that the buttons was actually
+            // * clicked).
+            if (!button) {
+                return;
+            }
+
+            // * Interaction is acknowledged to prevent the interaction timeout.
+            button.deferUpdate();
+
+            // * Validates that the button clicked is one of the actions buttons
+            // * (there is just 3 buttons, but it clarifies the intention).
+            if (button.customId !== 'btnCancel' &&
+                button.customId !== 'btnConfirm' &&
+                button.customId !== 'btnDecline') {
+                return;
+            }
+
             if (button.customId === 'btnCancel') {
                 deletedMessage = true;
 

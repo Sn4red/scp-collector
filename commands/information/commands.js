@@ -91,15 +91,13 @@ module.exports = {
         const tradingSystemText = '/`trade` - Creates a trade request to a ' +
             'user, specifying the user, the SCP they have, and the one you ' +
             'are willing to trade. When the other user accepts your request, ' +
-            'the trade will be executed automatically. **Before accepting, ' +
-            'there is a 1-minute cooldown in case a request was sent by ' +
+            'the trade will be executed automatically. **Before accepting ' +
+            'it, there is a 1-minute cooldown in case a request was sent by ' +
             'mistake.**\n' +
-            '/`accepttrade` `<Trade ID>` - Accepts the request, and the ' +
-            'trade is done.\n' +
-            '/`declinetrade` `<Trade ID>` - Declines a trade offer.\n' +
-            '/`canceltrade` `<Trade ID>` - Cancels a specific trade you have ' +
-            'sent.\n' +
-            '/`viewtrade` `<Trade ID>` - Displays the details of a trade.\n' +
+            '/`viewtrade` `<Trade ID>` - Displays the details of a trade, ' +
+            'along with buttons to manage the request, such as canceling it ' +
+            '(if you sent it) and accepting/declining it (if you received ' +
+            'it).\n' +
             '/`senttrades` - Lists pending trades along with a history of ' +
             'trades you have done.\n' +
             '/`receivedtrades` - Lists the trade requests you have pending ' +

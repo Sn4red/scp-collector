@@ -117,6 +117,13 @@ module.exports = {
         // * Promise that resolves when the user submits the modal.
         interaction.awaitModalSubmit({ filter: filter, time: time })
             .then(async (modalInteraction) => {
+
+            // * Notify the Discord API that the interaction was received
+            // * successfully and set a maximun timeout of 15 minutes.
+            await modalInteraction.deferReply({
+                flags: [MessageFlags.Ephemeral],
+            });
+
             const card1Value = modalInteraction.fields
                 .getTextInputValue('txtCard1');
             const card2Value = modalInteraction.fields
@@ -127,12 +134,6 @@ module.exports = {
                 .getTextInputValue('txtCard4');
             const card5Value = modalInteraction.fields
                 .getTextInputValue('txtCard5');
-
-            // * Notify the Discord API that the interaction was received
-            // * successfully and set a maximun timeout of 15 minutes.
-            await modalInteraction.deferReply({
-                flags: [MessageFlags.Ephemeral],
-            });
 
             const fieldsValidation = validateFields(
                 card1Value,

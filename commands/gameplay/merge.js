@@ -466,28 +466,24 @@ module.exports = {
                 setTimeout(async () => {
                     await modalInteraction.editReply({
                         components: [mergeMessage2],
-                        flags: [MessageFlags.IsComponentsV2],
                     });
                 }, 1000);
 
                 setTimeout(async () => {
                     await modalInteraction.editReply({
                         components: [mergeMessage3],
-                        flags: [MessageFlags.IsComponentsV2],
                     });
                 }, 2000);
 
                 setTimeout(async () => {
                     await modalInteraction.editReply({
                         components: [mergeMessage4],
-                        flags: [MessageFlags.IsComponentsV2],
                     });
                 }, 3000);
 
                 setTimeout(async () => {
                     await modalInteraction.editReply({
                         components: [mergeMessage5],
-                        flags: [MessageFlags.IsComponentsV2],
                     });
                 }, 4000);
 
@@ -495,7 +491,6 @@ module.exports = {
                     await modalInteraction.editReply({
                         components: [cardContainer, mergeSummaryContainer],
                         files: [image],
-                        flags: [MessageFlags.IsComponentsV2],
                     });
                 }, 5000);
             } catch (error) {

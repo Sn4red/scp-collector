@@ -12,6 +12,7 @@ const {
     SectionBuilder,
     ContainerBuilder,
 } = require('discord.js');
+
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
 const wrap = require('word-wrap');
@@ -115,6 +116,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -467,9 +469,7 @@ function createCardContainer(
 
     // * Name.
     const textName = new TextDisplayBuilder()
-        .setContent(
-            `*${fixedCardName}*`,
-        );
+        .setContent(`*${fixedCardName}*`);
 
     // * Container.
     const container = new ContainerBuilder()
@@ -583,7 +583,11 @@ async function promotionProcess(
 
     userDocument.dailyAttemptsRemaining--;
 
-    return { promotionType, userDocument, indexCurrentElement };
+    return {
+        promotionType,
+        userDocument,
+        indexCurrentElement,
+    };
 }
 
 // * Creates the results container that will display the results of the capture

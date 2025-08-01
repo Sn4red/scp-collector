@@ -1,5 +1,3 @@
-const path = require('node:path');
-const sharp = require('sharp');
 const {
     SlashCommandBuilder,
     AttachmentBuilder,
@@ -17,6 +15,9 @@ const {
     SectionBuilder,
     ContainerBuilder,
 } = require('discord.js');
+
+const path = require('node:path');
+const sharp = require('sharp');
 
 module.exports = {
     cooldown: 60 * 30,
@@ -120,7 +121,7 @@ module.exports = {
         const reply = await interaction.editReply({
             components: [pageContainer],
             files: [bannerImage, thumbnailImage],
-            flags: MessageFlags.IsComponentsV2,
+            flags: [MessageFlags.IsComponentsV2],
         });
 
         const collector = reply.createMessageComponentCollector({
@@ -139,7 +140,7 @@ module.exports = {
             }
 
             // * Interaction is acknowledged to prevent the interaction timeout.
-            button.deferUpdate();
+            await button.deferUpdate();
 
             // * Validates that the button clicked is one of the navigation
             // * buttons (there is just 3 buttons, but it clarifies the
@@ -147,6 +148,7 @@ module.exports = {
             if (button.customId !== 'btnInformation' &&
                 button.customId !== 'btnGameplay' &&
                 button.customId !== 'btnTradingSystem') {
+
                 return;
             }
 

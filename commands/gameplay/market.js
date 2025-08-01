@@ -4,6 +4,7 @@ const {
     MessageFlags,
     TextDisplayBuilder,
 } = require('discord.js');
+
 const Canvas = require('@napi-rs/canvas');
 const firebase = require('../../utils/firebase');
 const moment = require('moment');
@@ -42,6 +43,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -60,6 +62,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -546,5 +549,8 @@ function fitTextToWidth(context, name, maxWidth, initialFontSize) {
         context.font = `bold ${fontSize}px Roboto Condensed`;
     }
 
-    return { fontSize, splitName };
+    return {
+        fontSize,
+        splitName,
+    };
 }

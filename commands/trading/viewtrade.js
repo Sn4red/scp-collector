@@ -51,6 +51,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -73,6 +74,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -91,6 +93,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -135,6 +138,7 @@ module.exports = {
             componentType: ComponentType.Button,
             filter: collectorFilter,
             time: time,
+            max: 1,
         });
 
         let deletedMessage = false;
@@ -150,13 +154,14 @@ module.exports = {
             }
 
             // * Interaction is acknowledged to prevent the interaction timeout.
-            button.deferUpdate();
+            await button.deferUpdate();
 
             // * Validates that the button clicked is one of the actions buttons
             // * (there is just 3 buttons, but it clarifies the intention).
             if (button.customId !== 'btnCancel' &&
                 button.customId !== 'btnConfirm' &&
                 button.customId !== 'btnDecline') {
+
                 return;
             }
 
@@ -214,8 +219,6 @@ module.exports = {
                             MessageFlags.Ephemeral,
                         ],
                     });
-
-                    await interaction.deleteReply();
                 } catch (error) {
                     if (error.message.includes(errorMessage1) ||
                         error.message.includes(errorMessage2)) {
@@ -230,8 +233,6 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
-
-                        await interaction.deleteReply();
                     } else {
                         console.log(
                             `${new Date()} >>> *** ERROR: viewtrade.js ` +
@@ -254,8 +255,6 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
-
-                        await interaction.deleteReply();
                     }
                 }
             }
@@ -415,8 +414,6 @@ module.exports = {
                             MessageFlags.Ephemeral,
                         ],
                     });
-
-                    await interaction.deleteReply();
                 } catch (error) {
                     if (error.message.includes(errorMessage1) ||
                         error.message.includes(errorMessage2) ||
@@ -432,8 +429,6 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
-
-                        await interaction.deleteReply();
                     } else if (error.message.includes(errorMessage4) ||
                         error.message.includes(errorMessage5)) {
 
@@ -449,8 +444,6 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
-
-                        await interaction.deleteReply();
                     } else {
                         console.log(
                             `${new Date()} >>> *** ERROR: accepttrade.js *** ` +
@@ -472,8 +465,6 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
-
-                        await interaction.deleteReply();
                     }
                 }
             }
@@ -532,8 +523,6 @@ module.exports = {
                             MessageFlags.Ephemeral,
                         ],
                     });
-
-                    await interaction.deleteReply();
                 } catch (error) {
                     if (error.message.includes(errorMessage1) ||
                         error.message.includes(errorMessage2)) {
@@ -548,8 +537,6 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
-
-                        await interaction.deleteReply();
                     } else {
                         console.log(
                             `${new Date()} >>> *** ERROR: declinetrade.js ` +
@@ -572,8 +559,6 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
-
-                        await interaction.deleteReply();
                     }
                 }
             }
@@ -698,6 +683,7 @@ function createTradeContainer(
     issuerCardName,
     recipientCardName,
     userId,
+    disableButtons = false,
 ) {
     // * Header.
     const header = new TextDisplayBuilder()
@@ -787,7 +773,8 @@ function createTradeContainer(
             const cancelButton = new ButtonBuilder()
                 .setCustomId('btnCancel')
                 .setLabel('Cancel')
-                .setStyle(ButtonStyle.Danger);
+                .setStyle(ButtonStyle.Danger)
+                .setDisabled(disableButtons);
 
             const actionRow = new ActionRowBuilder()
                 .addComponents(cancelButton);
@@ -807,12 +794,14 @@ function createTradeContainer(
             const confirmButton = new ButtonBuilder()
                 .setCustomId('btnConfirm')
                 .setLabel('Confirm')
-                .setStyle(ButtonStyle.Success);
+                .setStyle(ButtonStyle.Success)
+                .setDisabled(disableButtons);
 
             const declineButton = new ButtonBuilder()
                 .setCustomId('btnDecline')
                 .setLabel('Decline')
-                .setStyle(ButtonStyle.Danger);
+                .setStyle(ButtonStyle.Danger)
+                .setDisabled(disableButtons);
 
             const actionRow = new ActionRowBuilder()
                 .addComponents(confirmButton, declineButton);
@@ -855,7 +844,9 @@ async function findCard(userId, cardReference, holographic, transaction) {
             obtainingCount: SCPCount,
         };
     } else {
-        return { wasFound: false };
+        return {
+            wasFound: false,
+        };
     }
 }
 

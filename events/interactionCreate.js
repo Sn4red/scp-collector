@@ -4,6 +4,7 @@ const {
     MessageFlags,
     TextDisplayBuilder,
 } = require('discord.js');
+
 const { cooldowns } = require('../index-scp-collector.js');
 
 module.exports = {
@@ -21,6 +22,7 @@ module.exports = {
                 `No command with the name ${interaction.commandName} was ` +
                     'found.',
             );
+
             return;
         }
 

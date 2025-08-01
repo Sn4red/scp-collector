@@ -6,6 +6,7 @@ const {
     ContainerBuilder,
     MessageFlags,
 } = require('discord.js');
+
 const path = require('path');
 const fs = require('fs');
 const firebase = require('../../utils/firebase');
@@ -42,6 +43,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 

@@ -1,5 +1,3 @@
-const path = require('node:path');
-const sharp = require('sharp');
 const {
     SlashCommandBuilder,
     AttachmentBuilder,
@@ -13,6 +11,9 @@ const {
     SectionBuilder,
     ContainerBuilder,
 } = require('discord.js');
+
+const path = require('node:path');
+const sharp = require('sharp');
 
 module.exports = {
     cooldown: 60 * 30,
@@ -136,7 +137,7 @@ module.exports = {
         await interaction.editReply({
             components: [container],
             files: [bannerImage, thumbnailImage],
-            flags: MessageFlags.IsComponentsV2,
+            flags: [MessageFlags.IsComponentsV2],
         });
     },
 };

@@ -7,6 +7,7 @@ const {
     TextInputStyle,
     ActionRowBuilder,
 } = require('discord.js');
+
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -37,6 +38,7 @@ module.exports = {
                     MessageFlags.Ephemeral,
                 ],
             });
+
             return;
         }
 
@@ -62,6 +64,7 @@ module.exports = {
                     MessageFlags.Ephemeral,
                 ],
             });
+
             return;
         }
 
@@ -105,6 +108,7 @@ module.exports = {
             // ! If the fields are not valid, returns an error message.
             if (fieldsValidation.errorState) {
                 await modalInteraction.editReply(fieldsValidation.errorMessage);
+
                 return;
             }
 
@@ -127,6 +131,7 @@ module.exports = {
                     components: [errorMessage],
                     flags: [MessageFlags.IsComponentsV2],
                 });
+
                 return;
             }
 
@@ -467,7 +472,10 @@ function validateSpecialConditions(
         errorState = true;
     }
 
-    return { errorState, errorMessage };
+    return {
+        errorState,
+        errorMessage,
+    };
 }
 
 // * This function searches for the card data through all the card collections,
@@ -514,10 +522,14 @@ async function findCard(userId, cardId, holographic, transaction) {
                     cardReference: snapshot.ref,
                 };
             } else {
-                return { wasFound: false };
+                return {
+                    wasFound: false,
+                };
             }
         }
     }
 
-    return { wasFound: false };
+    return {
+        wasFound: false,
+    };
 }

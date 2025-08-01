@@ -3,6 +3,7 @@ const {
     MessageFlags,
     TextDisplayBuilder,
 } = require('discord.js');
+
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -38,6 +39,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -56,6 +58,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 

@@ -12,6 +12,7 @@ const {
     SectionBuilder,
     ContainerBuilder,
 } = require('discord.js');
+
 const path = require('node:path');
 const wrap = require('word-wrap');
 const firebase = require('../../utils/firebase');
@@ -60,6 +61,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -81,6 +83,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -108,6 +111,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -135,9 +139,7 @@ module.exports = {
 
         // * Card ID.
         const textCardId = new TextDisplayBuilder()
-            .setContent(
-                `## ${holographicEmoji}  Item #: \`${fixedCardId}\``,
-            );
+            .setContent(`## ${holographicEmoji}  Item #: \`${fixedCardId}\``);
 
         // * Separator.
         const separator = new SeparatorBuilder()
@@ -175,9 +177,7 @@ module.exports = {
 
         // * Name.
         const textName = new TextDisplayBuilder()
-            .setContent(
-                `*${cardName}*`,
-            );
+            .setContent(`*${cardName}*`);
 
         // * Container.
         const container = new ContainerBuilder()
@@ -251,14 +251,18 @@ async function findCard(userId, cardId, holographic) {
             } else {
                 // * If the card exist but the user does not have it in the
                 // * collection.
-                return { wasFound: false };
+                return {
+                    wasFound: false,
+                };
             }
         }
     }
 
     // * If the card is not found in any collection, in other words, the card
     // * does not exist.
-    return { wasFound: false };
+    return {
+        wasFound: false,
+    };
 }
 
 // * This function returns the holographic emoji and container color for the

@@ -432,7 +432,10 @@ async function getMarketCards(obtainedClasses, transaction) {
         }
     }
 
-    return { cardReferences, cardIds };
+    return {
+        cardReferences,
+        cardIds,
+    };
 }
 
 // * This function defines the probability of getting holographic cards.

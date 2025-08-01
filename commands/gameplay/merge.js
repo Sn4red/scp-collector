@@ -16,6 +16,7 @@ const {
     SectionBuilder,
     ContainerBuilder,
 } = require('discord.js');
+
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
 const wrap = require('word-wrap');
@@ -70,6 +71,7 @@ module.exports = {
                     MessageFlags.Ephemeral,
                 ],
             });
+
             return;
         }
 
@@ -96,6 +98,7 @@ module.exports = {
                     MessageFlags.Ephemeral,
                 ],
             });
+
             return;
         }
 
@@ -152,6 +155,7 @@ module.exports = {
                     components: [errorMessage],
                     flags: [MessageFlags.IsComponentsV2],
                 });
+
                 return;
             }
 
@@ -825,7 +829,10 @@ function validateExistence(
         errorState = true;
     }
 
-    return { errorState, errorMessage };
+    return {
+        errorState,
+        errorMessage,
+    };
 }
 
 // * This function validates that the cards entered by the user are not Thaumiel
@@ -875,7 +882,10 @@ function validateClasses(
         errorState = true;
     }
 
-    return { errorState, errorMessage };
+    return {
+        errorState,
+        errorMessage,
+    };
 }
 
 // * This funtion manages the tie between classes, giving a random one.
@@ -1014,9 +1024,7 @@ function createCardContainer(
 
     // * Name.
     const textName = new TextDisplayBuilder()
-        .setContent(
-            `*${fixedCardName}*`,
-        );
+        .setContent(`*${fixedCardName}*`);
 
     // * Container.
     const container = new ContainerBuilder()

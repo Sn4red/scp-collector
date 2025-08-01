@@ -43,6 +43,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
             
@@ -67,6 +68,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -114,11 +116,12 @@ module.exports = {
 
             const cardName = limitCardName(card.name);
 
-            cardList += `**\`[${quantity}]\`** \`${element}\` -> ` +
-                `\`${cardName}\` - **\`${classCard}\`**    ` +
-                `${process.env.EMOJI_GREEN_DOT}**${emeraldQuantity}** ` +
-                `${process.env.EMOJI_YELLOW_DOT}**${goldenQuantity}** ` +
-                `${process.env.EMOJI_BLUE_DOT}**${diamondQuantity}** \n`;
+            cardList +=
+                `**\`[${quantity}]\`** \`${element}\` -> \`${cardName}\` - ` +
+                    `**\`${classCard}\`**    ` +
+                    `${process.env.EMOJI_GREEN_DOT}**${emeraldQuantity}** ` +
+                    `${process.env.EMOJI_YELLOW_DOT}**${goldenQuantity}** ` +
+                    `${process.env.EMOJI_BLUE_DOT}**${diamondQuantity}** \n`;
 
             entriesPerPageLimit++;
                     
@@ -191,13 +194,14 @@ module.exports = {
             }
 
             // * Interaction is acknowledged to prevent the interaction timeout.
-            button.deferUpdate();
+            await button.deferUpdate();
         
             // * Validates that the button clicked is one of the navigation
             // * buttons (there is just 2 buttons, but it clarifies the
             // * intention).
             if (button.customId !== 'btnPrevious' &&
                 button.customId !== 'btnNext') {
+
                 return;
             }
         
@@ -350,8 +354,8 @@ function createContainer(
     // * Header.
     const header = new TextDisplayBuilder()
         .setContent(
-            `## ${process.env.EMOJI_PAGE}  ` +
-                `${nickname}'s Collection - ${SCPCount}`,
+            `## ${process.env.EMOJI_PAGE}  ${nickname}'s Collection - ` +
+                `${SCPCount}`,
         );
 
     // * Separator.

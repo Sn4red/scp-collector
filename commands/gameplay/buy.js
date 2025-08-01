@@ -14,6 +14,7 @@ const {
     ComponentType,
     AttachmentBuilder,
 } = require('discord.js');
+
 const path = require('node:path');
 const firebase = require('../../utils/firebase');
 const wrap = require('word-wrap');
@@ -57,6 +58,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -77,6 +79,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -94,6 +97,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -114,6 +118,7 @@ module.exports = {
                 components: [errorMessage],
                 flags: [MessageFlags.IsComponentsV2],
             });
+
             return;
         }
 
@@ -157,6 +162,7 @@ module.exports = {
             componentType: ComponentType.Button,
             filter: collectorFilter,
             time: time,
+            max: 1,
         });
 
         let deletedMessage = false;
@@ -172,13 +178,14 @@ module.exports = {
             }
 
             // * Interaction is acknowledged to prevent the interaction timeout.
-            button.deferUpdate();
+            await button.deferUpdate();
 
             // * Validates that the button clicked is one of the confirmation
             // * buttons (there is just 2 buttons, but it clarifies the
             // * intention).
             if (button.customId !== 'btnConfirm' &&
                 button.customId !== 'btnCancel') {
+
                 return;
             }
 
@@ -248,8 +255,6 @@ module.exports = {
                             MessageFlags.Ephemeral,
                         ],
                     });
-
-                    await interaction.deleteReply();
                 } catch (error) {
                     if (error.message.includes('You don\'t have enough ' +
                             'crystals to buy this card!')) {
@@ -264,8 +269,6 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
-
-                        await interaction.deleteReply();
                     } else {
                         console.log(
                             `${new Date()} >>> *** ERROR: buy.js *** by ` +
@@ -287,16 +290,12 @@ module.exports = {
                                 MessageFlags.Ephemeral,
                             ],
                         });
-
-                        await interaction.deleteReply();
                     }
                 }
             }
 
             if (button.customId === 'btnCancel') {
                 deletedMessage = true;
-
-                await interaction.deleteReply();
             }
         });
 
@@ -325,7 +324,9 @@ async function findCardInMarket(cardId) {
     const marketSnapshot = await marketQuery.get();
 
     if (marketSnapshot.empty) {
-        return { wasFound: false };
+        return {
+            wasFound: false,
+        };
     } else {
         return {
             wasFound: true,
@@ -632,9 +633,7 @@ function createCardContainer(
 
     // * Name.
     const textName = new TextDisplayBuilder()
-        .setContent(
-            `*${fixedCardName}*`,
-        );
+        .setContent(`*${fixedCardName}*`);
 
     // * Container.
     const container = new ContainerBuilder()

@@ -54,59 +54,65 @@ module.exports = {
         );
 
         // * Text for the different pages.
-        const initialText = 'Use the buttons above to navigate through ' +
-            'the different command sections.';
+        const initialText =
+            'Use the buttons above to navigate through the different command ' +
+                'sections.';
 
-        const informationText = '/`commands` - Lists all usable commands.\n' +
-            '/`system` - Explains how ranks, levels, and XP work.\n' +
-            '/`classes` - Details the different classes of SCPs.\n' +
-            '/`history` - Provides details on the theme of the bot for more ' +
-            'context and a brief history of what the SCP Foundation is.\n' +
-            '/`faq` - Frequently Asked Questions about bot functionality.\n' +
-            '/`merges` - Explains about how merge works.\n' +
-            '/`crystals` - Explains about the crystal system.\n' +
-            '**/`vip` - VIP details. Get additional features by becoming a ' +
-            `donor!** ${process.env.EMOJI_THUNDER}` +
-            `${process.env.EMOJI_THUNDER}${process.env.EMOJI_THUNDER}`;
+        const informationText =
+            '/`commands` - Lists all usable commands.\n' +
+                '/`system` - Explains how ranks, levels, and XP work.\n' +
+                '/`classes` - Details the different classes of SCPs.\n' +
+                '/`history` - Provides details on the theme of the bot for ' +
+                'more context and a brief history of what the SCP Foundation ' +
+                'is.\n' +
+                '/`faq` - Frequently Asked Questions about bot ' +
+                'functionality.\n' +
+                '/`merges` - Explains about how merge works.\n' +
+                '/`crystals` - Explains about the crystal system.\n' +
+                '**/`vip` - VIP details. Get additional features by becoming ' +
+                `a donor!** ${process.env.EMOJI_THUNDER}` +
+                `${process.env.EMOJI_THUNDER}${process.env.EMOJI_THUNDER}`;
 
-        const gameplayText = '/`card` - Displays your personal card and ' +
-            'progress details. This is the first command you should use to ' +
-            'start playing.\n' +
-            '/`capture` - Capture an SCP and add it to your collection. You ' +
-            'may obtain duplicates that can be used for trading with someone ' +
-            'else. The rarity (class) of the SCP will influence the ' +
-            'probabilities of obtaining it. You can only capture **5 SCPs** ' +
-            'per day.\n' +
-            '/`showcard` `<SCP ID>` - Shows one of your cards to the ' +
-            'public.\n' +
-            '/`viewcard` `<SCP ID>` - Privately displays one of your owned ' +
-            'cards.\n' +
-            '/`scp` - Lists the SCPs you currently have, including ' +
-            'duplicates.\n' +
-            '/`merge` - Merges 5 cards to turn it into a higher class card.\n' +
-            '/`market` - A weekly market where you can purchase up to 5 ' +
-            'cards using your crystals.\n' +
-            '/`buy` `<SCP ID>` - Buys a card that is currently in the ' +
-            'market, using your crystals.';
+        const gameplayText =
+            '/`card` - Displays your personal card and progress details. ' +
+                'This is the first command you should use to start playing.\n' +
+                '/`capture` - Capture an SCP and add it to your collection. ' +
+                'You may obtain duplicates that can be used for trading with ' +
+                'someone else. The rarity (class) of the SCP will influence ' +
+                'the probabilities of obtaining it. You can only capture **5 ' +
+                'SCPs** per day.\n' +
+                '/`showcard` `<SCP ID>` - Shows one of your cards to the ' +
+                'public.\n' +
+                '/`viewcard` `<SCP ID>` - Privately displays one of your ' +
+                'owned cards.\n' +
+                '/`scp` - Lists the SCPs you currently have, including ' +
+                'duplicates.\n' +
+                '/`merge` - Merges 5 cards to turn it into a higher class ' +
+                'card.\n' +
+                '/`market` - A weekly market where you can purchase up to 5 ' +
+                'cards using your crystals.\n' +
+                '/`buy` `<SCP ID>` - Buys a card that is currently in the ' +
+                'market, using your crystals.';
 
-        const tradingSystemText = '/`trade` - Creates a trade request to a ' +
-            'user, specifying the user, the SCP they have, and the one you ' +
-            'are willing to trade. When the other user accepts your request, ' +
-            'the trade will be executed automatically. **Before accepting ' +
-            'it, there is a 1-minute cooldown in case a request was sent by ' +
-            'mistake.**\n' +
-            '/`viewtrade` `<Trade ID>` - Displays the details of a trade, ' +
-            'along with buttons to manage the request, such as canceling it ' +
-            '(if you sent it) and accepting/declining it (if you received ' +
-            'it).\n' +
-            '/`senttrades` - Lists pending trades along with a history of ' +
-            'trades you have done.\n' +
-            '/`receivedtrades` - Lists the trade requests you have pending ' +
-            'to accept or decline.\n' +
-            '/`disabletrades` - Use it if you don\'t want to receive trade ' +
-            'offers.\n' +
-            '/`enabletrades` - Use it if you want to receive trade offers ' +
-            '**(enabled by default)**.';
+        const tradingSystemText =
+            '/`trade` - Creates a trade request to a user, specifying the ' +
+                'user, the SCP they have, and the one you are willing to ' +
+                'trade. When the other user accepts your request, the trade ' +
+                'will be executed automatically. **Before accepting it, ' +
+                'there is a 1-minute cooldown in case a request was sent by ' +
+                'mistake.**\n' +
+                '/`viewtrade` `<Trade ID>` - Displays the details of a ' +
+                'trade, along with buttons to manage the request, such as ' +
+                'canceling it (if you sent it) and accepting/declining it ' +
+                '(if you received it).\n' +
+                '/`senttrades` - Lists pending trades along with a trade ' +
+                'history\n' +
+                '/`receivedtrades` - Lists the trade requests you have ' +
+                'pending to accept or decline.\n' +
+                '/`disabletrades` - Use it if you don\'t want to receive ' +
+                'trade offers.\n' +
+                '/`enabletrades` - Use it if you want to receive trade ' +
+                'offers **(enabled by default)**.';
 
         // * The initial page for the container is created with the initial
         // * text withouth a thumbnail.

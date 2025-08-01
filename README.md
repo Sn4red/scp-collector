@@ -87,14 +87,15 @@ SCP Collector features a market where 5 cards are sold weekly in exchange for cr
 same market is shared by all users. You can view it with the /`market` command and use /`buy` to purchase a card.
 
 ## Trading System
-Card trades between users are always 1-to-1. Using the /`trade` command, you specify the user ID, the card you're offering, and the card you want in return. If
+Card trades between users are always 1-to-1. Using the /`trade` command, you specify the user ID, the card you want in return, and the one you're offering. If
 both have the cards, a request is created, and there's a 1-minute cooldown before the other party can accept it, for security reasons (in case of misclicks,
-accidental sends, etc.). You can view the details and status of the trade using /`viewtrade`.
+accidental sends, etc.). You can view the details and status of the trade using /`viewtrade`, and you can also manage the request through there.
 
-To cancel a trade you've sent (as long as it hasn't been accepted yet), use /`canceltrade`. To reject a trade you've received, use /`declinetrade`.
+If you want to cancel the trade you've sent (as long as it hasn't been accepted yet), you'll see the **Cancel** button. To reject a trade you've
+received, use the **Decline** button. If you want to accept a trade request, use the **Accept** button, and the cards will be exchanged. Additionally, any
+existing trade requests from either user that are no longer valid, such as offers involving a card that has already been traded, will be automatically deleted.
 
-When using /`accepttrade`, the cards are exchanged. Additionally, any existing trade requests from either user that are no longer valid, such as offers involving
-a card that has already been traded, are automatically deleted.
+Any user that is not part of the trade request won't be able to see these buttons, only the trade details.
 
 You can view your pending incoming trade requests using /`receivedtrades`. This displays a list showing the trade ID, creation date, and the username of the user
 who sent it. To view all the trades you've sent, use the /`senttrades` command. This command shows a list of pending trades at the top, and a history of completed

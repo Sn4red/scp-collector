@@ -20,8 +20,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('senttrades')
         .setDescription(
-            'Lists pending trade requests along with a history of trades you ' +
-                'have completed.',
+            'Lists pending trade requests along with a trade history',
         ),
     async execute(interaction) {
         const userId = interaction.user.id;
@@ -58,13 +57,17 @@ module.exports = {
             .orderBy('securityCooldown', 'desc');
         const pendingTradeSnapshot = await pendingTradeQuery.get();
 
+        // * The user's trade history is retrieved to display it in the
+        // * container.
+        const tradeHistoryList = await tradeHistory(userId);
+
         // ! If the user has no pending sent trades, it displays the container
         // ! with no details and the history of recent trades performed.
         if (pendingTradeSnapshot.empty) {
             const container = await createContainer(
                 isListEmpty = true,
                 tradeCount = pendingTradeSnapshot.size,
-                this.userId = userId,
+                this.tradeHistoryList = tradeHistoryList,
             );
 
             await interaction.editReply({
@@ -168,7 +171,7 @@ module.exports = {
         const container = await createContainer(
             false,
             pendingTradeSnapshot.size,
-            userId,
+            tradeHistoryList,
             tradeLists[pages[userId]],
             pages[userId],
             totalContainers,
@@ -225,7 +228,7 @@ module.exports = {
             const updatedContainer = await createContainer(
                 false,
                 pendingTradeSnapshot.size,
-                userId,
+                tradeHistoryList,
                 tradeLists[pages[userId]],
                 pages[userId],
                 totalContainers,
@@ -242,7 +245,7 @@ module.exports = {
 async function createContainer(
     isListEmpty,
     tradeCount,
-    userId,
+    tradeHistoryList,
     tradeList = '',
     currentPage = 0,
     totalPages = 0,
@@ -301,16 +304,14 @@ async function createContainer(
         .addTextDisplayComponents(header2)
         .addSeparatorComponents(separator3);
 
-    // * History of trades.
-    const historyTradesValue = await historyTrades(userId);
-
+    // * Trade History.
     // * The component it will only be added if there are trades in the history.
-    if (historyTradesValue.length !== 0) {
-        const textHistoryTrades = new TextDisplayBuilder()
-            .setContent(historyTradesValue);
+    if (tradeHistoryList.length !== 0) {
+        const textTradeHistory = new TextDisplayBuilder()
+            .setContent(tradeHistoryList);
 
         container
-            .addTextDisplayComponents(textHistoryTrades);
+            .addTextDisplayComponents(textTradeHistory);
     }
 
     // * If the trade list is not empty, it adds the navigation buttons.
@@ -338,7 +339,7 @@ async function createContainer(
     return container;
 }
 
-async function historyTrades(userId) {
+async function tradeHistory(userId) {
     const issuerCompleteTradeReference = database.collection('trade');
     const issuerCompleteTradeQuery = issuerCompleteTradeReference
         .where('issuer', '==', userId)

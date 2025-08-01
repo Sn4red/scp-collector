@@ -193,7 +193,8 @@ When the bot determines the SCP class based on probability, it performs a query 
 an aggregation query:
 
 ```javascript
-const cardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
+const cardReference = database.collection('card').doc(obtainedClass)
+    .collection(obtainedClass.toLowerCase());
 const cardSnapshot = await transaction.get(cardReference.count());
 
 const classCount = cardSnapshot.data().count;
@@ -205,8 +206,10 @@ Next, to select a card from the class, the bot generates a random number based o
 ```javascript
 const randomNumber = Math.floor(Math.random() * classCount) + 1;
                     
-const selectedCardReference = database.collection('card').doc(obtainedClass).collection(obtainedClass.toLowerCase());
-const selectedCardQuery = selectedCardReference.where('random', '==', randomNumber);
+const selectedCardReference = database.collection('card').doc(obtainedClass)
+    .collection(obtainedClass.toLowerCase());
+const selectedCardQuery = selectedCardReference
+    .where('random', '==', randomNumber);
 const selectedCardSnapshot = await transaction.get(selectedCardQuery);
                     
 const cardDocument = selectedCardSnapshot.docs[0];

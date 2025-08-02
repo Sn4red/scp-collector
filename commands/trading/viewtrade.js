@@ -24,7 +24,8 @@ module.exports = {
                 'or cancel it.',
         )
         .addStringOption(option =>
-            option.setName('trade')
+            option
+                .setName('trade')
                 .setDescription('Trade request ID to inquire about.')
                 .setRequired(true)),
     async execute(interaction) {
@@ -132,12 +133,12 @@ module.exports = {
         // * The time is set to 20 seconds. Less time than the command cooldown,
         // * so the user can't spawn more than 1 collector at the same time,
         // * which could cause glitches.
-        const time = 1000 * 20;
+        const timeLeft = 1000 * 20;
 
         const collector = reply.createMessageComponentCollector({
             componentType: ComponentType.Button,
             filter: collectorFilter,
-            time: time,
+            time: timeLeft,
             max: 1,
         });
 
@@ -446,8 +447,9 @@ module.exports = {
                         });
                     } else {
                         console.log(
-                            `${new Date()} >>> *** ERROR: accepttrade.js *** ` +
-                                'by ${userId} (${interaction.user.username})',
+                            `${new Date()} >>> *** ERROR: viewtrade.js ` +
+                                `(ACCEPT) *** by ${userId} ` +
+                                `(${interaction.user.username})`,
                         );
                         console.error(error);
 
@@ -539,7 +541,7 @@ module.exports = {
                         });
                     } else {
                         console.log(
-                            `${new Date()} >>> *** ERROR: declinetrade.js ` +
+                            `${new Date()} >>> *** ERROR: viewtrade.js ` +
                                 `(DECLINE) *** by ${userId} ` +
                                 `(${interaction.user.username})`,
                         );

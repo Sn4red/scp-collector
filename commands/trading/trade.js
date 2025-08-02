@@ -75,11 +75,12 @@ module.exports = {
         // * The filter ensures that the modal interaction is only processed by
         // * the user who invoked the command.
         const filter = (userModal) => userModal.customId === `mdl-${userId}`;
-        const time = 1000 * 60;
+        const timeLeft = 1000 * 60;
 
-        interaction.awaitModalSubmit({ filter: filter, time: time })
-            .then(async (modalInteraction) => {
-
+        interaction.awaitModalSubmit({
+            filter: filter,
+            time: timeLeft,
+        }).then (async (modalInteraction) => {
             // * Notify the Discord API that the interaction was received
             // * successfully and set a maximun timeout of 15 minutes.
             await modalInteraction.deferReply({

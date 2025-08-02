@@ -122,7 +122,7 @@ module.exports = {
         // * interact with it, this filter is kept for security purposes and
         // * code clarity.
         const collectorFilter = (x) => x.user.id === interaction.user.id;
-        const time = 1000 * 60 * 5;
+        const timeLeft = 1000 * 60 * 5;
 
         const reply = await interaction.editReply({
             components: [pageContainer],
@@ -133,7 +133,7 @@ module.exports = {
         const collector = reply.createMessageComponentCollector({
             componentType: ComponentType.Button,
             filter: collectorFilter,
-            time,
+            time: timeLeft,
         });
 
         // * Collector listener for the navigation buttons.

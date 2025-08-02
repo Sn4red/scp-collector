@@ -25,12 +25,14 @@ module.exports = {
         .setName('viewcard')
         .setDescription('Privately displays one of your owned cards.')
         .addStringOption(option =>
-            option.setName('card')
+            option
+                .setName('card')
                 .setDescription('Card ID to inquire about.')
                 .setRequired(true),
         )
         .addStringOption(option =>
-            option.setName('holographic')
+            option
+                .setName('holographic')
                 .setDescription('Specify the holopraphic type if needed.')
                 .setRequired(false)
                 .addChoices(

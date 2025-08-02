@@ -30,7 +30,8 @@ module.exports = {
             'Buys a card that is currently in the market, using your crystals.',
         )
         .addStringOption(option =>
-            option.setName('card')
+            option
+                .setName('card')
                 .setDescription('Card ID to buy.')
                 .setRequired(true)),
     async execute(interaction) {
@@ -156,12 +157,12 @@ module.exports = {
         // * The time is set to 10 seconds. Less time than the command cooldown,
         // * so the user can't spawn more than 1 collector at the same time,
         // * which could cause glitches, like buying the card multiple times.
-        const time = 1000 * 10;
+        const timeLeft = 1000 * 10;
 
         const collector = reply.createMessageComponentCollector({
             componentType: ComponentType.Button,
             filter: collectorFilter,
-            time: time,
+            time: timeLeft,
             max: 1,
         });
 

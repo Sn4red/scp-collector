@@ -25,12 +25,14 @@ module.exports = {
         .setName('showcard')
         .setDescription('Shows one of your cards to the public.')
         .addStringOption(option =>
-            option.setName('card')
+            option
+                .setName('card')
                 .setDescription('Card ID to inquire about.')
                 .setRequired(true),
         )
         .addStringOption(option =>
-            option.setName('holographic')
+            option
+                .setName('holographic')
                 .setDescription('Specify the holopraphic type if needed.')
                 .setRequired(false)
                 .addChoices(

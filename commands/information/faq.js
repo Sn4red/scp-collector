@@ -86,7 +86,7 @@ module.exports = {
             .setContent(
                 `### ${process.env.EMOJI_SMALL_WHITE_DASH}When do premium ` +
                     'users receive their monthly crystals?\n' +
-                    'At the end of each month at 12:20 (EST/EDT).',
+                    'At the beginning of each month at 12:20 a.m (EST/EDT).',
             );
 
         // * Question 3.
@@ -94,7 +94,7 @@ module.exports = {
             .setContent(
                 `### ${process.env.EMOJI_SMALL_WHITE_DASH}When does the ` +
                     'market reset?\n' +
-                    'It resets every Sunday at 12:05 (EST/EDT).',
+                    'It resets every Monday at 12:05 a.m (EST/EDT).',
             );
 
         // * Question 4.

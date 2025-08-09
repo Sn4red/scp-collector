@@ -94,7 +94,7 @@ module.exports = {
                     '- Double XP when capturing SCP cards.\n' +
                     '- Double crystals when capturing and merging SCP ' +
                     'cards.\n' +
-                    '- 1000 crystals at the end of each month.\n' +
+                    '- 1000 crystals at the beginning of each month.\n' +
                     '- Better chances of obtaining rare class cards.\n' +
                     '- Opportunity to obtain holographic cards (Use ' +
                     '/`classes` for more information).\n' +

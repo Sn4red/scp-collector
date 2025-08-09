@@ -42,8 +42,7 @@ If you changed your Discord username, running the command again will update it s
 It’s worth noting that using /`card` is not required to access the **information** commands. It’s only necessary when you want to use the bot’s main
 functionality.
 
-After registering, you can start capturing cards using /`capture`. You get 5 daily attempts, which reset at midnight (EST/EDT). Even if you haven't
-used all of them, your attempts will reset to 5 at the start of the next day.
+After registering, you can start capturing cards using /`capture`. You get 5 daily attempts, which reset at midnight (EST/EDT).
 
 The rarity of the cards is defined by what is called 'class'. There is a set probability of obtaining each class, and depending on which one you get,
 you receive a certain amount of **XP** and **crystals**:
@@ -83,7 +82,7 @@ There is also a chance that the result of the merge can be a holographic card, w
 Just like when capturing cards, you can also earn crystals by performing merges, with the same values. However, you don't receive any XP.
 
 ## Gameplay - Market
-SCP Collector features a market where 5 cards are sold weekly in exchange for crystals. The selection refreshes every Sunday at 12:05 a.m (EST/EDT), and the
+SCP Collector features a market where 5 cards are sold weekly in exchange for crystals. The selection refreshes every Monday at 12:05 a.m (EST/EDT), and the
 same market is shared by all users. You can view it with the /`market` command and use /`buy` to purchase a card.
 
 ## Trading System
@@ -118,7 +117,7 @@ You can get extra features by subscribing to the [Patreon](https://www.patreon.c
 - 10 shots daily instead of 5.
 - Double XP when capturing SCP cards.
 - Double crystals when capturing and merging SCP cards.
-- 1000 crystals at the end of each month.
+- 1000 crystals at the beginning of each month.
 - Better chances of obtaining rare class cards.
 - Opportunity to obtain holographic cards.
 - A golden seal on your ID card.

@@ -243,8 +243,9 @@ async function resetUserMarketFields() {
     }
 }
 
-// * This function gives 1000 crystals to Premium users at the end of the month.
-async function giveCrystalsEndOfMonth(client) {
+// * This function gives 1000 crystals to Premium users at the beginning of the
+// * month.
+async function giveCrystalsBeginningOfMonth(client) {
     let numberUsers = 0;
     let numberUsersErrors = 0;
 
@@ -291,7 +292,7 @@ async function giveCrystalsEndOfMonth(client) {
 
                 console.log(
                     `${new Date()} >>> *** ERROR: Cron Job - ` +
-                        `giveCrystalsEndOfMonth *** by ${user.id} ` +
+                        `giveCrystalsBeginningOfMonth *** by ${user.id} ` +
                         `(${user.data().nickname})`,
                 );
                 console.error(error);
@@ -305,8 +306,8 @@ async function giveCrystalsEndOfMonth(client) {
         console.log(`*** Errors with Premium users: ${numberUsersErrors} ***`);
     } catch (error) {
         console.log(
-            `${new Date()} >>> *** ERROR: Cron Job - giveCrystalsEndOfMonth ` +
-                '***',
+            `${new Date()} >>> *** ERROR: Cron Job - ` +
+                'giveCrystalsBeginningOfMonth ***',
         );
         console.error(error);
     }
@@ -327,9 +328,9 @@ function startCronJobs(client) {
     });
 
     // * The cron task executes the update market function and the
-    // * reset user market-related fields function every Sunday at midnight
+    // * reset user market-related fields function every Monday at midnight
     // * (12:05).
-    cron.schedule('5 0 * * 0', async () => {
+    cron.schedule('5 0 * * 1', async () => {
         console.log('*** Updating market ***');
         await updateMarket();
 
@@ -337,18 +338,11 @@ function startCronJobs(client) {
         await resetUserMarketFields();
     });
 
-    // * The cron task executes the give crystals function at the end of the
-    // * month at midnight (12:20).
-    cron.schedule('20 0 28-31 * *', async () => {
-        const now = moment();
-        const endOfMonth = now.clone().endOf('month');
-
-        // * If the current date is the last day of the month, the function is
-        // * executed.
-        if (now.isSame(endOfMonth, 'day')) {
-            console.log('*** Giving 1000 crystals to Premium users ***');
-            await giveCrystalsEndOfMonth(client);
-        }
+    // * The cron task executes the give crystals function at the beginning of
+    // * the month at midnight (12:20).
+    cron.schedule('20 0 1 * *', async () => {
+        console.log('*** Giving 1000 crystals to Premium users ***');
+        await giveCrystalsBeginningOfMonth(client);
     });
 }
 

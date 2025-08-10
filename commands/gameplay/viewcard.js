@@ -13,6 +13,10 @@ const {
     ContainerBuilder,
 } = require('discord.js');
 
+const {
+    holographicFeatures,
+} = require('../../utils/foundationConfig');
+
 const path = require('node:path');
 const wrap = require('word-wrap');
 const firebase = require('../../utils/firebase');
@@ -128,18 +132,19 @@ module.exports = {
         const cardData = foundCard.cardData;
 
         // * Through the word-wrap library, the card name is wrapped to a
-        // * maximum of 46 characters per line, with no indentation. This
-        // * is to ensure that the container size doesn't get longer.
+        // * maximum of 46 characters per line, with no indentation. This is to
+        // * ensure that the container size doesn't get longer.
         const cardName = wrap(cardData.name, {
             indent: '',
             width: 46,
         });
 
-        // * The holographic emoji and container color are obtained
-        // * based on the holographic type of the card.
-        const holographicFeature = getHolographicFeature(foundCard.holographic);
-        const holographicEmoji = holographicFeature.holographicEmoji;
-        const containerColor = holographicFeature.containerColor;
+        // * The holographic emoji and container color are obtained based on the
+        // * holographic type of the card.
+        const holographicEmoji = holographicFeatures[
+            foundCard.holographic
+        ].emoji || ' ';
+        const containerColor = holographicFeatures[foundCard.holographic].color;
 
         // * Card ID.
         const textCardId = new TextDisplayBuilder()
@@ -266,40 +271,5 @@ async function findCard(userId, cardId, holographic) {
     // * does not exist.
     return {
         wasFound: false,
-    };
-}
-
-// * This function returns the holographic emoji and container color for the
-// * card, based on the holographic type.
-function getHolographicFeature(cardHolographic) {
-    let holographicEmoji = null;
-    let containerColor = null;
-
-    switch (cardHolographic) {
-        case 'Emerald':
-            holographicEmoji = `${process.env.EMOJI_EMERALD}`;
-            containerColor = 0x00b65c;
-
-            break;
-        case 'Golden':
-            holographicEmoji = `${process.env.EMOJI_GOLDEN}`;
-            containerColor = 0xffd700;
-
-            break;
-        case 'Diamond':
-            holographicEmoji = `${process.env.EMOJI_DIAMOND}`;
-            containerColor = 0x00bfff;
-
-            break;
-        default:
-            holographicEmoji = ' ';
-            containerColor = 0x010101;
-
-            break;
-    }
-
-    return {
-        holographicEmoji: holographicEmoji,
-        containerColor: containerColor,
     };
 }

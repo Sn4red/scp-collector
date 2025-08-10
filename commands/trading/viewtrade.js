@@ -10,6 +10,12 @@ const {
     ContainerBuilder,
     ComponentType,
  } = require('discord.js');
+
+ const {
+    holographicFeatures,
+    defaultAccentColor,
+} = require('../../utils/foundationConfig');
+
 const firebase = require('../../utils/firebase');
 const moment = require('moment');
 
@@ -174,7 +180,7 @@ module.exports = {
                         'trade has already been cancelled/declined.';
                 const errorMessage2 =
                     `${process.env.EMOJI_ERROR}  Error. It seems that the ` +
-                    'trade has already been made.';
+                        'trade has already been made.';
 
                 try {
                     await database.runTransaction(async (transaction) => {
@@ -605,19 +611,13 @@ async function formattingValues(tradeDocument) {
     const recipientCardId = recipientCardSnapshot.id;
     const recipientCardName = recipientCardDocument.name;
 
-    const holographicEmojis = {
-        'Normal': `${process.env.EMOJI_NORMAL}`,
-        'Emerald': `${process.env.EMOJI_EMERALD}`,
-        'Golden': `${process.env.EMOJI_GOLDEN}`,
-        'Diamond': `${process.env.EMOJI_DIAMOND}`,
-    }; 
-
-    const issuerHolographicEmoji = holographicEmojis[
+    const issuerHolographicEmoji = holographicFeatures[
         tradeDocument.issuerHolographic
-    ];
-    const recipientHolographicEmoji = holographicEmojis[
+    ].emoji || `${process.env.EMOJI_NORMAL}`;
+
+    const recipientHolographicEmoji = holographicFeatures[
         tradeDocument.recipientHolographic
-    ];
+    ].emoji || `${process.env.EMOJI_NORMAL}`;
 
     const creationDate = tradeDocument.securityCooldown.toDate()
         .toLocaleString();
@@ -745,7 +745,7 @@ function createTradeContainer(
 
     // * Container.
     const tradeContainer = new ContainerBuilder()
-        .setAccentColor(0x010101)
+        .setAccentColor(defaultAccentColor)
         .addTextDisplayComponents(header)
         .addSeparatorComponents(separator1)
         .addTextDisplayComponents(issuerText)

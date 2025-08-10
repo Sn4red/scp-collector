@@ -11,6 +11,10 @@ const {
     ComponentType,
 } = require('discord.js');
 
+const {
+    defaultAccentColor,
+} = require('../../utils/foundationConfig');
+
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -275,7 +279,7 @@ function createContainer(
 
     // * Container.
     const container = new ContainerBuilder()
-        .setAccentColor(0x010101)
+        .setAccentColor(defaultAccentColor)
         .addTextDisplayComponents(header)
         .addSeparatorComponents(separator)
         .addTextDisplayComponents(textTradeList)

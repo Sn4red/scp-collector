@@ -11,6 +11,11 @@ const {
     ComponentType,
 } = require('discord.js');
 
+const {
+    defaultAccentColor,
+    holographicFeatures,
+} = require('../../utils/foundationConfig');
+
 const firebase = require('../../utils/firebase');
 
 const database = firebase.firestore();
@@ -296,7 +301,7 @@ async function createContainer(
 
     // * Container.
     const container = new ContainerBuilder()
-        .setAccentColor(0x010101)
+        .setAccentColor(defaultAccentColor)
         .addTextDisplayComponents(header1)
         .addSeparatorComponents(separator1)
         .addTextDisplayComponents(textTradeList)
@@ -409,21 +414,17 @@ async function tradeHistory(userId) {
         const issuerDocument = issuerSnapshot.data();
         const issuerNickname = issuerDocument.nickname;
 
-        const holographicEmojis = {
-            'Emerald': `${process.env.EMOJI_EMERALD}`,
-            'Golden': `${process.env.EMOJI_GOLDEN}`,
-            'Diamond': `${process.env.EMOJI_DIAMOND}`,
-        };  
-
         const issuerCard = tradeDocument.issuerHolographic !== 'Normal'
-            ? `${holographicEmojis[tradeDocument.issuerHolographic]} ` +
+            ? `${holographicFeatures[tradeDocument.issuerHolographic].emoji} ` +
                 `\`${issuerCardSnapshot.id}\` ` +
-                `${holographicEmojis[tradeDocument.issuerHolographic]}`
+                `${holographicFeatures[tradeDocument.issuerHolographic].emoji}`
             : `\`${issuerCardSnapshot.id}\``;
         const recipientCard = tradeDocument.recipientHolographic !== 'Normal'
-            ? `${holographicEmojis[tradeDocument.recipientHolographic]} ` +
+            ? `${holographicFeatures[tradeDocument.recipientHolographic]
+                    .emoji} ` +
                 `\`${recipientCardSnapshot.id}\` ` +
-                `${holographicEmojis[tradeDocument.recipientHolographic]}`
+                `${holographicFeatures[tradeDocument.recipientHolographic]
+                    .emoji}`
             : `\`${recipientCardSnapshot.id}\``;
 
         historyTradeList +=

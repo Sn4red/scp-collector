@@ -12,6 +12,10 @@ const {
     ContainerBuilder,
 } = require('discord.js');
 
+const {
+    defaultAccentColor,
+} = require('../../utils/foundationConfig');
+
 const path = require('node:path');
 const sharp = require('sharp');
 
@@ -139,7 +143,7 @@ module.exports = {
 
         // * Container.
         const container = new ContainerBuilder()
-            .setAccentColor(0x010101)
+            .setAccentColor(defaultAccentColor)
             .addMediaGalleryComponents(bannerMediaGallery)
             .addTextDisplayComponents(header)
             .addSeparatorComponents(separator1)

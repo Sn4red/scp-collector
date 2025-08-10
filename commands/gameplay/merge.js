@@ -17,6 +17,14 @@ const {
     ContainerBuilder,
 } = require('discord.js');
 
+const {
+    defaultAccentColor,
+    holographicProbabilities,
+    holographicFeatures,
+    normalCrystals,
+    premiumCrystals,
+} = require('../../utils/foundationConfig');
+
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
 const wrap = require('word-wrap');
@@ -26,24 +34,6 @@ const database = firebase.firestore();
 
 const guildId = process.env.DISCORD_SERVER_ID;
 const VIPRoleId = process.env.DISCORD_VIP_ROLE_ID;
-
-// * The crystals obtained based on the SCP class by a normal user.
-const normalCrystals = {
-    'Safe': 10,
-    'Euclid': 20,
-    'Keter': 30,
-    'Thaumiel': 50,
-    'Apollyon': 100,
-};
-
-// * The crystals obtained based on the SCP class by a premium user.
-const premiumCrystals = {
-    'Safe': 20,
-    'Euclid': 40,
-    'Keter': 60,
-    'Thaumiel': 100,
-    'Apollyon': 200,
-};
 
 module.exports = {
     cooldown: 60 * 2,
@@ -177,11 +167,15 @@ module.exports = {
                 // * The holographic probability is calculated.
                 // * It's not restricted from non-premium users.
                 const holographicValue = holographicProbability();
-                const holographicFeature = getHolographicFeature(
-                    holographicValue,
-                );
-                const holographicEmoji = holographicFeature.holographicEmoji;
-                const containerColor = holographicFeature.containerColor;
+
+                // * The holographic emoji and container color are obtained
+                // * based on the holographic type of the card.
+                const holographicEmoji = holographicFeatures[
+                    holographicValue
+                ].emoji || ' ';
+                const containerColor = holographicFeatures[
+                    holographicValue
+                ].color;
 
                 await database.runTransaction(async (transaction) => {
                     // * This array will store the document's ID of the cards
@@ -921,50 +915,15 @@ function holographicProbability() {
      * * - Emerald 7%
      */
     
-    if (randomNumber < 0.007) {
+    if (randomNumber < holographicProbabilities['Diamond']) {
         return 'Diamond';
-    } else if (randomNumber < 0.02) {
+    } else if (randomNumber < holographicProbabilities['Golden']) {
         return 'Golden';
-    } else if (randomNumber < 0.07) {
+    } else if (randomNumber < holographicProbabilities['Emerald']) {
         return 'Emerald';
     } else {
         return 'Normal';
     }
-}
-
-// * This function returns the holographic emoji and container color for the
-// * card, based on the holographic type.
-function getHolographicFeature(cardHolographic) {
-    let holographicEmoji = null;
-    let containerColor = null;
-
-    switch (cardHolographic) {
-        case 'Emerald':
-            holographicEmoji = `${process.env.EMOJI_EMERALD}`;
-            containerColor = 0x00b65c;
-
-            break;
-        case 'Golden':
-            holographicEmoji = `${process.env.EMOJI_GOLDEN}`;
-            containerColor = 0xffd700;
-
-            break;
-        case 'Diamond':
-            holographicEmoji = `${process.env.EMOJI_DIAMOND}`;
-            containerColor = 0x00bfff;
-
-            break;
-        default:
-            holographicEmoji = ' ';
-            containerColor = 0x010101;
-
-            break;
-    }
-
-    return {
-        holographicEmoji: holographicEmoji,
-        containerColor: containerColor,
-    };
 }
 
 // * Creates the container for the card.
@@ -976,9 +935,9 @@ function createCardContainer(
     cardFile,
     cardName,
 ) {
-    // * Through the word-wrap library, the card name is wrapped to a
-    // * maximum of 46 characters per line, with no indentation. This
-    // * is to ensure that the container size doesn't get longer.
+    // * Through the word-wrap library, the card name is wrapped to a maximum of
+    // * 46 characters per line, with no indentation. This is to ensure that the
+    // * container size doesn't get longer.
     const fixedCardName = wrap(cardName, {
         indent: '',
         width: 46,
@@ -1085,7 +1044,7 @@ function createMergeSummaryContainer(
 
     // * Container.
     const container = new ContainerBuilder()
-        .setAccentColor(0x010101)
+        .setAccentColor(defaultAccentColor)
         .addTextDisplayComponents(header)
         .addSeparatorComponents(separator)
         .addTextDisplayComponents(textClassesSummary);

@@ -13,6 +13,21 @@ const {
     ContainerBuilder,
 } = require('discord.js');
 
+const {
+    defaultAccentColor,
+    ranks,
+    normalClassProbabilities,
+    premiumClassProbabilities,
+    holographicProbabilities,
+    holographicFeatures,
+    normalXP,
+    premiumXP,
+    holographicXP,
+    userMaxXP,
+    normalCrystals,
+    premiumCrystals,
+} = require('../../utils/foundationConfig');
+
 const firebase = require('../../utils/firebase');
 const path = require('node:path');
 const wrap = require('word-wrap');
@@ -22,72 +37,6 @@ const database = firebase.firestore();
 
 const guildId = process.env.DISCORD_SERVER_ID;
 const VIPRoleId = process.env.DISCORD_VIP_ROLE_ID;
-
-// * The XP obtained based on the SCP class by a normal user.
-const normalXP = {
-    'Safe': 5,
-    'Euclid': 15,
-    'Keter': 30,
-    'Thaumiel': 100,
-    'Apollyon': 200,
-};
-
-// * The XP obtained based on the SCP class by a premium user.
-const premiumXP = {
-    'Safe': 10,
-    'Euclid': 30,
-    'Keter': 60,
-    'Thaumiel': 200,
-    'Apollyon': 400,
-};
-
-// * The maximum XP per level (500 levels per rank) based on the user's rank.
-const userXP = {
-    'Class D': 50,
-    'Security Officer': 100,
-    'Investigator': 250,
-    'Containment Specialist': 500,
-    'Field Agent': 1500,
-    'Site Director': 5000,
-    'O5 Council Member': 10000,
-};
-
-// * User ranks.
-const ranks = [
-    'Class D',
-    'Security Officer',
-    'Investigator',
-    'Containment Specialist',
-    'Field Agent',
-    'Site Director',
-    'O5 Council Member',
-];
-
-// * The additional XP obtained based on the holographic type.
-const holographicXP = {
-    'Normal': 0,
-    'Emerald': 40,
-    'Golden': 70,
-    'Diamond': 100,
-};
-
-// * The crystals obtained based on the SCP class by a normal user.
-const normalCrystals = {
-    'Safe': 10,
-    'Euclid': 20,
-    'Keter': 30,
-    'Thaumiel': 50,
-    'Apollyon': 100,
-};
-
-// * The crystals obtained based on the SCP class by a premium user.
-const premiumCrystals = {
-    'Safe': 20,
-    'Euclid': 40,
-    'Keter': 60,
-    'Thaumiel': 100,
-    'Apollyon': 200,
-};
 
 module.exports = {
     cooldown: 2,
@@ -162,14 +111,12 @@ module.exports = {
                 holographicValue = holographicProbability();
             }
 
-            // * The holographic emoji and container color are obtained
-            // * based on the holographic value.
-            const holographicFeature = getHolographicFeature(
-                holographicValue,
-            );
-            const holographicEmoji = holographicFeature
-                .holographicEmoji;
-            const containerColor = holographicFeature.containerColor;
+            // * The holographic emoji and container color are obtained based
+            // * on the holographic type of the card.
+            const holographicEmoji = holographicFeatures[
+                holographicValue
+            ].emoji || ' ';
+            const containerColor = holographicFeatures[holographicValue].color;
 
             let cardContainer = null;
             let promotionResults = null;
@@ -321,30 +268,14 @@ async function checkingUserPremiumStatus(userId, interaction) {
 // * This function defines the probability per class (rarity) in an array,
 // * and determines the class to choose based on cumulative probability.
 function classProbability(isPremium) {
-    const normalClasses = [
-        { name: 'Safe', probability: 45 },
-        { name: 'Euclid', probability: 30 },
-        { name: 'Keter', probability: 21 },
-        { name: 'Thaumiel', probability: 3 },
-        { name: 'Apollyon', probability: 1 },
-    ];
-
-    const premiumClasses = [
-        { name: 'Safe', probability: 40 },
-        { name: 'Euclid', probability: 31 },
-        { name: 'Keter', probability: 22 },
-        { name: 'Thaumiel', probability: 4 },
-        { name: 'Apollyon', probability: 3 },
-    ];
-
     const random = Math.random() * 100;
     let cumulative = 0;
     let preferredClasses = null;
 
     if (isPremium) {
-        preferredClasses = premiumClasses;
+        preferredClasses = premiumClassProbabilities;
     } else {
-        preferredClasses = normalClasses;
+        preferredClasses = normalClassProbabilities;
     }
 
     for (const classCard of preferredClasses) {
@@ -370,50 +301,15 @@ function holographicProbability() {
      * * - Emerald 7%
      */
     
-    if (randomNumber < 0.007) {
+    if (randomNumber < holographicProbabilities['Diamond']) {
         return 'Diamond';
-    } else if (randomNumber < 0.02) {
+    } else if (randomNumber < holographicProbabilities['Golden']) {
         return 'Golden';
-    } else if (randomNumber < 0.07) {
+    } else if (randomNumber < holographicProbabilities['Emerald']) {
         return 'Emerald';
     } else {
         return 'Normal';
     }
-}
-
-// * This function returns the holographic emoji and container color for the
-// * card, based on the holographic type.
-function getHolographicFeature(cardHolographic) {
-    let holographicEmoji = null;
-    let containerColor = null;
-
-    switch (cardHolographic) {
-        case 'Emerald':
-            holographicEmoji = `${process.env.EMOJI_EMERALD}`;
-            containerColor = 0x00b65c;
-
-            break;
-        case 'Golden':
-            holographicEmoji = `${process.env.EMOJI_GOLDEN}`;
-            containerColor = 0xffd700;
-
-            break;
-        case 'Diamond':
-            holographicEmoji = `${process.env.EMOJI_DIAMOND}`;
-            containerColor = 0x00bfff;
-
-            break;
-        default:
-            holographicEmoji = ' ';
-            containerColor = 0x010101;
-
-            break;
-    }
-
-    return {
-        holographicEmoji: holographicEmoji,
-        containerColor: containerColor,
-    };
 }
 
 // * Creates the container for the card.
@@ -425,9 +321,9 @@ function createCardContainer(
     cardFile,
     cardName,
 ) {
-    // * Through the word-wrap library, the card name is wrapped to a
-    // * maximum of 46 characters per line, with no indentation. This
-    // * is to ensure that the container size doesn't get longer.
+    // * Through the word-wrap library, the card name is wrapped to a maximum of
+    // * 46 characters per line, with no indentation. This is to ensure that the
+    // * container size doesn't get longer.
     const fixedCardName = wrap(cardName, {
         indent: '',
         width: 46,
@@ -505,7 +401,7 @@ async function promotionProcess(
         crystals = normalCrystals[cardClass];
     }
 
-    let maxXP = userXP[userDocument.rank];
+    let maxXP = userMaxXP[userDocument.rank];
 
     // * The variable determines what type of promotion will be performed (rank
     // * or level), so that a different type of message is displayed.
@@ -545,7 +441,7 @@ async function promotionProcess(
                     userDocument.rank = ranks[indexCurrentElement];
     
                     rankPromotion = true;
-                    maxXP = userXP[userDocument.rank];
+                    maxXP = userMaxXP[userDocument.rank];
                 }
             }
         }
@@ -628,7 +524,7 @@ function createResultsContainer(
 
     // * Container.
     const container = new ContainerBuilder()
-        .setAccentColor(0x010101)
+        .setAccentColor(defaultAccentColor)
         .addTextDisplayComponents(header)
         .addSeparatorComponents(separator)
         .addTextDisplayComponents(textStats);

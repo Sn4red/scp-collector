@@ -485,6 +485,10 @@ function validateSpecialConditions(
 async function findCard(userId, cardId, holographic, transaction) {
     let holographicValue = holographic;
 
+    // * This value relies on the `validHolographic` array, in which one of its
+    // * values is an empty string representing the `Normal` value (because that
+    // * field in the modal is optional). If this is the case, then the value
+    // * `Normal` is assigned to `holographicValue`.
     if (holographicValue.length < 2) {
         holographicValue = 'Normal';
     }

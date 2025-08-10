@@ -1,3 +1,8 @@
+const {
+    marketClassProbabilities,
+    marketHolographicProbabilities,
+} = require('./foundationConfig');
+
 const firebase = require('./firebase');
 const { Filter } = require('firebase-admin/firestore');
 const moment = require('moment');
@@ -356,18 +361,10 @@ function startCronJobs(client) {
 // * and determines the class to choose based on cumulative probability.
 // * It does this 5 times.
 function classProbability() {
-    const classes = [
-        { name: 'Safe', probability: 43 },
-        { name: 'Euclid', probability: 30 },
-        { name: 'Keter', probability: 21 },
-        { name: 'Thaumiel', probability: 4 },
-        { name: 'Apollyon', probability: 2 },
-    ];
-
     const random = Math.random() * 100;
     let cumulative = 0;
 
-    for (const classCard of classes) {
+    for (const classCard of marketClassProbabilities) {
         cumulative += classCard.probability;
 
         if (random < cumulative) {
@@ -375,7 +372,7 @@ function classProbability() {
         }
     }
 
-    return classes[0].name;
+    return marketClassProbabilities[0].name;
 }
 
 // * This function retrieves 5 random cards and returns them as an array.
@@ -448,11 +445,11 @@ function holographicProbability() {
          * * - Emerald 20%
          */
         
-        if (randomNumber < 0.05) {
+        if (randomNumber < marketHolographicProbabilities['Diamond']) {
             holographics.push('Diamond');
-        } else if (randomNumber < 0.10) {
+        } else if (randomNumber < marketHolographicProbabilities['Golden']) {
             holographics.push('Golden');
-        } else if (randomNumber < 0.20) {
+        } else if (randomNumber < marketHolographicProbabilities['Emerald']) {
             holographics.push('Emerald');
         } else {
             holographics.push('Normal');

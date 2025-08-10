@@ -15,6 +15,13 @@ const {
     AttachmentBuilder,
 } = require('discord.js');
 
+const {
+    defaultAccentColor,
+    holographicFeatures,
+    cardClassPrices,
+    cardHolographicPrices,
+} = require('../../utils/foundationConfig');
+
 const path = require('node:path');
 const firebase = require('../../utils/firebase');
 const wrap = require('word-wrap');
@@ -129,13 +136,15 @@ module.exports = {
         const cardFile = cardData.file;
         const cardName = cardData.name;
         const cardHolographic = foundCardInformation.cardHolographic;
-        const crystals = getCardCrystals(cardClass, cardHolographic);
+        const crystals = cardClassPrices[cardClass] +
+            cardHolographicPrices[cardHolographic];
         
-        // * The holographic emoji and container color are obtained
-        // * based on the holographic type of the card.
-        const holographicFeature = getHolographicFeature(cardHolographic);
-        const holographicEmoji = holographicFeature.holographicEmoji;
-        const containerColor = holographicFeature.containerColor;
+        // * The holographic emoji and container color are obtained based on the
+        // * holographic type of the card.
+        const holographicEmoji = holographicFeatures[
+            cardHolographic
+        ].emoji || ' ';
+        const containerColor = holographicFeatures[cardHolographic].color;
 
         const confirmationContainer = createConfirmationContainer(
             holographicEmoji,
@@ -412,79 +421,6 @@ async function findCardInformation(cardId, marketDocument, userDocument) {
     };
 }
 
-// * This function returns the holographic emoji and container color for the
-// * card, based on the holographic type.
-function getHolographicFeature(cardHolographic) {
-    let holographicEmoji = null;
-    let containerColor = null;
-    
-    switch (cardHolographic) {
-        case 'Emerald':
-            holographicEmoji = `${process.env.EMOJI_EMERALD}`;
-            containerColor = 0x00b65c;
-
-            break;
-        case 'Golden':
-            holographicEmoji = `${process.env.EMOJI_GOLDEN}`;
-            containerColor = 0xffd700;
-
-            break;
-        case 'Diamond':
-            holographicEmoji = `${process.env.EMOJI_DIAMOND}`;
-            containerColor = 0x00bfff;
-
-            break;
-        default:
-            holographicEmoji = ' ';
-            containerColor = 0x010101;
-
-            break;
-    }
-
-    return {
-        holographicEmoji: holographicEmoji,
-        containerColor: containerColor,
-    };
-}
-
-// * This function calculates the cost of the card based on the class and
-// * holographic (if any).
-function getCardCrystals(cardClass, cardHolographic) {
-    let crystals = 0;
-
-    switch (cardClass) {
-        case 'Safe':
-            crystals = 1000;
-            break;
-        case 'Euclid':
-            crystals = 2000;
-            break;
-        case 'Keter':
-            crystals = 3000;
-            break;
-        case 'Thaumiel':
-            crystals = 5000;
-            break;
-        case 'Apollyon':
-            crystals = 10000;
-            break;
-    }
-
-    switch (cardHolographic) {
-        case 'Emerald':
-            crystals += 200;
-            break;
-        case 'Golden':
-            crystals += 300;
-            break;
-        case 'Diamond':
-            crystals += 500;
-            break;
-    }
-
-    return crystals;
-}
-
 // * Creates the confirmation container with the card details and price.
 function createConfirmationContainer(
     holographicEmoji,
@@ -527,7 +463,7 @@ function createConfirmationContainer(
 
     // * Container.
     const confirmationContainer = new ContainerBuilder()
-        .setAccentColor(0x010101)
+        .setAccentColor(defaultAccentColor)
         .addTextDisplayComponents(confirmHeader)
         .addSeparatorComponents(separator)
         .addTextDisplayComponents(detailsText)
@@ -590,9 +526,9 @@ function createCardContainer(
     cardFile,
     cardName,
 ) {
-    // * Through the word-wrap library, the card name is wrapped to a
-    // * maximum of 46 characters per line, with no indentation. This
-    // * is to ensure that the container size doesn't get longer.
+    // * Through the word-wrap library, the card name is wrapped to a maximum of
+    // * 46 characters per line, with no indentation. This is to ensure that the
+    // * container size doesn't get longer.
     const fixedCardName = wrap(cardName, {
         indent: '',
         width: 46,

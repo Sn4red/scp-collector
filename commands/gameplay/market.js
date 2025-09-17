@@ -5,7 +5,13 @@ const {
     TextDisplayBuilder,
 } = require('discord.js');
 
+const {
+    cardClassPrices,
+    cardHolographicPrices,
+} = require('../../utils/foundationConfig');
+
 const Canvas = require('@napi-rs/canvas');
+const fetch = require('node-fetch');
 const firebase = require('../../utils/firebase');
 const moment = require('moment');
 
@@ -127,14 +133,23 @@ module.exports = {
             marketDocument.holographic5,
         ];
 
+        const cardsPurchased = [
+            userDocument.card1Purchased,
+            userDocument.card2Purchased,
+            userDocument.card3Purchased,
+            userDocument.card4Purchased,
+            userDocument.card5Purchased,
+        ];
+
         // * Uses the AttachmentBuilder class to process the file and be
         // * attached in the reply.
         const attachment = await displayMarket(
-            userDocument,
+            userDocument.crystals,
             cardHolographics,
             cardIds,
             cardClasses,
             cardNames,
+            cardsPurchased,
             deadline,
         );
 
@@ -146,13 +161,19 @@ module.exports = {
 
 // * This function draws all the user's card and returns it as an attachment.
 async function displayMarket(
-    userDocument,
+    userCrystals,
     cardHolographics,
     cardIds,
     cardClasses,
     cardNames,
+    cardsPurchased,
     deadline,
 ) {
+    // * The numeric ID is extracted from the emoji ID to build the URL, which
+    // * is then used in the canvas.
+    const emojiCrystal = process.env.EMOJI_CRYSTAL;
+    const emojiIdCrystal = emojiCrystal.match(/\d{15,}/g)[0];
+
     // * Creates a canvas of 571x527 pixels and obtain its context.
     // * The context will be used to modify the canvas.
     const canvas = Canvas.createCanvas(571, 527);
@@ -173,16 +194,16 @@ async function displayMarket(
     // * Market label.
     context.font = 'bold 18px Roboto Condensed';
     context.fillStyle = '#FF0000';
-    context.fillText('[ MARKET ]', 43, 40);
+    context.fillText('[ MARKET ]', 43, 33);
 
     // * Header.
     context.font = 'bold 20px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.textAlign = 'center';
     context.fillText(
-        `CRYSTALS: ${userDocument.crystals}`,
+        `CRYSTALS: ${userCrystals}`,
         canvas.width / 2,
-        40,
+        33,
     );
 
     // * Card textures.
@@ -226,65 +247,88 @@ async function displayMarket(
         { x: 367, y: 413 },
     ];
 
-    const firstXPositions = {
-        'firstLineMoveToX': 57,
-        'firstLineMoveToY': 83,
-        'firstLineLineToX': 196,
-        'firstLineLineToY': 249,
-        'secondLineMoveToX': 196,
-        'secondLineMoveToY': 83,
-        'secondLineLineToX': 57,
-        'secondLineLineToY': 249,
-    };
+    const crystalEmojisPositions = [
+        { x: 102, y: 57 },
+        { x: 262, y: 57 },
+        { x: 422, y: 57 },
+        { x: 182, y: 449 },
+        { x: 342, y: 449 },
+    ];
 
-    const secondXPositions = {
-        'firstLineMoveToX': 217,
-        'firstLineMoveToY': 83,
-        'firstLineLineToX': 356,
-        'firstLineLineToY': 249,
-        'secondLineMoveToX': 356,
-        'secondLineMoveToY': 83,
-        'secondLineLineToX': 217,
-        'secondLineLineToY': 249,
-    };
+    const cardPricesPositions = [
+        { x: 131, y: 68 },
+        { x: 291, y: 68 },
+        { x: 451, y: 68 },
+        { x: 211, y: 460 },
+        { x: 371, y: 460 },
+    ];
 
-    const thirdXPositions = {
-        'firstLineMoveToX': 377,
-        'firstLineMoveToY': 83,
-        'firstLineLineToX': 516,
-        'firstLineLineToY': 249,
-        'secondLineMoveToX': 516,
-        'secondLineMoveToY': 83,
-        'secondLineLineToX': 377,
-        'secondLineLineToY': 249,
-    };
+    // * X textures for purchased cards.
+    const xPositions = [
+        {
+            fstartx: 57,
+            fstarty: 83,
+            fendx: 196,
+            fendy: 249,
+            sstartx: 196,
+            sstarty: 83,
+            sendx: 57,
+            sendy: 249,
+        },
+        {
+            fstartx: 217,
+            fstarty: 83,
+            fendx: 356,
+            fendy: 249,
+            sstartx: 356,
+            sstarty: 83,
+            sendx: 217,
+            sendy: 249,
+        },
+        {
+            fstartx: 377,
+            fstarty: 83,
+            fendx: 516,
+            fendy: 249,
+            sstartx: 516,
+            sstarty: 83,
+            sendx: 377,
+            sendy: 249,
+        },
+        {
+            fstartx: 137,
+            fstarty: 271,
+            fendx: 276,
+            fendy: 437,
+            sstartx: 276,
+            sstarty: 271,
+            sendx: 137,
+            sendy: 437,
+        },
+        {
+            fstartx: 297,
+            fstarty: 271,
+            fendx: 436,
+            fendy: 437,
+            sstartx: 436,
+            sstarty: 271,
+            sendx: 297,
+            sendy: 437,
+        },
+    ];
 
-    const fourthXPositions = {
-        'firstLineMoveToX': 137,
-        'firstLineMoveToY': 271,
-        'firstLineLineToX': 276,
-        'firstLineLineToY': 437,
-        'secondLineMoveToX': 276,
-        'secondLineMoveToY': 271,
-        'secondLineLineToX': 137,
-        'secondLineLineToY': 437,
-    };
-
-    const fifthXPositions = {
-        'firstLineMoveToX': 297,
-        'firstLineMoveToY': 271,
-        'firstLineLineToX': 436,
-        'firstLineLineToY': 437,
-        'secondLineMoveToX': 436,
-        'secondLineMoveToY': 271,
-        'secondLineLineToX': 297,
-        'secondLineLineToY': 437,
-    };
+    // * Crystals emoji.
+    const crystalEmoji = await loadEmoji(
+        `https://cdn.discordapp.com/emojis/${emojiIdCrystal}`,
+    );
 
     for (let i = 0; i < cardIds.length; i++) {
         const cardId = cardIds[i];
         const cardClass = cardClasses[i];
         let cardName = cardNames[i];
+        const cardPrice = cardClassPrices[cardClass] +
+            cardHolographicPrices[cardHolographics[i]];
+        const cardPurchased = cardsPurchased[i];
 
         // * Displaying card texture.
         const card = await Canvas.loadImage(
@@ -389,141 +433,57 @@ async function displayMarket(
                 cardNamesPositions[i].y,
             );
         }
-    }
 
-    context.lineWidth = 5;
-    context.lineCap = 'round';
-    context.strokeStyle = 'rgba(255, 0, 0, 0.6';
+        // * Displaying crystal emojis.
+        context.drawImage(
+            crystalEmoji,
+            crystalEmojisPositions[i].x,
+            crystalEmojisPositions[i].y,
+            15,
+            15,
+        );
 
-    if (userDocument.card1Purchased) {
-        context.beginPath();
-        context.moveTo(
-            firstXPositions.firstLineMoveToX,
-            firstXPositions.firstLineMoveToY,
-        );
-        context.lineTo(
-            firstXPositions.firstLineLineToX,
-            firstXPositions.firstLineLineToY,
-        );
-        context.stroke();
+        // * Displaying card price.
+        context.font = 'bold 10px Roboto Condensed';
 
-        context.beginPath();
-        context.moveTo(
-            firstXPositions.secondLineMoveToX,
-            firstXPositions.secondLineMoveToY,
-        );
-        context.lineTo(
-            firstXPositions.secondLineLineToX,
-            firstXPositions.secondLineLineToY,
-        );
-        context.stroke();
-    }
+        if (userCrystals < cardPrice || cardPurchased) {
+            context.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        } else {
+            context.fillStyle = '#FFFFFF';
+        }
 
-    if (userDocument.card2Purchased) {
-        context.beginPath();
-        context.moveTo(
-            secondXPositions.firstLineMoveToX,
-            secondXPositions.firstLineMoveToY,
+        context.fillText(cardPrice.toString(),
+            cardPricesPositions[i].x,
+            cardPricesPositions[i].y,
         );
-        context.lineTo(
-            secondXPositions.firstLineLineToX,
-            secondXPositions.firstLineLineToY,
-        );
-        context.stroke();
 
-        context.beginPath();
-        context.moveTo(
-            secondXPositions.secondLineMoveToX,
-            secondXPositions.secondLineMoveToY,
-        );
-        context.lineTo(
-            secondXPositions.secondLineLineToX,
-            secondXPositions.secondLineLineToY,
-        );
-        context.stroke();
-    }
+        // * Displaying a red X if the card was purchased.
+        context.lineWidth = 5;
+        context.lineCap = 'round';
+        context.strokeStyle = 'rgba(255, 0, 0, 0.6)';
 
-    if (userDocument.card3Purchased) {
-        context.beginPath();
-        context.moveTo(
-            thirdXPositions.firstLineMoveToX,
-            thirdXPositions.firstLineMoveToY,
-        );
-        context.lineTo(
-            thirdXPositions.firstLineLineToX,
-            thirdXPositions.firstLineLineToY,
-        );
-        context.stroke();
+        if (cardPurchased) {
+            context.beginPath();
+            context.moveTo(xPositions[i].fstartx, xPositions[i].fstarty);
+            context.lineTo(xPositions[i].fendx, xPositions[i].fendy);
+            context.stroke();
 
-        context.beginPath();
-        context.moveTo(
-            thirdXPositions.secondLineMoveToX,
-            thirdXPositions.secondLineMoveToY,
-        );
-        context.lineTo(
-            thirdXPositions.secondLineLineToX,
-            thirdXPositions.secondLineLineToY,
-        );
-        context.stroke();
-    }
-
-    if (userDocument.card4Purchased) {
-        context.beginPath();
-        context.moveTo(
-            fourthXPositions.firstLineMoveToX,
-            fourthXPositions.firstLineMoveToY,
-        );
-        context.lineTo(
-            fourthXPositions.firstLineLineToX,
-            fourthXPositions.firstLineLineToY,
-        );
-        context.stroke();
-
-        context.beginPath();
-        context.moveTo(
-            fourthXPositions.secondLineMoveToX,
-            fourthXPositions.secondLineMoveToY,
-        );
-        context.lineTo(
-            fourthXPositions.secondLineLineToX,
-            fourthXPositions.secondLineLineToY,
-        );
-        context.stroke();
-    }
-
-    if (userDocument.card5Purchased) {
-        context.beginPath();
-        context.moveTo(
-            fifthXPositions.firstLineMoveToX,
-            fifthXPositions.firstLineMoveToY,
-        );
-        context.lineTo(
-            fifthXPositions.firstLineLineToX,
-            fifthXPositions.firstLineLineToY,
-        );
-        context.stroke();
-
-        context.beginPath();
-        context.moveTo(
-            fifthXPositions.secondLineMoveToX,
-            fifthXPositions.secondLineMoveToY,
-        );
-        context.lineTo(
-            fifthXPositions.secondLineLineToX,
-            fifthXPositions.secondLineLineToY,
-        );
-        context.stroke();
+            context.beginPath();
+            context.moveTo(xPositions[i].sstartx, xPositions[i].sstarty);
+            context.lineTo(xPositions[i].sendx, xPositions[i].sendy);
+            context.stroke();
+        }
     }
 
     // * Gray Label.
     context.fillStyle = 'rgba(87, 87, 87, 0.5)';
-    context.fillRect(6, 460, 559, 40);
+    context.fillRect(6, 481, 559, 40);
 
     // * Deadline.
     context.font = '16px Roboto Condensed';
     context.fillStyle = '#FFFFFF';
     context.textAlign = 'center';
-    context.fillText(`ENDS ON ${deadline}`, canvas.width / 2, 485);
+    context.fillText(`ENDS ON ${deadline}`, canvas.width / 2, 506);
 
     return new AttachmentBuilder(
         await canvas.encode('png'),
@@ -553,4 +513,13 @@ function fitTextToWidth(context, name, maxWidth, initialFontSize) {
         fontSize,
         splitName,
     };
+}
+
+// * This function is to convert the emoji URL into an image, to be used in the
+// * canvas.
+async function loadEmoji(emojiUrl) {
+    const response = await fetch(emojiUrl);
+    const image = await Canvas.loadImage(await response.buffer());
+
+    return image;
 }
